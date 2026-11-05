@@ -18,6 +18,8 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
 | Veri saklama | Şimdilik telefonda (AsyncStorage), hesap sistemi gelince sunucuya taşınacak | Kesin |
+| Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
+| Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
 | Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
 | Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
 | Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
@@ -31,7 +33,7 @@ Tasarımdaki adlar `screens.html` içindeki `data-screen` değerleridir.
 |---|---|---|
 | Karşılama | `welcome` | Apple ile girişe götürür |
 | Hayvan ekleme | `add-pet` | Tek adım. Ad ve tür zorunlu; ırk (serbest metin), fotoğraf, doğum tarihi veya yaklaşık yaş isteğe bağlı |
-| Bugün | `home` | Yaklaşan aşılar ve günün görevleri, kayıp modu düğmesi. Randevu düğmesi yok |
+| Bugün | `home` | Yaklaşan aşı ve tedaviler, günün görevleri, sonraki ziyaret kartı, kayıp modu düğmesi. Randevu düğmesi yok |
 | Sağlık kaydı | `records` | Kayıtlar elle girilir ve "Elle girildi" yazar. Tarama ve randevu düğmesi yok |
 | Kilo | `weight` | Kayıt ve grafik. Sağlıklı aralık yalnızca kullanıcı girerse görünür |
 | Hatırlatmalar | `lock-daily` | Bildirim ve "Yapıldı" ile "1 saat sonra" seçenekleri. Widget yok |
@@ -92,7 +94,7 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı bölümü (düzeltme ve silme dahil), aşı hatırlatmaları, görevler ve Bugün listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada tedaviler, ziyaretler ve kilo)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler ve Bugün listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada kilo ve Hayvanlar listesi)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi

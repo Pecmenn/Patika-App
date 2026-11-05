@@ -6,9 +6,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import { Button } from '@/components/button';
 import { colors, fonts } from '@/constants/theme';
-import type { Vaccine } from '@/data/vaccines';
-import { daysUntil, formatLongDate, formatShortDate, fromDateKey } from '@/lib/dates';
-import { dueCountLabel } from '@/lib/vaccines';
+import type { HealthRecord } from '@/data/health-records';
+import type { Visit } from '@/data/visits';
+import { daysUntil, formatLongDate, formatShortDate, formatTime, fromDateKey } from '@/lib/dates';
+import { dueCountLabel } from '@/lib/health-records';
+import { visitWhenLabel } from '@/lib/visits';
 
 const CORNER = 20;
 
@@ -27,15 +29,6 @@ function StickerFrame({ isDue, children }: { isDue: boolean; children: ReactNode
         <Path d={`M${CORNER} 0V${CORNER}H0Z`} fill={colors.paper} />
         <Path d={`M5 0H${CORNER}L0 ${CORNER}V5A5 5 0 0 1 5 0Z`} fill={isDue ? '#B8D24A' : '#DCDBEE'} />
       </Svg>
-    </View>
-  );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <View>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue}>{value}</Text>
     </View>
   );
 }
@@ -63,52 +56,109 @@ function StickerBody({ name, onEdit, children }: StickerBodyProps) {
   );
 }
 
-type VaccineStickerProps = {
-  vaccine: Vaccine;
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.metaItem}>
+      <Text style={styles.metaLabel}>{label}</Text>
+      <Text style={styles.metaValue}>{value}</Text>
+    </View>
+  );
+}
+
+function ManualSource() {
+  return (
+    <View style={styles.source}>
+      <PencilSimpleIcon size={13} weight="bold" color={colors.ink2} />
+      <Text style={styles.sourceLabel}>Elle girildi</Text>
+    </View>
+  );
+}
+
+type RecordStickerProps = {
+  record: HealthRecord;
   onEdit: () => void;
 };
 
-export function VaccineSticker({ vaccine, onEdit }: VaccineStickerProps) {
+export function RecordSticker({ record, onEdit }: RecordStickerProps) {
   return (
     <StickerFrame isDue={false}>
-      <StickerBody name={vaccine.name} onEdit={onEdit}>
+      <StickerBody name={record.name} onEdit={onEdit}>
+        {record.note && <Text style={styles.note}>{record.note}</Text>}
         <View style={styles.meta}>
-          <Meta label="Yapıldı" value={formatShortDate(fromDateKey(vaccine.givenDate))} />
-          {vaccine.nextDueDate && (
-            <Meta label="Sonraki" value={formatShortDate(fromDateKey(vaccine.nextDueDate))} />
+          <Meta label="Yapıldı" value={formatShortDate(fromDateKey(record.givenDate))} />
+          {record.nextDueDate && (
+            <Meta label="Sonraki" value={formatShortDate(fromDateKey(record.nextDueDate))} />
           )}
-          {vaccine.batch && <Meta label="Seri no" value={vaccine.batch} />}
+          {record.batch && <Meta label="Seri no" value={record.batch} />}
         </View>
-        <View style={styles.source}>
-          <PencilSimpleIcon size={13} weight="bold" color={colors.ink2} />
-          <Text style={styles.sourceLabel}>Elle girildi</Text>
-        </View>
+        <ManualSource />
       </StickerBody>
     </StickerFrame>
   );
 }
 
-type DueVaccineStickerProps = VaccineStickerProps & {
+type DueRecordStickerProps = RecordStickerProps & {
   // Uygulama ertesi gün açılınca sayaç yenilensin diye dışarıdan geliyor.
   now: Date;
   onDone: () => void;
 };
 
-export function DueVaccineSticker({ vaccine, now, onDone, onEdit }: DueVaccineStickerProps) {
-  const dueDate = vaccine.nextDueDate ?? vaccine.givenDate;
+export function DueRecordSticker({ record, now, onDone, onEdit }: DueRecordStickerProps) {
+  const dueDate = record.nextDueDate ?? record.givenDate;
   const days = daysUntil(dueDate, now);
 
   return (
     <StickerFrame isDue>
-      <StickerBody name={vaccine.name} onEdit={onEdit}>
+      <StickerBody name={record.name} onEdit={onEdit}>
         <Text style={styles.lastDose}>
-          Son doz: {formatShortDate(fromDateKey(vaccine.givenDate))}
+          Son doz: {formatShortDate(fromDateKey(record.givenDate))}
         </Text>
         <Text style={styles.dueDate}>
           {Math.abs(days)} {dueCountLabel(days)}, {formatLongDate(fromDateKey(dueDate))}
         </Text>
       </StickerBody>
       <Button label="Yapıldı" size="small" onPress={onDone} />
+    </StickerFrame>
+  );
+}
+
+type VisitStickerProps = {
+  visit: Visit;
+  onEdit: () => void;
+};
+
+export function VisitSticker({ visit, onEdit }: VisitStickerProps) {
+  return (
+    <StickerFrame isDue={false}>
+      <StickerBody name={visit.reason} onEdit={onEdit}>
+        {visit.note && <Text style={styles.note}>{visit.note}</Text>}
+        <View style={styles.meta}>
+          <Meta label="Tarih" value={formatShortDate(fromDateKey(visit.date))} />
+          {visit.time && <Meta label="Saat" value={formatTime(visit.time)} />}
+          {visit.clinic && <Meta label="Klinik" value={visit.clinic} />}
+        </View>
+        <ManualSource />
+      </StickerBody>
+    </StickerFrame>
+  );
+}
+
+export function UpcomingVisitSticker({
+  visit,
+  now,
+  onEdit,
+}: VisitStickerProps & { now: Date }) {
+  const days = daysUntil(visit.date, now);
+
+  return (
+    <StickerFrame isDue>
+      <StickerBody name={visit.reason} onEdit={onEdit}>
+        {visit.clinic && <Text style={styles.lastDose}>{visit.clinic}</Text>}
+        {visit.note && <Text style={styles.lastDose}>{visit.note}</Text>}
+        <Text style={styles.dueDate}>
+          {days === 0 ? 'Bugün' : `${days} gün kaldı`}, {visitWhenLabel(visit)}
+        </Text>
+      </StickerBody>
     </StickerFrame>
   );
 }
@@ -168,6 +218,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: colors.ink,
   },
+  note: {
+    marginTop: 3,
+    fontFamily: fonts.ui,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: colors.ink2,
+  },
   lastDose: {
     marginTop: 2,
     fontFamily: fonts.ui,
@@ -185,6 +242,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 16,
     marginTop: 10,
+  },
+  metaItem: {
+    flexShrink: 1,
   },
   metaLabel: {
     fontFamily: fonts.uiSemi,

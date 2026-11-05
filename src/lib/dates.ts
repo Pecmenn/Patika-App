@@ -17,6 +17,16 @@ const weekdayFormat = new Intl.DateTimeFormat('tr-TR', {
 });
 
 const weekdayNameFormat = new Intl.DateTimeFormat('tr-TR', { weekday: 'long' });
+const shortWeekdayFormat = new Intl.DateTimeFormat('tr-TR', { weekday: 'short' });
+const shortMonthFormat = new Intl.DateTimeFormat('tr-TR', { month: 'short' });
+
+export function formatShortWeekday(date: Date) {
+  return shortWeekdayFormat.format(date);
+}
+
+export function formatShortMonth(date: Date) {
+  return shortMonthFormat.format(date);
+}
 
 export function formatWeekdayName(date: Date) {
   return weekdayNameFormat.format(date).toLocaleLowerCase('tr-TR');
@@ -67,6 +77,17 @@ export function atTime(dateKey: string, timeKey: string) {
 export function addDays(date: Date, days: number) {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
+  return result;
+}
+
+// Ayın 31'inden bir ay sonrası, kısa aylarda ayın son günüdür.
+export function addMonths(date: Date, months: number) {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() + months);
+  const lastDayOfMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDayOfMonth));
   return result;
 }
 

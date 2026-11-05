@@ -5,21 +5,21 @@ import { PetAvatar } from '@/components/pet-avatar';
 import { SPECIES } from '@/constants/species';
 import { colors, fonts } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
+import type { HealthRecord } from '@/data/health-records';
 import type { Pet } from '@/data/pets';
-import type { Vaccine } from '@/data/vaccines';
 import { daysUntil, formatLongDate, fromDateKey } from '@/lib/dates';
-import { dueCountLabel } from '@/lib/vaccines';
+import { dueCountLabel } from '@/lib/health-records';
 
 type UpNextCardProps = {
   pet: Pet;
-  vaccine: Vaccine;
+  record: HealthRecord;
   // Uygulama ertesi gün açılınca sayaç yenilensin diye dışarıdan geliyor.
   now: Date;
   onDone: () => void;
 };
 
-export function UpNextCard({ pet, vaccine, now, onDone }: UpNextCardProps) {
-  const dueDate = vaccine.nextDueDate ?? vaccine.givenDate;
+export function UpNextCard({ pet, record, now, onDone }: UpNextCardProps) {
+  const dueDate = record.nextDueDate ?? record.givenDate;
   const days = daysUntil(dueDate, now);
 
   return (
@@ -36,7 +36,7 @@ export function UpNextCard({ pet, vaccine, now, onDone }: UpNextCardProps) {
       </View>
 
       <View style={styles.main}>
-        <Text style={styles.name}>{vaccine.name}</Text>
+        <Text style={styles.name}>{record.name}</Text>
         <View style={styles.count}>
           <Text style={styles.countValue}>{Math.abs(days)}</Text>
           <Text style={styles.countLabel}>{dueCountLabel(days)}</Text>

@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank';
+import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
 import {
@@ -15,91 +16,77 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { ChoiceChips } from '@/components/choice-chips';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { colors, fonts } from '@/constants/theme';
-import { listPets, type Species } from '@/data/pets';
-import { addVaccine, deleteVaccine, updateVaccine, type Vaccine } from '@/data/vaccines';
+import { listPets } from '@/data/pets';
+import { addVisit, deleteVisit, updateVisit, type Visit } from '@/data/visits';
 import { useFocusData } from '@/hooks/use-focus-data';
-import { addYears, formatLongDate, fromDateKey, toDateKey } from '@/lib/dates';
+import { atTime, formatLongDate, formatTime, fromDateKey, toDateKey, toTimeKey } from '@/lib/dates';
 import { refreshReminders } from '@/lib/reminders';
+import { isUpcomingVisit } from '@/lib/visits';
 
-// Yalnızca yazmayı hızlandıran kısayollar. Hangi aşının gerektiğine veteriner karar verir.
-const NAME_SUGGESTIONS: Record<Species, string[]> = {
-  cat: ['Kuduz', 'Karma', 'Lösemi'],
-  dog: ['Kuduz', 'Karma', 'Bronşin'],
-  rabbit: [],
-  bird: [],
-};
+const DEFAULT_TIME = '10:00';
 
-type OpenPicker = 'given' | 'next' | null;
+type OpenPicker = 'date' | 'time' | null;
 
 const calendarIcon = <CalendarBlankIcon size={20} weight="bold" color={colors.ink2} />;
+const clockIcon = <ClockIcon size={20} weight="bold" color={colors.ink2} />;
 
-type VaccineFormProps = {
+type VisitFormProps = {
   petId: string;
-  // Verilirse form bu kaydı düzenler ve silme seçeneği görünür.
-  vaccine?: Vaccine;
-  initialName?: string;
+  // Verilirse form bu ziyareti düzenler ve silme seçeneği görünür.
+  visit?: Visit;
 };
 
-export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
+export function VisitForm({ petId, visit }: VisitFormProps) {
   const insets = useSafeAreaInsets();
   const pets = useFocusData(listPets);
   const pet = pets?.find((candidate) => candidate.id === petId);
 
-  const [name, setName] = useState(vaccine?.name ?? initialName ?? '');
-  const [givenDate, setGivenDate] = useState(() =>
-    vaccine ? fromDateKey(vaccine.givenDate) : new Date(),
-  );
-  const [nextDueDate, setNextDueDate] = useState<Date | null>(() =>
-    vaccine?.nextDueDate ? fromDateKey(vaccine.nextDueDate) : null,
-  );
-  const [batch, setBatch] = useState(vaccine?.batch ?? '');
+  const [reason, setReason] = useState(visit?.reason ?? '');
+  const [date, setDate] = useState(() => (visit ? fromDateKey(visit.date) : new Date()));
+  const [time, setTime] = useState<string | null>(visit?.time ?? null);
+  const [clinic, setClinic] = useState(visit?.clinic ?? '');
+  const [note, setNote] = useState(visit?.note ?? '');
   const [openPicker, setOpenPicker] = useState<OpenPicker>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const trimmedName = name.trim();
-  const canSave = pet !== undefined && trimmedName.length > 0 && !isSaving;
-  const suggestions = pet ? NAME_SUGGESTIONS[pet.species] : [];
-
-  function changeGivenDate(date: Date) {
-    setGivenDate(date);
-    if (nextDueDate && nextDueDate < date) {
-      setNextDueDate(null);
-    }
-  }
+  const trimmedReason = reason.trim();
+  const canSave = pet !== undefined && trimmedReason.length > 0 && !isSaving;
+  const dateKey = toDateKey(date);
+  const isUpcoming = isUpcomingVisit({ date: dateKey, time } as Visit);
 
   async function save() {
     const fields = {
       petId,
-      name: trimmedName,
-      givenDate: toDateKey(givenDate),
-      nextDueDate: nextDueDate ? toDateKey(nextDueDate) : null,
-      batch: batch.trim() || null,
+      reason: trimmedReason,
+      date: dateKey,
+      time,
+      clinic: clinic.trim() || null,
+      note: note.trim() || null,
     };
     setIsSaving(true);
     try {
-      if (vaccine) {
-        await updateVaccine(vaccine.id, fields);
+      if (visit) {
+        await updateVisit(visit.id, fields);
       } else {
-        await addVaccine(fields);
+        await addVisit(fields);
       }
     } catch {
       setIsSaving(false);
       Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
       return;
     }
-    await refreshReminders({ askPermission: nextDueDate !== null });
+    await refreshReminders({ askPermission: isUpcoming });
     router.back();
   }
 
   async function remove(id: string) {
     setIsSaving(true);
     try {
-      await deleteVaccine(id);
+      await deleteVisit(id);
     } catch {
       setIsSaving(false);
       Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.');
@@ -109,10 +96,10 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
     router.back();
   }
 
-  function confirmRemove({ id, name: savedName }: Vaccine) {
+  function confirmRemove({ id, reason: savedReason }: Visit) {
     Alert.alert(
-      `${savedName} kaydı silinsin mi?`,
-      'Bu kayıt ve hatırlatmaları silinir. Bu işlem geri alınamaz.',
+      `${savedReason} silinsin mi?`,
+      'Bu ziyaret ve hatırlatmaları silinir. Bu işlem geri alınamaz.',
       [
         { text: 'Vazgeç', style: 'cancel' },
         { text: 'Sil', style: 'destructive', onPress: () => remove(id) },
@@ -133,77 +120,89 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
         </GlassButton>
 
         <Text accessibilityRole="header" style={styles.title}>
-          {vaccine ? 'Aşıyı düzenle' : 'Aşı ekle'}
+          {visit ? 'Ziyareti düzenle' : 'Ziyaret ekle'}
         </Text>
         {pet && (
           <Text style={styles.lede}>
-            {vaccine
+            {visit
               ? `${pet.name} için bu kaydı düzelt.`
-              : `${pet.name} için, karnedeki bilgileri yaz.`}
+              : `${pet.name} için, geçmiş bir ziyareti ya da aldığın randevuyu yaz.`}
           </Text>
         )}
 
-        <TextField label="Aşı adı" maxLength={40} value={name} onChangeText={setName} />
-
-        {suggestions.length > 0 && (
-          <ChoiceChips
-            options={suggestions.map((suggestion) => ({ value: suggestion, label: suggestion }))}
-            value={trimmedName}
-            onChange={setName}
-          />
-        )}
+        <TextField
+          autoCapitalize="sentences"
+          label="Ziyaret nedeni"
+          maxLength={60}
+          placeholder="Örneğin diş kontrolü"
+          value={reason}
+          onChangeText={setReason}
+        />
 
         <View style={styles.field}>
           <PressableField
             icon={calendarIcon}
-            label="Yapıldığı tarih"
+            label="Tarih"
             placeholder="Tarih seç"
-            value={formatLongDate(givenDate)}
-            onPress={() => setOpenPicker('given')}
+            value={formatLongDate(date)}
+            onPress={() => setOpenPicker('date')}
           />
         </View>
 
         <View style={styles.field}>
           <PressableField
-            icon={calendarIcon}
-            label="Sonraki tarih (isteğe bağlı)"
-            placeholder="Tarih seç"
-            value={nextDueDate ? formatLongDate(nextDueDate) : null}
-            onPress={() => setOpenPicker('next')}
+            icon={clockIcon}
+            label="Saat (isteğe bağlı)"
+            placeholder="Saat seç"
+            value={time ? formatTime(time) : null}
+            onPress={() => setOpenPicker('time')}
           />
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setNextDueDate(nextDueDate ? null : addYears(givenDate, 1))}
-          style={styles.shortcut}>
-          <Text style={styles.shortcutLabel}>
-            {nextDueDate ? 'Sonraki tarihi kaldır' : 'Bir yıl sonrasını seç'}
-          </Text>
-        </Pressable>
-        {nextDueDate && (
-          <Text style={styles.reminderNote}>
-            Bu tarihten 7 gün önce ve son gün sabah 09.00&apos;da sana hatırlatırız.
+        {time && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setTime(null)}
+            style={styles.shortcut}>
+            <Text style={styles.shortcutLabel}>Saati kaldır</Text>
+          </Pressable>
+        )}
+        {dateKey > toDateKey(new Date()) && (
+          <Text style={styles.hint}>
+            {time
+              ? 'Bir gün önce sabah 09.00’da ve randevudan 2 saat önce hatırlatırız.'
+              : 'Bir gün önce ve o gün sabah 09.00’da hatırlatırız.'}
           </Text>
         )}
 
         <View style={styles.field}>
           <TextField
-            autoCapitalize="characters"
-            label="Seri no (isteğe bağlı)"
-            maxLength={30}
-            value={batch}
-            onChangeText={setBatch}
+            autoCapitalize="words"
+            label="Klinik (isteğe bağlı)"
+            maxLength={40}
+            value={clinic}
+            onChangeText={setClinic}
           />
         </View>
 
-        {vaccine ? (
+        <View style={styles.field}>
+          <TextField
+            autoCapitalize="sentences"
+            label="Not (isteğe bağlı)"
+            maxLength={120}
+            placeholder="Örneğin veterinerin önerileri"
+            value={note}
+            onChangeText={setNote}
+          />
+        </View>
+
+        {visit ? (
           <View style={styles.removeAction}>
             <Button
               disabled={isSaving}
-              label="Kaydı sil"
+              label="Ziyareti sil"
               size="small"
               variant="text"
-              onPress={() => confirmRemove(vaccine)}
+              onPress={() => confirmRemove(visit)}
             />
           </View>
         ) : (
@@ -215,24 +214,23 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
         <Button disabled={!canSave} label="Kaydet" onPress={save} />
       </View>
 
-      {openPicker === 'given' && (
+      {openPicker === 'date' && (
         <DatePickerSheet
-          maximumDate={new Date()}
-          value={givenDate}
+          value={date}
           onCancel={() => setOpenPicker(null)}
-          onConfirm={(date) => {
-            changeGivenDate(date);
+          onConfirm={(picked) => {
+            setDate(picked);
             setOpenPicker(null);
           }}
         />
       )}
-      {openPicker === 'next' && (
+      {openPicker === 'time' && (
         <DatePickerSheet
-          minimumDate={givenDate}
-          value={nextDueDate ?? addYears(givenDate, 1)}
+          mode="time"
+          value={atTime(dateKey, time ?? DEFAULT_TIME)}
           onCancel={() => setOpenPicker(null)}
-          onConfirm={(date) => {
-            setNextDueDate(date);
+          onConfirm={(picked) => {
+            setTime(toTimeKey(picked));
             setOpenPicker(null);
           }}
         />
@@ -281,8 +279,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
     textDecorationLine: 'underline',
   },
-  reminderNote: {
-    marginTop: 4,
+  hint: {
+    marginTop: 8,
     marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,

@@ -2,9 +2,10 @@ import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { listHealthRecords } from '@/data/health-records';
 import { listPets } from '@/data/pets';
 import { listTasks, setTaskCompleted, snoozeTask } from '@/data/tasks';
-import { listVaccines } from '@/data/vaccines';
+import { listVisits } from '@/data/visits';
 import { createChangeSignal } from '@/lib/change-signal';
 import { planReminders } from '@/lib/reminder-plan';
 
@@ -94,10 +95,15 @@ async function rebuildReminders() {
   }
   const channelId = await ensureChannel();
 
-  const [pets, vaccines, tasks] = await Promise.all([listPets(), listVaccines(), listTasks()]);
+  const [pets, records, tasks, visits] = await Promise.all([
+    listPets(),
+    listHealthRecords(),
+    listTasks(),
+    listVisits(),
+  ]);
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  for (const reminder of planReminders(pets, vaccines, tasks)) {
+  for (const reminder of planReminders(pets, records, tasks, visits)) {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: reminder.title,

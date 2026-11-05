@@ -1,12 +1,15 @@
+import type { HealthRecord } from '@/data/health-records';
 import type { Pet } from '@/data/pets';
 import type { Task, TaskRepeat } from '@/data/tasks';
-import type { Vaccine } from '@/data/vaccines';
+import type { Visit } from '@/data/visits';
 import { addDays, atTime, formatLongDate, formatTime, fromDateKey, toDateKey } from '@/lib/dates';
+import { latestInSeries } from '@/lib/health-records';
 import { isCompleted, nextOccurrence, occursOn } from '@/lib/tasks';
-import { latestInSeries } from '@/lib/vaccines';
+import { isUpcomingVisit } from '@/lib/visits';
 
 const REMINDER_HOUR = 9;
 const DAYS_BEFORE = [7, 0];
+const VISIT_HOURS_BEFORE = 2;
 // iOS aynı anda en fazla 64 planlı bildirim tutuyor, en yakın tarihliler öncelikli.
 const MAX_REMINDERS = 60;
 // Tekrarlayan görevler için kaç gün sonrasına kadar bildirim kurulacağı. Haftalık ve aylık
@@ -26,15 +29,15 @@ export type PlannedReminder = {
   task?: { id: string; occurrence: string };
 };
 
-function planVaccineReminders(pets: Pet[], vaccines: Vaccine[], now: Date) {
+function planRecordReminders(pets: Pet[], records: HealthRecord[], now: Date) {
   const reminders: PlannedReminder[] = [];
 
-  for (const vaccine of latestInSeries(vaccines)) {
-    const pet = pets.find((candidate) => candidate.id === vaccine.petId);
-    if (!pet || !vaccine.nextDueDate) {
+  for (const record of latestInSeries(records)) {
+    const pet = pets.find((candidate) => candidate.id === record.petId);
+    if (!pet || !record.nextDueDate) {
       continue;
     }
-    const dueDate = fromDateKey(vaccine.nextDueDate);
+    const dueDate = fromDateKey(record.nextDueDate);
 
     for (const daysBefore of DAYS_BEFORE) {
       const date = new Date(dueDate);
@@ -43,14 +46,55 @@ function planVaccineReminders(pets: Pet[], vaccines: Vaccine[], now: Date) {
       if (date > now) {
         reminders.push({
           date,
-          title: `${pet.name} için ${vaccine.name}`,
+          title: `${pet.name} için ${record.name}`,
           body:
             daysBefore === 0
               ? 'Son tarih bugün.'
               : `${daysBefore} gün kaldı. Son tarih: ${formatLongDate(dueDate)}.`,
-          url: `/pet/${pet.id}`,
+          url: record.kind === 'treatment' ? `/pet/${pet.id}?tab=treatments` : `/pet/${pet.id}`,
         });
       }
+    }
+  }
+
+  return reminders;
+}
+
+// Bir gün önce sabah ve o gün: saati yazıldıysa 2 saat önce, yazılmadıysa sabah.
+function planVisitReminders(pets: Pet[], visits: Visit[], now: Date) {
+  const reminders: PlannedReminder[] = [];
+
+  for (const visit of visits) {
+    const pet = pets.find((candidate) => candidate.id === visit.petId);
+    if (!pet) {
+      continue;
+    }
+    const morning = `${String(REMINDER_HOUR).padStart(2, '0')}:00`;
+    const clinic = visit.clinic ? ` ${visit.clinic}.` : '';
+    const clock = visit.time ? formatTime(visit.time) : null;
+    const shared = {
+      title: `${pet.name} için ${visit.reason}`,
+      url: `/pet/${pet.id}?tab=visits`,
+    };
+
+    const dayBefore = atTime(toDateKey(addDays(fromDateKey(visit.date), -1)), morning);
+    if (dayBefore > now) {
+      reminders.push({
+        ...shared,
+        date: dayBefore,
+        body: `Yarın${clock ? `, saat ${clock}` : ''}.${clinic}`,
+      });
+    }
+
+    const sameDay = visit.time
+      ? new Date(atTime(visit.date, visit.time).getTime() - VISIT_HOURS_BEFORE * 3_600_000)
+      : atTime(visit.date, morning);
+    if (sameDay > now) {
+      reminders.push({
+        ...shared,
+        date: sameDay,
+        body: `${clock ? `Saat ${clock}` : 'Bugün'}.${clinic}`,
+      });
     }
   }
 
@@ -127,8 +171,18 @@ function firstRunOutDate(tasks: Task[], reminders: PlannedReminder[]) {
   return earliest;
 }
 
-export function planReminders(pets: Pet[], vaccines: Vaccine[], tasks: Task[], now = new Date()) {
-  const planned = [...planVaccineReminders(pets, vaccines, now), ...planTaskReminders(pets, tasks, now)]
+export function planReminders(
+  pets: Pet[],
+  records: HealthRecord[],
+  tasks: Task[],
+  visits: Visit[],
+  now = new Date(),
+) {
+  const planned = [
+    ...planRecordReminders(pets, records, now),
+    ...planTaskReminders(pets, tasks, now),
+    ...planVisitReminders(pets, visits, now),
+  ]
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, MAX_REMINDERS - 1);
 
@@ -146,11 +200,18 @@ export function planReminders(pets: Pet[], vaccines: Vaccine[], tasks: Task[], n
   return planned;
 }
 
-export function hasUpcomingReminder(vaccines: Vaccine[], tasks: Task[], now = new Date()) {
+export function hasUpcomingReminder(
+  records: HealthRecord[],
+  tasks: Task[],
+  visits: Visit[],
+  now = new Date(),
+) {
   const todayKey = toDateKey(now);
   return (
-    latestInSeries(vaccines).some(
-      (vaccine) => vaccine.nextDueDate !== null && fromDateKey(vaccine.nextDueDate) >= now,
-    ) || tasks.some((task) => nextOccurrence(task, todayKey) !== null)
+    latestInSeries(records).some(
+      (record) => record.nextDueDate !== null && fromDateKey(record.nextDueDate) >= now,
+    ) ||
+    tasks.some((task) => nextOccurrence(task, todayKey) !== null) ||
+    visits.some((visit) => isUpcomingVisit(visit, now))
   );
 }

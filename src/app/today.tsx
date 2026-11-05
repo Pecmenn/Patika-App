@@ -3,26 +3,34 @@ import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { NextVisitCard } from '@/components/next-visit-card';
 import { PetAvatar } from '@/components/pet-avatar';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
 import { cardShadow, colors, fonts } from '@/constants/theme';
+import { listHealthRecords } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
 import { listTasks, setTaskCompleted, subscribeToTasks } from '@/data/tasks';
-import { listVaccines } from '@/data/vaccines';
+import { listVisits } from '@/data/visits';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { formatWeekday, greetingFor } from '@/lib/dates';
+import { splitRecords } from '@/lib/health-records';
 import { hasUpcomingReminder } from '@/lib/reminder-plan';
 import { refreshReminders } from '@/lib/reminders';
 import { tasksForToday, type TodayTask } from '@/lib/tasks';
-import { splitVaccines } from '@/lib/vaccines';
+import { splitVisits } from '@/lib/visits';
 
 // Saat de verilerle birlikte okunuyor: uygulama ertesi gün açılırsa ekran yeni güne geçsin.
 async function loadToday() {
-  const [pets, vaccines, tasks] = await Promise.all([listPets(), listVaccines(), listTasks()]);
-  return { pets, vaccines, tasks, now: new Date() };
+  const [pets, records, tasks, visits] = await Promise.all([
+    listPets(),
+    listHealthRecords(),
+    listTasks(),
+    listVisits(),
+  ]);
+  return { pets, records, tasks, visits, now: new Date() };
 }
 
 async function toggleTask({ task, date, isDone }: TodayTask) {
@@ -39,12 +47,15 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const data = useFocusData(loadToday, subscribeToTasks);
   const pets = data?.pets;
-  const vaccines = data?.vaccines;
+  const records = data?.records;
   const tasks = data?.tasks;
+  const visits = data?.visits;
   const now = data?.now ?? new Date();
 
-  const upNext = vaccines ? splitVaccines(vaccines).due[0] : undefined;
+  const upNext = records ? splitRecords(records, now).due[0] : undefined;
   const upNextPet = upNext ? pets?.find((pet) => pet.id === upNext.petId) : undefined;
+  const nextVisit = visits ? splitVisits(visits, now).upcoming[0] : undefined;
+  const nextVisitPet = nextVisit ? pets?.find((pet) => pet.id === nextVisit.petId) : undefined;
 
   return (
     <ScrollView
@@ -90,11 +101,11 @@ export default function TodayScreen() {
           <UpNextCard
             now={now}
             pet={upNextPet}
-            vaccine={upNext}
+            record={upNext}
             onDone={() =>
               router.push({
-                pathname: '/add-vaccine',
-                params: { petId: upNextPet.id, name: upNext.name },
+                pathname: '/add-record',
+                params: { petId: upNextPet.id, kind: upNext.kind, name: upNext.name },
               })
             }
           />
@@ -108,7 +119,7 @@ export default function TodayScreen() {
         </View>
       )}
 
-      {vaccines && tasks && hasUpcomingReminder(vaccines, tasks, now) && (
+      {records && tasks && visits && hasUpcomingReminder(records, tasks, visits, now) && (
         <ReminderPermissionCard />
       )}
 
@@ -118,6 +129,16 @@ export default function TodayScreen() {
           items={tasksForToday(tasks, now)}
           pets={pets}
           onToggle={toggleTask}
+        />
+      )}
+
+      {nextVisit && nextVisitPet && (
+        <NextVisitCard
+          pet={nextVisitPet}
+          visit={nextVisit}
+          onPress={() =>
+            router.push({ pathname: '/pet/[id]', params: { id: nextVisitPet.id, tab: 'visits' } })
+          }
         />
       )}
     </ScrollView>
