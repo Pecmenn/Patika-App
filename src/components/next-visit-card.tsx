@@ -38,7 +38,7 @@ export function NextVisitCard({ visit, pet, onPress }: NextVisitCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginTop: 12,
+    flex: 1,
     paddingTop: 14,
     paddingBottom: 14,
     paddingHorizontal: 16,

@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { EmptyCard } from '@/components/empty-card';
 import { GlassButton } from '@/components/glass-button';
 import { PetAvatar } from '@/components/pet-avatar';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -15,28 +16,32 @@ import {
   UpcomingVisitSticker,
   VisitSticker,
 } from '@/components/stickers';
-import { cardShadow, colors, fonts } from '@/constants/theme';
+import { WeightSection } from '@/components/weight-section';
+import { colors, fonts } from '@/constants/theme';
 import { listHealthRecords, type RecordKind } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
 import { listVisits } from '@/data/visits';
+import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { splitRecords } from '@/lib/health-records';
 import { petSummary } from '@/lib/pets';
 import { splitVisits } from '@/lib/visits';
 
-type RecordTab = 'vaccines' | 'treatments' | 'visits';
+type RecordTab = 'vaccines' | 'treatments' | 'visits' | 'weight';
 
 const TABS: { value: RecordTab; label: string }[] = [
   { value: 'vaccines', label: 'Aşılar' },
   { value: 'treatments', label: 'Tedaviler' },
   { value: 'visits', label: 'Ziyaretler' },
+  { value: 'weight', label: 'Kilo' },
 ];
 
 const ADD_LABELS: Record<RecordTab, string> = {
   vaccines: 'Aşı ekle',
   treatments: 'Tedavi ekle',
   visits: 'Ziyaret ekle',
+  weight: 'Kilo ekle',
 };
 
 const RECORD_COPY: Record<RecordKind, { emptyTitle: string; emptyBody: string }> = {
@@ -53,12 +58,14 @@ const RECORD_COPY: Record<RecordKind, { emptyTitle: string; emptyBody: string }>
 
 // Saat de verilerle birlikte okunuyor: uygulama ertesi gün açılırsa sayaçlar yenilensin.
 async function loadRecord() {
-  const [pets, records, visits] = await Promise.all([
+  const [pets, records, visits, weights, weightRanges] = await Promise.all([
     listPets(),
     listHealthRecords(),
     listVisits(),
+    listWeights(),
+    listWeightRanges(),
   ]);
-  return { pets, records, visits, now: new Date() };
+  return { pets, records, visits, weights, weightRanges, now: new Date() };
 }
 
 function openEditRecord(id: string) {
@@ -67,15 +74,6 @@ function openEditRecord(id: string) {
 
 function openEditVisit(id: string) {
   router.push({ pathname: '/edit-visit', params: { id } });
-}
-
-function EmptyCard({ title, body }: { title: string; body: string }) {
-  return (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      <Text style={styles.emptyBody}>{body}</Text>
-    </View>
-  );
 }
 
 export default function PetRecordScreen() {
@@ -94,7 +92,7 @@ export default function PetRecordScreen() {
   if (!pet) {
     return <Redirect href="/today" />;
   }
-  const { records, visits, now } = data;
+  const { records, visits, weights, weightRanges, now } = data;
   const kind: RecordKind = tab === 'treatments' ? 'treatment' : 'vaccine';
 
   const { due, others } = splitRecords(
@@ -109,6 +107,8 @@ export default function PetRecordScreen() {
   function openAdd(petId: string) {
     if (tab === 'visits') {
       router.push({ pathname: '/add-visit', params: { petId } });
+    } else if (tab === 'weight') {
+      router.push({ pathname: '/add-weight', params: { petId } });
     } else {
       router.push({ pathname: '/add-record', params: { petId, kind } });
     }
@@ -150,7 +150,16 @@ export default function PetRecordScreen() {
           <SegmentedControl options={TABS} value={tab} onChange={setTab} />
         </View>
 
-        {tab === 'visits' ? (
+        {tab === 'weight' && (
+          <WeightSection
+            entries={weights.filter((weight) => weight.petId === pet.id)}
+            now={now}
+            petId={pet.id}
+            range={weightRanges[pet.id] ?? null}
+          />
+        )}
+
+        {tab === 'visits' && (
           <>
             {upcoming.length > 0 && (
               <View style={styles.section}>
@@ -189,7 +198,9 @@ export default function PetRecordScreen() {
               />
             )}
           </>
-        ) : (
+        )}
+
+        {(tab === 'vaccines' || tab === 'treatments') && (
           <>
             {due.length > 0 && (
               <View style={styles.section}>
@@ -302,25 +313,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.ui,
     fontSize: 14,
     color: colors.ink3,
-  },
-  emptyCard: {
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    boxShadow: cardShadow,
-  },
-  emptyTitle: {
-    fontFamily: fonts.uiHeavy,
-    fontSize: 17,
-    color: colors.ink,
-  },
-  emptyBody: {
-    marginTop: 4,
-    fontFamily: fonts.ui,
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.ink2,
   },
   actions: {
     paddingHorizontal: 20,

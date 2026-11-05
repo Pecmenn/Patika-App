@@ -65,6 +65,9 @@ export default function RootLayout() {
         <Stack.Screen name="edit-record" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-visit" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-visit" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="add-weight" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="edit-weight" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="weight-range" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />

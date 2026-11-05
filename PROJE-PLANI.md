@@ -20,6 +20,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Veri saklama | Şimdilik telefonda (AsyncStorage), hesap sistemi gelince sunucuya taşınacak | Kesin |
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
 | Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
+| Kilo kaydı | Kilo, tarih ve not. Sağlıklı aralığı uygulama önermez, kullanıcı veterinerinden öğrendiğini yazar. Bugün'deki kart en son tartılan hayvanı gösterir | Kesin |
 | Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
 | Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
 | Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
@@ -95,7 +96,7 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü ve Hayvanlar listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada kilo)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Bu aşamanın kodu bitti)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
@@ -113,7 +114,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Aşı, tedavi ve ziyaret kayıtları | 8 | Bitti |
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
-| Kilo | 4 | Başlamadı |
+| Kilo | 4 | Bitti |
 | Apple ile giriş, ayarlar ve hesap silme | 8 | Başlamadı |
 | Sunucu ve verilerin sunucuya taşınması | 12 | Başlamadı |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Başlamadı |
@@ -122,7 +123,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: %30**
+**Toplam: %34**
 
 ## Test ve derleme
 

@@ -8,12 +8,14 @@ import { PetAvatar } from '@/components/pet-avatar';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
+import { WeightCard } from '@/components/weight-card';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listHealthRecords } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
 import { listTasks, setTaskCompleted, subscribeToTasks } from '@/data/tasks';
 import { listVisits } from '@/data/visits';
+import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { formatWeekday, greetingFor } from '@/lib/dates';
 import { splitRecords } from '@/lib/health-records';
@@ -21,16 +23,19 @@ import { hasUpcomingReminder } from '@/lib/reminder-plan';
 import { refreshReminders } from '@/lib/reminders';
 import { tasksForToday, type TodayTask } from '@/lib/tasks';
 import { splitVisits } from '@/lib/visits';
+import { sortByDate } from '@/lib/weights';
 
 // Saat de verilerle birlikte okunuyor: uygulama ertesi gün açılırsa ekran yeni güne geçsin.
 async function loadToday() {
-  const [pets, records, tasks, visits] = await Promise.all([
+  const [pets, records, tasks, visits, weights, weightRanges] = await Promise.all([
     listPets(),
     listHealthRecords(),
     listTasks(),
     listVisits(),
+    listWeights(),
+    listWeightRanges(),
   ]);
-  return { pets, records, tasks, visits, now: new Date() };
+  return { pets, records, tasks, visits, weights, weightRanges, now: new Date() };
 }
 
 async function toggleTask({ task, date, isDone }: TodayTask) {
@@ -56,6 +61,11 @@ export default function TodayScreen() {
   const upNextPet = upNext ? pets?.find((pet) => pet.id === upNext.petId) : undefined;
   const nextVisit = visits ? splitVisits(visits, now).upcoming[0] : undefined;
   const nextVisitPet = nextVisit ? pets?.find((pet) => pet.id === nextVisit.petId) : undefined;
+
+  // Kilo kartı en son tartılan hayvanı gösterir.
+  const weights = data?.weights ?? [];
+  const latestWeight = sortByDate(weights).at(-1);
+  const weightPet = latestWeight ? pets?.find((pet) => pet.id === latestWeight.petId) : undefined;
 
   return (
     <ScrollView
@@ -135,14 +145,33 @@ export default function TodayScreen() {
         />
       )}
 
-      {nextVisit && nextVisitPet && (
-        <NextVisitCard
-          pet={nextVisitPet}
-          visit={nextVisit}
-          onPress={() =>
-            router.push({ pathname: '/pet/[id]', params: { id: nextVisitPet.id, tab: 'visits' } })
-          }
-        />
+      {(weightPet || (nextVisit && nextVisitPet)) && (
+        <View style={styles.tiles}>
+          {weightPet && (
+            <WeightCard
+              entries={weights.filter((weight) => weight.petId === weightPet.id)}
+              pet={weightPet}
+              range={data?.weightRanges[weightPet.id] ?? null}
+              onPress={() =>
+                router.push({ pathname: '/pet/[id]', params: { id: weightPet.id, tab: 'weight' } })
+              }
+            />
+          )}
+          {nextVisit && nextVisitPet && (
+            <NextVisitCard
+              pet={nextVisitPet}
+              visit={nextVisit}
+              onPress={() =>
+                router.push({
+                  pathname: '/pet/[id]',
+                  params: { id: nextVisitPet.id, tab: 'visits' },
+                })
+              }
+            />
+          )}
+          {/* Tasarımda kartlar iki sütunlu: tek kart kalırsa da yarım genişlikte durur. */}
+          {!(weightPet && nextVisit && nextVisitPet) && <View style={styles.tileSpacer} />}
+        </View>
       )}
     </ScrollView>
   );
@@ -207,6 +236,14 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 16,
+  },
+  tiles: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  tileSpacer: {
+    flex: 1,
   },
   emptyCard: {
     padding: 20,

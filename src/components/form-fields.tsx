@@ -9,6 +9,7 @@ type TextFieldProps = {
   placeholder?: string;
   maxLength?: number;
   autoCapitalize?: 'words' | 'characters' | 'sentences';
+  keyboardType?: 'default' | 'decimal-pad';
   onChangeText: (text: string) => void;
 };
 
@@ -18,6 +19,7 @@ export function TextField({
   placeholder,
   maxLength,
   autoCapitalize = 'words',
+  keyboardType = 'default',
   onChangeText,
 }: TextFieldProps) {
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -35,6 +37,7 @@ export function TextField({
           accessibilityLabel={label}
           autoCapitalize={autoCapitalize}
           autoCorrect={false}
+          keyboardType={keyboardType}
           maxLength={maxLength}
           onBlur={() => setIsFocused(false)}
           onChangeText={onChangeText}
