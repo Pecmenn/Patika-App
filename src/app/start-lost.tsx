@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { MapPinIcon } from 'phosphor-react-native/src/icons/MapPin';
@@ -8,6 +8,7 @@ import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState, type ReactNode } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -32,6 +33,7 @@ import { useFocusData } from '@/hooks/use-focus-data';
 import { useSession } from '@/hooks/use-session';
 import { formatTime, toTimeKey } from '@/lib/dates';
 import { lastSeenDate, type Point } from '@/lib/lost';
+import { refreshReminders } from '@/lib/reminders';
 
 const clockIcon = <ClockIcon size={20} weight="bold" color={colors.ink2} />;
 
@@ -48,8 +50,10 @@ export default function StartLostScreen() {
   const insets = useSafeAreaInsets();
   const session = useSession();
   const pets = useFocusData(listPets);
+  // Haber ekranından gelindiyse o hayvan seçili başlar.
+  const { petId: initialPetId } = useLocalSearchParams<{ petId?: string }>();
 
-  const [chosenPetId, setChosenPetId] = useState<string | null>(null);
+  const [chosenPetId, setChosenPetId] = useState<string | null>(initialPetId ?? null);
   const [place, setPlace] = useState<Point | null>(null);
   const [area, setArea] = useState('');
   const [isAreaEdited, setIsAreaEdited] = useState(false);
@@ -81,6 +85,8 @@ export default function StartLostScreen() {
     if (!pet || !place || !canStart) {
       return;
     }
+    // Açık kalan klavye, sonraki ekrandaki ilk dokunuşu yutmasın.
+    Keyboard.dismiss();
     setIsStarting(true);
     try {
       const id = await startLostReport({
@@ -91,14 +97,15 @@ export default function StartLostScreen() {
         lastSeenAt: lastSeen,
         description: description.trim() || null,
       });
+      // İhbar geldiğinde bildirim çıkabilsin. Hiç hatırlatma kurmamış kullanıcıda izin henüz yok.
+      refreshReminders({ askPermission: true }).catch((error) => {
+        console.warn('Bildirim izni istenemedi', error);
+      });
       router.replace({ pathname: '/lost/[id]', params: { id } });
     } catch (error) {
       console.warn('Kayıp modu başlatılamadı', error);
       setIsStarting(false);
-      Alert.alert(
-        'Kayıp modu başlatılamadı',
-        'İnternet bağlantını kontrol edip tekrar dene. Kayıp modu için internet gerekiyor.',
-      );
+      Alert.alert('Kayıp modu başlatılamadı', 'İnternet bağlantını kontrol edip tekrar dene. Kayıp modu için internet gerekiyor.', [{ text: 'Tamam' }]);
     }
   }
 
@@ -155,12 +162,6 @@ export default function StartLostScreen() {
         <Text style={styles.label}>Son görüldüğü yer</Text>
         <LastSeenMap onArea={fillArea} onMove={movePlace} />
         <Text style={styles.note}>Tam nokta yalnızca sana görünür.</Text>
-        {/* Yalnızca geliştirirken: seçilen noktayı doğrulamak için. */}
-        {__DEV__ && place && (
-          <Text style={styles.note}>
-            Nokta: {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)}
-          </Text>
-        )}
 
         <View style={styles.field}>
           <TextField
@@ -216,12 +217,12 @@ export default function StartLostScreen() {
         <View style={styles.hold}>
           <HoldButton
             disabled={!canStart}
-            label={isStarting ? 'Başlatılıyor...' : 'Basılı tut ve başlat'}
+            label={isStarting ? 'Başlatılıyor...' : 'Basılı tut, dolunca bırak'}
             onComplete={start}
           />
         </View>
         <Text style={styles.hint}>
-          {missingHint ?? 'Bir saniye basılı tutmak yanlışlıkla başlamasını önler.'}
+          {missingHint ?? 'Yanlışlıkla başlamaması için çubuk dolana kadar basılı tut, sonra parmağını kaldır.'}
         </Text>
       </ScrollView>
 
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13,
-    color: colors.ink3,
+    color: colors.ink2,
   },
   field: {
     marginTop: 10,
@@ -341,6 +342,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: fonts.uiSemi,
     fontSize: 13,
-    color: colors.ink3,
+    lineHeight: 18,
+    color: colors.ink2,
   },
 });

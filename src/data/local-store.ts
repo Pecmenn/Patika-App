@@ -33,8 +33,10 @@ export const COLLECTION_NAMES = Object.keys(COLLECTION_KEYS) as CollectionName[]
 
 const OUTBOX_KEY = 'patika.sync.outbox.v1';
 const PHOTO_QUEUE_KEY = 'patika.sync.photos.v1';
-const OWNER_KEY = 'patika.sync.owner.v1';
-const CURSOR_KEY = 'patika.sync.cursor.v1';
+// v2: Supabase'ten kendi sunucumuza geçişte yeni başladı. Hesap kimlikleri değişti, eski kimlik
+// okunmadığı için telefondaki kayıtlar silinmez, yeni hesaba aktarılıp sunucuya gönderilir.
+const OWNER_KEY = 'patika.sync.owner.v2';
+const CURSOR_KEY = 'patika.sync.cursor.v2';
 
 const dataChanges = createChangeSignal();
 // Kayıtlar değişince açık ekranlar kendini yeniler.
@@ -108,6 +110,11 @@ export function readCursor() {
 
 export async function writeCursor(cursor: string) {
   await AsyncStorage.setItem(CURSOR_KEY, cursor);
+}
+
+// Kayıtlar durur, yalnızca hesap bağı kalkar: sonraki girişte o hesaba aktarılır.
+export async function clearOwnership() {
+  await AsyncStorage.multiRemove([OWNER_KEY, CURSOR_KEY]);
 }
 
 export async function clearLocalKeys() {

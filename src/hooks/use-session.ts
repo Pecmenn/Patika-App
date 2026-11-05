@@ -1,7 +1,7 @@
-import type { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 
-import { supabase } from '@/lib/supabase';
+import { getSession, subscribeToSession, type Session } from '@/lib/session';
 
 // Oturum okunurken undefined, giriş yapılmamışsa null döner.
 export function useSession() {
@@ -9,18 +9,28 @@ export function useSession() {
 
   useEffect(() => {
     let isActive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (isActive) {
-        setSession(data.session);
+    const read = () => {
+      getSession()
+        .then((next) => {
+          if (isActive) {
+            setSession(next);
+          }
+        })
+        .catch((error) => console.warn('Oturum okunamadı', error));
+    };
+    read();
+    const unsubscribe = subscribeToSession(read);
+    // Telefon kilitliyken okunamadıysa uygulama öne gelince yeniden denenir.
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        read();
       }
     });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
 
     return () => {
       isActive = false;
-      subscription.unsubscribe();
+      unsubscribe();
+      appState.remove();
     };
   }, []);
 

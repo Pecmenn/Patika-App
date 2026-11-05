@@ -42,8 +42,12 @@ export function readPetPhotoBytes(photo: string) {
   return new File(photosDirectory(), photo).arrayBuffer();
 }
 
-export async function downloadPetPhoto(url: string, photo: string) {
-  await File.downloadFileAsync(url, new File(ensurePhotosDirectory(), photo));
+export async function downloadPetPhoto(
+  url: string,
+  photo: string,
+  headers: Record<string, string>,
+) {
+  await File.downloadFileAsync(url, new File(ensurePhotosDirectory(), photo), { headers });
 }
 
 export function resolvePetPhotoUri(photo: string) {

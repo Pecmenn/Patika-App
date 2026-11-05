@@ -28,7 +28,7 @@ export function ReminderPermissionCard() {
       await syncReminders();
     } catch (error) {
       console.warn('Hatırlatmalar kurulamadı', error);
-      Alert.alert('Hatırlatmalar açılamadı', 'Lütfen tekrar dene.');
+      Alert.alert('Hatırlatmalar açılamadı', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
     }
   }
 

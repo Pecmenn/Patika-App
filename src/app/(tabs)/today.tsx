@@ -6,13 +6,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NextVisitCard } from '@/components/next-visit-card';
 import { PetAvatar } from '@/components/pet-avatar';
+import { PetMessagesCard } from '@/components/pet-messages-card';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
 import { WeightCard } from '@/components/weight-card';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listHealthRecords } from '@/data/health-records';
-import { listActiveReports, subscribeToReports } from '@/data/lost-reports';
+import {
+  listActiveReports,
+  listPetMessages,
+  subscribeToReports,
+  subscribeToSightings,
+} from '@/data/lost-reports';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
 import { listTasks, setTaskCompleted } from '@/data/tasks';
@@ -22,6 +28,7 @@ import { useFocusData } from '@/hooks/use-focus-data';
 import { useSession } from '@/hooks/use-session';
 import { formatWeekday, greetingFor } from '@/lib/dates';
 import { splitRecords } from '@/lib/health-records';
+import { groupMessagesByPet } from '@/lib/lost';
 import { hasUpcomingReminder } from '@/lib/reminder-plan';
 import { refreshReminders } from '@/lib/reminders';
 import { tasksForToday, type TodayTask } from '@/lib/tasks';
@@ -45,7 +52,7 @@ async function toggleTask({ task, date, isDone }: TodayTask) {
   try {
     await setTaskCompleted(task.id, date, !isDone);
   } catch {
-    Alert.alert('Kaydedilemedi', 'Görev işaretlenirken bir sorun oldu. Lütfen tekrar dene.');
+    Alert.alert('Kaydedilemedi', 'Görev işaretlenirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
     return;
   }
   await refreshReminders();
@@ -57,7 +64,9 @@ export default function TodayScreen() {
   const session = useSession();
   const activeReports = useFocusData(listActiveReports, subscribeToReports);
   const activeReport = activeReports?.[0];
-  const givenName = session?.user.user_metadata.given_name as string | undefined;
+  const petMessages = useFocusData(listPetMessages, subscribeToSightings);
+  const messageGroups = groupMessagesByPet(petMessages ?? []);
+  const givenName = session?.user.given_name;
   const pets = data?.pets;
   const records = data?.records;
   const tasks = data?.tasks;
@@ -133,6 +142,21 @@ export default function TodayScreen() {
           <PlusIcon size={17} weight="bold" color={colors.ink} />
         </Pressable>
       </ScrollView>
+
+      {messageGroups.map(({ petId, items }) => {
+        const pet = pets?.find((candidate) => candidate.id === petId);
+        return (
+          pet && (
+            <View key={petId} style={styles.message}>
+              <PetMessagesCard
+                count={items.length}
+                petName={pet.name}
+                onPress={() => router.push({ pathname: '/pet-messages/[id]', params: { id: petId } })}
+              />
+            </View>
+          )
+        );
+      })}
 
       {upNext && upNextPet ? (
         <View style={styles.content}>
@@ -291,6 +315,9 @@ const styles = StyleSheet.create({
   },
   content: {
     marginTop: 16,
+  },
+  message: {
+    marginTop: 12,
   },
   tiles: {
     flexDirection: 'row',

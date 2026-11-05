@@ -15,9 +15,9 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Giriş | Apple ile giriş. Karşılama'da tek düğme var, yeni ve eski kullanıcı aynı düğmeyi kullanır. Android ve tarayıcıda şimdilik girişsiz denenir | Kesin |
 | İlk sürüm kapsamı | Aşağıdaki liste | Kesin |
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
-| Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
+| Çalışma yeri | Windows bilgisayar. Uygulama `Desktop\Patika-App`, sunucu `Desktop\Patika-Backend` klasöründe (ayrı repolar) | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
-| Veri saklama | Telefon önce: kayıt önce telefona yazılır (AsyncStorage), internet olunca Supabase'e gider. Çakışmada son değişiklik kazanır. Çıkış yapınca telefondaki kopya silinir, gönderilmemiş değişiklik varsa önce uyarır | Kesin |
+| Veri saklama | Telefon önce: kayıt önce telefona yazılır (AsyncStorage), internet olunca kendi sunucumuza gider. Çakışmada son değişiklik kazanır. Çıkış yapınca telefondaki kopya silinir, gönderilmemiş değişiklik varsa önce uyarır | Kesin |
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
 | Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
 | Kilo kaydı | Kilo, tarih ve not. Sağlıklı aralığı uygulama önermez, kullanıcı veterinerinden öğrendiğini yazar. Bugün'deki kart en son tartılan hayvanı gösterir | Kesin |
@@ -27,7 +27,15 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
 | Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
 | Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
-| Sunucu | Supabase, Frankfurt bölgesi. Geliştirirken ücretsiz plan ve yalnızca deneme verisi, gerçek kullanıcılardan önce ücretli plan (aylık 25 dolardan başlıyor) | Kesin |
+| Sunucu | Kendi backend'imiz: Node.js, TypeScript (Fastify), MySQL 8.4, Docker. Supabase'in yerini aldı (5 Kasım 2026, kullanıcı kararı; dil ve mimari kararı Claude'a bırakıldı). Şimdilik yalnızca bu bilgisayarda çalışıyor, uygulama aynı ağdan bağlanıyor | Kesin |
+| Sunucunun gerçek yeri | TestFlight'tan önce internete açık bir sunucuya alınacak. Türkiye'de sunucu KVKK yurt dışı aktarım yükümlülüğünü ortadan kaldırabilir, avukata doğrulatılacak | Açık |
+| Kayıp sayfasının adresi | Backend'in kendisinden yayınlanıyor: `/p/<kod>`. Basılmış QR değiştirilemez, gerçek kişiler QR basmadan önce kalıcı alan adı şart. Cloudflare denemesi bu karar yüzünden bırakıldı | Kesin |
+| QR sayfasında konum | "Konumumu ekle" düğmesi ve yazıyla yer adı. Harita yok, sayfa hızlı açılır. Yazıyla gelen ihbar haritada değil listede görünür | Kesin |
+| İlan yokken QR okutulursa | Sayfa "kayıp bildirilmemiş, haber ver" der, form açık. Haber sahibine Bugün'de kart olarak düşer, kayıp modu başlarsa ilana eklenir. Bulunan hayvanda form bağlantının arkasında | Kesin |
+| İlan paylaşımı | Story ve gönderi resim, A4 tek sayfalık PDF. Telefonun kendi paylaşım menüsü ve "Bağlantıyı kopyala". Tasarımdaki uygulama düğmeleri yok | Kesin |
+| Basılı tutma düğmesi | 1 saniyede dolar, "Şimdi bırak" yazar, iş parmak kalkınca başlar. Doluyken parmak düğmeden kayarsa da başlar | Kesin |
+| Başka hesapla giriş | Telefondaki kayıtlar başka hesaba aitse sorulur: bu hesaba aktar, sil ya da vazgeç. Sorulmadan hiçbir şey silinmez | Kesin |
+| İlan fotoğrafı | Sunucu GPS ve diğer üst verileri siler. İlan görselinde fotoğraf kırpılmaz, kenarda zemin rengi kalır | Kesin |
 
 ## İlk sürüm: tasarımdan gelen 11 ekran
 
@@ -86,19 +94,24 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Kontrol temizse patika.pet alan adını satın al
 - [ ] Apple geliştirici üyeliğini aç (Apple ile giriş adımında gerekecek, 99 dolar/yıl, TL fiyatı doğrulanmadı)
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
-- [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor. Sağlayıcıya bu sözleşmeyi imzalayıp imzalamadığını yazılı sor. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
+- [ ] Backend'i internete açık bir sunucuya al (TestFlight'tan önce şart): barındırma seçimi, HTTPS, kalıcı alan adı, veritabanı ve fotoğraf yedeği, izleme. Şimdilik yalnızca bu bilgisayarda çalışıyor, QR sayfası dışarıdan açılmıyor, telefon başka ağdayken eşitleme yapmıyor
+- [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor
+- [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor, Türkiye'deyse bu yükümlülük doğmayabilir. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
-- [ ] Hesap silmeyi ekle: sunucu işlevi (gizli anahtar uygulamada duramaz) ve Apple'ın istediği giriş izni iptali. Apple geliştirici üyeliği gerektirir, App Store'dan önce şart
-- [ ] Kendi derlememize geçince Supabase'de Apple "Client IDs" listesine uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni)
-- [ ] Yayından önce Supabase'teki deneme (anonim) kullanıcılarını ve verilerini temizle. Hesap silerken önce fotoğraflar silinmeli, fotoğrafı olan kullanıcı silinemiyor
+- [ ] Hesap silmeyi tamamla: sunucu ucu hazır (`DELETE /v1/me`, testli). Eksik: Ayarlar'daki düğme ve Apple'ın istediği giriş izni iptali (Apple geliştirici üyeliği gerektirir). App Store'dan önce şart
+- [ ] Kendi derlememize geçince backend'in `APPLE_AUDIENCES` ayarına uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni). `ALLOW_DEV_LOGIN` gerçek sunucuda kapalı olmalı
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Uygulama kapalıyken ihbar bildirimi: Apple geliştirici üyeliği ve kendi derlememiz gerekiyor, TestFlight'tan önce yapılacak (Expo Push Service). Şimdilik ihbarlar uygulama açıkken anında, kapalıyken açılınca görünüyor
 - [ ] TestFlight'tan önce kayıp sayfasına bot koruması ekle: şu anki ihbar sınırını kötü niyetli biri doldurursa gerçek ihbarlar da engellenir
-- [ ] Bulunan ilanların ihbarlarını (iletişim bilgisi içeriyor) belli bir süre sonra otomatik sil, süreyi gizlilik metnine yaz
+- [ ] Bulunan ilanların ihbarlarını ve tam konumunu (iletişim bilgisi içeriyor) belli bir süre sonra otomatik sil, süreyi gizlilik metnine yaz. Kayıp sayfasına aydınlatma metni bağlantısı koy
+- [ ] Gerçek sunucu öncesi güvenlik: girişli uçlara kullanıcı başına kota ve dakikalık sınır, canlı bağlantı sayısına sınır, Apple girişinde tek kullanımlık değer (nonce), `TRUST_PROXY` için güvenilen sunucu sayısı, kapıyı yalnızca önündeki sunucuya açmak
+- [ ] Üst veri silinince fotoğraf yönü değişiyor mu gerçek telefon fotoğrafıyla dene (yön bilgisi de üst veride duruyor, kırpma aracı genelde görüntüyü zaten döndürüyor)
 - [ ] Mağaza sürümünde konum izni metnini Türkçe göster ve kullanılmayan "her zaman" izin metinlerini kaldır
 - [ ] Android sürümü için Google Haritalar anahtarı al
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
+- [ ] Apple geliştirici üyeliği açılınca iPhone'da otomatik testi yeniden değerlendir. Windows'tan kablo ile yalnızca ekran görüntüsü ve kayıt okunabiliyor, dokunma için imzalı WebDriverAgent gerekiyor (bu bilgisayarda denenmedi)
+- [ ] QR sayfasında konumu gerçek iPhone'da dene: tarayıcılar konum iznini yalnızca HTTPS sayfalarda veriyor, yerel `http` adresinde "Konumumu ekle" çalışmaz. Gerçek sunucuda ya da HTTPS tünelle denenecek
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
 - [ ] Android sürümünde hatırlatmalara `delivery: 'alarmClock'` ayarını ve tam zamanlı alarm iznini ekle. Expo Go'da bu izin olmadığı için bildirim 27 dakika ile 1 saat arasında gecikebiliyor (taklitçide görüldü)
 - [ ] Android sürümünde düğmeye basılan bildirimin kapandığını kendi derlemede dene (Expo Go'da ekranda kalıyor)
@@ -108,9 +121,10 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
 3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı ve iPhone'da denendi. Bu aşama tamamlandı)
-4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
-5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
-6. App Store başvurusu ve Apple incelemesi
+4. Hesap sistemi, kendi backend'imiz, kayıp ilanı ve QR sayfası (tamamlandı, iPhone'da denendi. Yalnızca hesap silme düğmesi kaldı)
+5. Backend'i internete açık sunucuya alma
+6. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
+7. App Store başvurusu ve Apple incelemesi
 
 ## İlerleme
 
@@ -126,19 +140,25 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
-| Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | 5 puan |
-| Sunucu ve verilerin sunucuya taşınması | 12 | Bitti |
-| Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti (uzaktan bildirim kendi derlememizle gelecek) |
-| İlan, QR sayfası ve yazdırılabilir QR | 12 | Başlamadı |
+| Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş ve ayarlar iPhone'da denendi (5 puan). Hesap silme düğmesi ve Apple izni iptali kaldı (3 puan) |
+| Kendi backend'imiz ve verilerin sunucuya taşınması | 12 | Bitti |
+| Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti |
+| İlan, QR sayfası ve yazdırılabilir QR | 12 | Bitti |
+| Backend'i internete açma (barındırma, HTTPS, alan adı, yedek) | 6 | Başlamadı. Supabase bunu kendisi yapıyordu, kendi sunucuya geçince iş oldu |
 | Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: %67**
+**Toplam: 106 puanın 79'u, yaklaşık %75.** Kalan 27 puan: hesap silme (3), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6).
 
 ## Test ve derleme
 
-- **Şimdilik:** Kod Windows'ta yazılıyor. Günlük testleri Claude bu bilgisayardaki Android taklitçisinde (`patika`) ve tarayıcı önizlemesinde yapıyor. iPhone'a özgü son kontrolü kullanıcı Expo Go ile kendi telefonunda yapıyor. Windows'ta sanal iPhone çalışmıyor.
+- **Şimdilik:** Kod Windows'ta yazılıyor. Testleri Claude bu bilgisayarda çalıştırıyor. iPhone'a özgü son kontrolü kullanıcı Expo Go ile kendi telefonunda yapıyor. Windows'ta sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor.
+- **Backend'i başlatma:** `Patika-Backend` klasöründe `docker compose up -d --build`. Telefon aynı ağda olmalı, uygulama sunucunun adresini kodu sunan bilgisayardan öğrenir (4000 numaralı kapı). Taklitçi için `adb reverse tcp:4000 tcp:4000`.
+- **Testler:**
+  - `Patika-App`: `npm test` (tarih, görev, kilo, eşitleme, QR kuralları), `npm run test:e2e` (taklitçide Playwright ile uygulamanın gerçek ekranları, piksel testleri dahil)
+  - `Patika-Backend`: `npm test` (sunucu ve erişim kuralları, gerçek MySQL), `npm run test:page` (kayıp sayfası: Safari motoru iPhone profilleri ve Chrome motoru, piksel testleri dahil)
+  - Senaryo listesi ve kapsanmayanlar: `e2e/SENARYOLAR.md`
 - **Taklitçiyi başlatma:** `C:\Users\user\AppData\Local\Android\Sdk\emulator\emulator.exe -avd patika`. Sunucuyu önce `$env:ANDROID_HOME = 'C:\Users\user\AppData\Local\Android\Sdk'` ayarlayıp `npx expo start --android` ile başlat. Java `C:\Users\user\AppData\Local\Android\jdk17` klasöründe.
 - **Sonra:** Expo Go sınırlı bir deneme aracı. Ek yerel modül (uygulamanın telefon özelliklerine bağlanan parçası) gerektiğinde uygulamanın kendi geliştirme sürümü derlenecek. Bunun iPhone'da çalışması için Apple geliştirici üyeliği gerekecek.
 - **Yayın:** Derleme ve App Store'a gönderim EAS (Expo'nun bulut servisi) ile yapılabiliyor, Mac şart değil. EAS ücretlerine henüz bakılmadı.
@@ -156,15 +176,20 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Git'te ana hatta (`master`) çalışılıyor, kullanıcı böyle seçti.
 - Windows'ta `npx expo login` tarayıcı açarken hata verip kapanıyor. Girişte `npx expo login --no-browser` kullan.
 - Yeni paket kurulunca sunucu dosyaları göremeyebilir. `npx expo start --clear` ile yeniden başlat.
-- Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası aşamasında bu ayar yeniden değerlendirilecek.
+- Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası backend'den yayınlandığı için bu ayarı değiştirmek gerekmedi.
 - İkon paketi çok büyük. İkonları tek tek al: `phosphor-react-native/src/icons/Check`.
 - `android emulator create` istenmeyen ek bir telefon görüntüsü indiriyor. Sanal telefon oluştururken `avdmanager` kullan. `android` aracını `--no-metrics` ile çalıştır.
 - Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
 - Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç. `adb root` bu yönlendirmeyi siler, yeniden çalıştır.
 - Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
-- Testler: `npm test` tarih, görev, kilo ve eşitleme kurallarını sınar. `npm run test:access` iki hesapla gerçek sunucudaki erişim kurallarını sınar; önce panelde anonim girişi geçici olarak aç, sonra kapat. Sunucu kuralı değişince mutlaka çalıştır.
-- Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, anonim giriş açıkken). Yeni telefon sınaması için `adb root` sonrası `databases/RKStorage-scoped-experience-...` dosyasını ve `pet-photos` klasörünü sil, oturum `files/SQLite/ExpoSQLiteStorage` içinde kalır.
-- Taklitçide basılı tutma `adb shell input swipe X Y X Y 1300`, konum verme `adb emu geo fix BOYLAM ENLEM`. Kayıp modu ekranı geliştirirken ilanın kodunu gösteriyor, testten ihbar göndermek için.
+- Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, backend'de `ALLOW_DEV_LOGIN=true`). Her basış yeni, boş bir hesap açar.
+- Taklitçide basılı tutma `adb shell input swipe X Y X Y 1400`, konum verme `adb emu geo fix BOYLAM ENLEM`. Kaydırırken ekranın kenarından kaydır, ortada harita varsa hareket haritaya gider.
+- Playwright Android sürücüsü: `device.wait` uygulama açılırken güvenilir değil, `device.info` ile yokla. Metin eşleştirmesi yazının tamamına bakar, "içinde geçiyor" için `/.*yazı.*/`. Android onay düğmeleri büyük harfli gelir.
+- Expo Go'da PDF'in yazıldığı `cache/Print` klasörüne dosya ve paylaşım modülleri erişemiyor. PDF içerik olarak alınıp kendi klasörümüze yazılıyor.
+- `File.move` ve `File.write` bu SDK'da bekleme gerektiriyor (`await`). Beklenmezse hata sessizce kaybolur, tip kontrolü de yakalamaz.
+- Expo Go'nun ekranda yüzen "Tools" düğmesi dokunuşları kendine alıyor: taklitçide arada ilk dokunuş uygulamaya ulaşmıyordu. Düğme, geliştirici menüsündeki "Tools button" anahtarıyla kapatılıyor. Gerçek uygulamada yok.
+- Piksel testinde `--update-snapshots` hiçbir şey karşılaştırmaz. Görseli yeniledikten sonra bayraksız çalıştır.
+- Docker görüntüsü kayıp sayfasını içinde taşıyor: `public/` değişince yeniden derle, yoksa testler de telefon da eski sayfayı görür.
 - `phone.ps1` Türkçe büyük harfi eşleştiremiyor: onay düğmesine "ÇIKIŞ YAP" gibi tam yazılışıyla dokun.
 - Expo Go'nun dişli düğmesi sağ üstte duruyor ve oradaki düğmelerin üstüne biniyor. Taklitçide `adb shell input swipe 971 110 971 1700 600` ile kenara çek. Gerçek uygulamada yok.
 - Alt menüde `left` ve `right` işe yaramıyor, kenar boşluğu `marginHorizontal` ile veriliyor.
@@ -184,6 +209,8 @@ Uygulamalar denenmedi, yalnızca mağaza metinleri okundu.
 
 ## Sunucu araştırması (5 Kasım 2026'da kontrol edildi)
 
+Geçmiş kayıt: Kendi backend'imize geçilince bu seçenekler bırakıldı. KVKK notları hâlâ geçerli.
+
 Fiyatlar resmî sayfalardan okundu, değişebilir. Hiçbir seçeneğin Türkiye'de sunucusu yok.
 
 | | Supabase | Firebase | Convex |
@@ -192,8 +219,6 @@ Fiyatlar resmî sayfalardan okundu, değişebilir. Hiçbir seçeneğin Türkiye'
 | Ücretli plan | Aylık 25 dolardan başlar, günlük yedek, harcama sınırı varsayılan açık | Kullandığın kadar öde. Toplam harcama sınırı yok, yalnızca bazı servislerde var | Geliştirici başına aylık 25 dolar |
 | Avrupa'da veri | Frankfurt | Var, ama ücretsiz dosya kotası yalnızca ABD bölgelerinde | İrlanda, %30 ek ücretli |
 | Apple ile giriş | Belgeli, Expo Go'da denenebilir | Bugün ayrıca doğrulanmadı | Beta |
-
-**Kayıp sayfasının adresi (QR için):** Supabase'in kendi adresinde web sayfası çalışmıyor, HTML düz metne çevriliyor. Expo'nun EAS Hosting hizmeti ücretsiz planda `*.expo.app` adresi veriyor (ayda 100 bin istek). Kendi alan adı (patika.pet) için aylık 19 dolarlık Starter planı gerekiyor. Sayfa işinde başka seçeneklerle karşılaştırılacak.
 
 **KVKK:** Sunucusu yurt dışında olan servis, yurt dışına veri aktarımı sayılıyor. Kurumun kendi standart sözleşmesi imzalanıp 5 iş günü içinde bildirilmeli, AB sözleşmesi tek başına yetmiyor. Hukuk bürolarının yazılarına göre, bildirilmezse 2026 için 90.308 ile 1.806.177 TL arası ceza var. Supabase, Google veya Convex'in bu sözleşmeyi imzalayıp imzalamadığına dair kaynak bulunamadı. Türkiye'de sunucu kullanılırsa bu yükümlülük doğmuyor. Bu notlar hukuki görüş değildir.
 

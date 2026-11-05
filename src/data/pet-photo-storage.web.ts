@@ -15,7 +15,11 @@ export async function readPetPhotoBytes(_photo: string): Promise<ArrayBuffer> {
   return new ArrayBuffer(0);
 }
 
-export async function downloadPetPhoto(_url: string, _photo: string) {}
+export async function downloadPetPhoto(
+  _url: string,
+  _photo: string,
+  _headers: Record<string, string>,
+) {}
 
 export function resolvePetPhotoUri(photo: string) {
   return photo;

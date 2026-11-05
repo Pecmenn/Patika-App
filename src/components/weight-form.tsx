@@ -53,7 +53,7 @@ export function WeightForm({ petId, entry }: WeightFormProps) {
       }
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     router.back();
@@ -65,7 +65,7 @@ export function WeightForm({ petId, entry }: WeightFormProps) {
       await deleteWeight(id);
     } catch {
       setIsSaving(false);
-      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     router.back();

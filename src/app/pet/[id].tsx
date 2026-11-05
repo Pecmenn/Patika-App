@@ -1,6 +1,7 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
+import { QrCodeIcon } from 'phosphor-react-native/src/icons/QrCode';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -125,11 +126,18 @@ export default function PetRecordScreen() {
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}>
             <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
           </GlassButton>
-          <GlassButton
-            label="Hayvanı düzenle"
-            onPress={() => router.push({ pathname: '/edit-pet', params: { id: pet.id } })}>
-            <PencilSimpleIcon size={20} weight="bold" color={colors.ink} />
-          </GlassButton>
+          <View style={styles.navActions}>
+            <GlassButton
+              label="QR kodu"
+              onPress={() => router.push({ pathname: '/pet-qr/[id]', params: { id: pet.id } })}>
+              <QrCodeIcon size={20} weight="bold" color={colors.ink} />
+            </GlassButton>
+            <GlassButton
+              label="Hayvanı düzenle"
+              onPress={() => router.push({ pathname: '/edit-pet', params: { id: pet.id } })}>
+              <PencilSimpleIcon size={20} weight="bold" color={colors.ink} />
+            </GlassButton>
+          </View>
         </View>
 
         <View style={styles.head}>
@@ -267,6 +275,10 @@ const styles = StyleSheet.create({
   navbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  navActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
   head: {
     flexDirection: 'row',

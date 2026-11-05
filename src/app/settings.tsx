@@ -17,7 +17,7 @@ async function leave() {
     await clearLocalData();
   } catch (error) {
     console.warn('Çıkış yapılamadı', error);
-    Alert.alert('Çıkış yapılamadı', 'Lütfen tekrar dene.');
+    Alert.alert('Çıkış yapılamadı', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
     return;
   }
   router.dismissAll();
@@ -77,8 +77,9 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const session = useSession();
   const sync = useSyncStatus();
-  const fullName = session?.user.user_metadata.full_name as string | undefined;
+  const fullName = session?.user.full_name;
   const email = session?.user.email;
+  const providerLabel = session?.user.provider === 'apple' ? 'Apple ile giriş' : 'Deneme hesabı';
 
   return (
     <ScrollView
@@ -98,7 +99,7 @@ export default function SettingsScreen() {
 
       <Text style={styles.sectionTitle}>Hesap</Text>
       <View style={styles.card}>
-        <Row label="Giriş yöntemi" value={session ? 'Apple ile giriş' : 'Giriş yapılmadı'} />
+        <Row label="Giriş yöntemi" value={session ? providerLabel : 'Giriş yapılmadı'} />
         {fullName ? <Row label="Ad" value={fullName} /> : null}
         {email ? <Row label="E-posta" value={email} /> : null}
         {session ? <Row label="Yedekleme" value={backupLabel(sync)} /> : null}
@@ -110,8 +111,8 @@ export default function SettingsScreen() {
         </View>
       )}
 
-      {/* Apple ile giriş Android'de yok. Eşitlemeyi taklitçide denemek için, yalnızca geliştirirken. */}
-      {__DEV__ && !session && Platform.OS === 'android' && (
+      {/* Apple ile giriş yalnızca iPhone'da var. Taklitçi ve tarayıcıda denemek için, yalnızca geliştirirken. */}
+      {__DEV__ && !session && Platform.OS !== 'ios' && (
         <View style={styles.action}>
           <Button
             label="Deneme hesabıyla gir"

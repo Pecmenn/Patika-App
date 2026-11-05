@@ -487,3 +487,73 @@ test('kayıp: harita duraklarında aynı nokta denetimi', () => {
   assert.equal(lost.isSameSpot({ latitude: 41.015, longitude: 28.979 }, target), false, 'haritanın açılış noktası seçim sayılmaz');
   assert.equal(lost.isSameSpot({ latitude: 40.9877, longitude: 29.0272 }, target), false, 'yaklaşık 100 metre öte aynı değil');
 });
+
+// --- QR ve ilan ---
+const { qrModules, qrPath, qrSvg } = await import('@/lib/qr');
+const { posterHeading, posterLastSeen, posterDescription, qrSheetHtml, a4PosterHtml } = await import('@/lib/poster');
+const { lostPageLink, shortLink, groupMessagesByPet } = await import('@/lib/lost');
+
+test('QR: kare biçiminde ve üç köşesinde konum işareti var', () => {
+  const modules = qrModules('https://patika.pages.dev/p/8718cd6c2425');
+  const size = modules.length;
+  assert.equal(size % 4, 1, 'QR boyutu her zaman 4n+1');
+  assert.ok(modules.every((row) => row.length === size));
+  for (const [r, c] of [[0, 0], [0, size - 7], [size - 7, 0]]) {
+    assert.equal(modules[r][c], true);
+    assert.equal(modules[r + 1][c + 1], false, 'konum işaretinin içi boş');
+    assert.equal(modules[r + 3][c + 3], true, 'konum işaretinin ortası dolu');
+  }
+});
+
+test('QR: farklı bağlantı farklı kod verir, çizim tüm koyu kareleri kapsar', () => {
+  const a = qrModules('https://patika.pages.dev/p/8718cd6c2425');
+  const b = qrModules('https://patika.pages.dev/p/000000000000');
+  assert.notDeepEqual(a, b);
+  const dark = a.flat().filter(Boolean).length;
+  const drawn = [...qrPath(a).matchAll(/h(\d+)v1/g)].reduce((sum, m) => sum + Number(m[1]), 0);
+  assert.equal(drawn, dark);
+});
+
+test('QR yazdırma: SVG beyaz kenar payını içerir', () => {
+  const svg = qrSvg('https://patika.pages.dev/p/8718cd6c2425', '#1D2452');
+  assert.match(svg, /viewBox="-4 -4 /);
+  assert.match(svg, /fill="#1D2452"/);
+});
+
+test('sayfa bağlantısı: kod ve adres birleşir, ilanda kısa görünür', () => {
+  const link = lostPageLink('8718cd6c2425', 'https://patika.pet');
+  assert.equal(link, 'https://patika.pet/p/8718cd6c2425');
+  assert.equal(shortLink(link), 'patika.pet/p/8718cd6c2425');
+});
+
+test('ilan yazıları: tür başlığı, son görülme ve açıklama', () => {
+  assert.equal(posterHeading('dog'), 'KAYIP KÖPEK');
+  assert.equal(posterHeading('cat'), 'KAYIP KEDİ');
+  assert.equal(posterHeading('rabbit'), 'KAYIP TAVŞAN');
+  assert.equal(posterHeading('bird'), 'KAYIP KUŞ');
+  assert.equal(
+    posterLastSeen('Moda, Kadıköy', new Date(2026, 10, 1, 18, 40)),
+    'Son görülme: 1 Kasım, 18.40, Moda, Kadıköy',
+  );
+  assert.equal(posterDescription('Melez', 'Mavi tasma'), 'Melez. Mavi tasma');
+  assert.equal(posterDescription(null, 'Mavi tasma'), 'Mavi tasma');
+  assert.equal(posterDescription(null, null), '');
+});
+
+test('yazdırma sayfası: hayvan adı HTML olarak çalışamaz', () => {
+  const html = qrSheetHtml('<img src=x onerror=alert(1)>', 'https://patika.pet/p/abc', '#000');
+  assert.ok(!html.includes('<img src=x'));
+  assert.ok(html.includes('&lt;img src=x'));
+  assert.equal(html.match(/class="tag"/g).length, 24);
+  assert.ok(a4PosterHtml('QUJD').includes('data:image/jpeg;base64,QUJD'));
+});
+
+test('haberler: hayvan başına toplanır, en yeni haberin hayvanı önde', () => {
+  const groups = groupMessagesByPet([
+    { id: 'm3', petId: 'b' },
+    { id: 'm2', petId: 'a' },
+    { id: 'm1', petId: 'b' },
+  ]);
+  assert.deepEqual(groups.map((group) => group.petId), ['b', 'a']);
+  assert.deepEqual(groups[0].items.map((item) => item.id), ['m3', 'm1']);
+});

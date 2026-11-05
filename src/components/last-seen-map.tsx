@@ -98,7 +98,7 @@ export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
       goTo(position.coords);
     } catch (error) {
       console.warn('Konum alınamadı', error);
-      Alert.alert('Konum alınamadı', 'Haritayı elle kaydırarak işaretleyebilirsin.');
+      Alert.alert('Konum alınamadı', 'Haritayı elle kaydırarak işaretleyebilirsin.', [{ text: 'Tamam' }]);
     }
   }
 

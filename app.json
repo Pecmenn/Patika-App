@@ -44,11 +44,17 @@
           "microphonePermission": false
         }
       ],
-      "expo-sqlite",
       [
         "expo-location",
         {
           "locationWhenInUsePermission": "Kayıp hayvanının son görüldüğü yeri işaretlemek ve ihbar konumlarına yön almak için konumun kullanılır."
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
         }
       ]
     ],

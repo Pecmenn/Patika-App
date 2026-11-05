@@ -19,7 +19,7 @@ export function AppleSignInButton() {
       await signInWithApple();
     } catch (error) {
       console.warn('Apple ile giriş başarısız', error);
-      Alert.alert('Giriş yapılamadı', 'Lütfen bağlantını kontrol edip tekrar dene.');
+      Alert.alert('Giriş yapılamadı', 'Lütfen bağlantını kontrol edip tekrar dene.', [{ text: 'Tamam' }]);
     } finally {
       setIsSigningIn(false);
     }

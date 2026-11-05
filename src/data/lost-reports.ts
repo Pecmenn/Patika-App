@@ -1,18 +1,19 @@
 import { petPhotoExists, readPetPhotoBytes } from '@/data/pet-photo-storage';
-import type { Pet, Species } from '@/data/pets';
+import { listPets, type Pet, type Species } from '@/data/pets';
+import { API_URL, apiRequest } from '@/lib/api';
 import { createChangeSignal } from '@/lib/change-signal';
+import { openEventStream } from '@/lib/realtime';
 import { showSightingNotification } from '@/lib/reminders';
-import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/session';
 
 // Kayıp ilanları telefonda tutulmaz, başkalarının ulaşması gerektiği için doğrudan sunucudadır.
-const PHOTO_BUCKET = 'lost-photos';
-const ALREADY_EXISTS_CODE = '23505';
 
 export type LostReport = {
   id: string;
   petId: string;
   petName: string;
   species: Species;
+  breed: string | null;
   description: string | null;
   photoPath: string | null;
   photoUrl: string | null;
@@ -34,6 +35,9 @@ export type Sighting = {
   createdAt: Date;
 };
 
+// İlan açık değilken künyedeki QR'dan gelen haber.
+export type PetMessage = Sighting & { petId: string };
+
 export type NewLostReport = {
   pet: Pet;
   lastSeenArea: string;
@@ -48,6 +52,7 @@ type ReportRow = {
   pet_id: string;
   pet_name: string;
   species: Species;
+  breed: string | null;
   description: string | null;
   photo_path: string | null;
   last_seen_area: string;
@@ -60,7 +65,8 @@ type ReportRow = {
 
 type SightingRow = {
   id: string;
-  report_id: string;
+  report_id: string | null;
+  pet_id: string;
   place: string | null;
   lat: number | null;
   lng: number | null;
@@ -75,10 +81,11 @@ function toReport(row: ReportRow): LostReport {
     petId: row.pet_id,
     petName: row.pet_name,
     species: row.species,
+    breed: row.breed,
     description: row.description,
     photoPath: row.photo_path,
     photoUrl: row.photo_path
-      ? supabase.storage.from(PHOTO_BUCKET).getPublicUrl(row.photo_path).data.publicUrl
+      ? `${API_URL}/v1/public/photos/${encodeURIComponent(row.photo_path)}`
       : null,
     lastSeenArea: row.last_seen_area,
     lastSeenLat: row.last_seen_lat,
@@ -107,203 +114,181 @@ export const subscribeToReports = reportChanges.subscribe;
 const sightingChanges = createChangeSignal();
 export const subscribeToSightings = sightingChanges.subscribe;
 
-async function currentUserId() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user.id ?? null;
-}
+const petPath = (petId: string) => `/v1/pets/${encodeURIComponent(petId)}`;
 
 // Bugün ekranı içindir: internet yoksa ya da giriş yapılmamışsa boş döner, ekranı durdurmaz.
 export async function listActiveReports(): Promise<LostReport[]> {
-  if (!(await currentUserId())) {
+  if (!(await getSession())) {
     return [];
   }
-  const { data, error } = await supabase
-    .from('lost_reports')
-    .select('*')
-    .is('found_at', null)
-    .order('started_at', { ascending: false });
-  if (error) {
+  try {
+    const { reports } = await apiRequest<{ reports: ReportRow[] }>('/v1/lost-reports?active=true');
+    return reports.map(toReport);
+  } catch (error) {
     console.warn('Kayıp ilanları okunamadı', error);
     return [];
   }
-  return (data as ReportRow[]).map(toReport);
 }
 
 export async function getLostDetails(id: string) {
-  const [reportResult, sightingsResult] = await Promise.all([
-    supabase.from('lost_reports').select('*').eq('id', id).single(),
-    supabase
-      .from('sightings')
-      .select('*')
-      .eq('report_id', id)
-      .order('created_at', { ascending: false }),
-  ]);
-  if (reportResult.error) {
-    throw reportResult.error;
-  }
-  if (sightingsResult.error) {
-    throw sightingsResult.error;
-  }
-  const report = toReport(reportResult.data as ReportRow);
-  const { data: tag } = await supabase
-    .from('pet_tags')
-    .select('public_code')
-    .eq('pet_id', report.petId)
-    .maybeSingle();
+  const data = await apiRequest<{
+    report: ReportRow;
+    sightings: SightingRow[];
+    public_code: string;
+  }>(`/v1/lost-reports/${encodeURIComponent(id)}`);
   return {
-    report,
-    sightings: (sightingsResult.data as SightingRow[]).map(toSighting),
-    publicCode: (tag?.public_code as string | undefined) ?? null,
+    report: toReport(data.report),
+    sightings: data.sightings.map(toSighting),
+    publicCode: data.public_code,
   };
 }
 
-// Fotoğraf yüklenemezse ilan yine açılır: kayıp hayvan için fotoğrafı beklemek olmaz.
-async function uploadReportPhoto(userId: string, pet: Pet) {
-  if (!pet.photo || !petPhotoExists(pet.photo)) {
-    return null;
+// Hayvanın değişmeyen kodu. Yoksa sunucu oluşturur. QR kodu bu kodu taşır.
+export async function ensurePublicCode(petId: string) {
+  const { public_code: code } = await apiRequest<{ public_code: string }>(
+    `${petPath(petId)}/public-code`,
+  );
+  return code;
+}
+
+// Bugün ekranı içindir: internet yoksa ya da giriş yapılmamışsa boş döner, ekranı durdurmaz.
+export async function listPetMessages(): Promise<PetMessage[]> {
+  if (!(await getSession())) {
+    return [];
   }
-  const path = `${userId}/${pet.id}-${Date.now()}.jpg`;
   try {
-    const { error } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .upload(path, await readPetPhotoBytes(pet.photo), { contentType: 'image/jpeg' });
-    if (error) {
-      throw error;
+    const { messages } = await apiRequest<{ messages: SightingRow[] }>('/v1/pet-messages');
+    return messages.map((row) => ({ ...toSighting(row), petId: row.pet_id }));
+  } catch (error) {
+    console.warn('Haberler okunamadı', error);
+    return [];
+  }
+}
+
+export async function deletePetMessages(petId: string) {
+  await apiRequest(`${petPath(petId)}/messages`, { method: 'DELETE' });
+  sightingChanges.notify();
+}
+
+// Fotoğraf yüklenemezse ilan yine açık kalır: kayıp hayvan için fotoğrafı beklemek olmaz.
+// Yükleme, ilan ekranı her açıldığında yeniden denenir (retryMissingPhoto).
+async function uploadReportPhoto(reportId: string, pet: Pet) {
+  if (!pet.photo || !petPhotoExists(pet.photo)) {
+    return false;
+  }
+  try {
+    const photo = await readPetPhotoBytes(pet.photo);
+    if (photo.byteLength === 0) {
+      return false;
     }
-    return path;
+    await apiRequest(`/v1/lost-reports/${encodeURIComponent(reportId)}/photo`, {
+      method: 'PUT',
+      photo,
+    });
+    return true;
   } catch (error) {
     console.warn('İlan fotoğrafı yüklenemedi', error);
-    return null;
+    return false;
   }
 }
 
+const PHOTO_RETRY_MS = 60_000;
+const lastPhotoAttempts = new Map<string, number>();
+
+// Açık ilanda fotoğraf yoksa ve hayvanın fotoğrafı varsa yeniden yüklemeyi dener.
+export async function retryMissingPhoto(report: LostReport) {
+  if (report.photoPath || report.foundAt) {
+    return false;
+  }
+  const last = lastPhotoAttempts.get(report.id) ?? 0;
+  if (Date.now() - last < PHOTO_RETRY_MS) {
+    return false;
+  }
+  lastPhotoAttempts.set(report.id, Date.now());
+  const pet = (await listPets()).find((candidate) => candidate.id === report.petId);
+  return pet ? uploadReportPhoto(report.id, pet) : false;
+}
+
+// Bu hayvanın zaten açık bir ilanı varsa yenisi açılmaz, sunucu açık olanı döner.
 export async function startLostReport(input: NewLostReport): Promise<string> {
-  const userId = await currentUserId();
-  if (!userId) {
-    throw new Error('Giriş yapılmadı');
-  }
   const { pet } = input;
-
-  const tag = await supabase
-    .from('pet_tags')
-    .upsert({ owner_id: userId, pet_id: pet.id }, { ignoreDuplicates: true });
-  if (tag.error) {
-    throw tag.error;
-  }
-
-  const { data, error } = await supabase
-    .from('lost_reports')
-    .insert({
-      owner_id: userId,
-      pet_id: pet.id,
-      pet_name: pet.name,
-      species: pet.species,
-      breed: pet.breed,
-      description: input.description,
-      photo_path: await uploadReportPhoto(userId, pet),
-      last_seen_area: input.lastSeenArea,
-      last_seen_lat: input.lastSeenLat,
-      last_seen_lng: input.lastSeenLng,
-      last_seen_at: input.lastSeenAt.toISOString(),
-    })
-    .select('id')
-    .single();
-
-  // Bu hayvanın zaten açık bir ilanı varsa yenisini açmak yerine ona gidilir.
-  if (error?.code === ALREADY_EXISTS_CODE) {
-    const existing = await supabase
-      .from('lost_reports')
-      .select('id')
-      .eq('pet_id', pet.id)
-      .is('found_at', null)
-      .single();
-    if (existing.error) {
-      throw existing.error;
-    }
-    return existing.data.id as string;
-  }
-  if (error) {
-    throw error;
+  const { id, has_photo: hasPhoto } = await apiRequest<{ id: string; has_photo: boolean }>(
+    '/v1/lost-reports',
+    {
+      method: 'POST',
+      body: {
+        pet_id: pet.id,
+        pet_name: pet.name,
+        species: pet.species,
+        breed: pet.breed,
+        description: input.description,
+        last_seen_area: input.lastSeenArea,
+        last_seen_lat: input.lastSeenLat,
+        last_seen_lng: input.lastSeenLng,
+        last_seen_at: input.lastSeenAt.toISOString(),
+      },
+    },
+  );
+  if (!hasPhoto) {
+    await uploadReportPhoto(id, pet);
   }
   reportChanges.notify();
-  return data.id as string;
+  sightingChanges.notify();
+  return id;
 }
 
-async function removeReportPhotos(paths: string[]) {
-  if (paths.length === 0) {
-    return;
-  }
-  const { error } = await supabase.storage.from(PHOTO_BUCKET).remove(paths);
-  if (error) {
-    console.warn('İlan fotoğrafı silinemedi', error);
-  }
-}
-
-// Bulununca herkese açık fotoğraf kaldırılır.
-export async function markFound({ id, photoPath }: LostReport) {
-  const { error } = await supabase
-    .from('lost_reports')
-    .update({ found_at: new Date().toISOString(), photo_path: null })
-    .eq('id', id);
-  if (error) {
-    throw error;
-  }
-  await removeReportPhotos(photoPath ? [photoPath] : []);
+// Bulununca herkese açık fotoğraf sunucuda silinir.
+export async function markFound({ id }: LostReport) {
+  await apiRequest(`/v1/lost-reports/${encodeURIComponent(id)}/found`, { method: 'POST' });
   reportChanges.notify();
 }
 
 export async function deleteReportsOfPet(petId: string) {
-  if (!(await currentUserId())) {
+  if (!(await getSession())) {
     return;
   }
-  const { data, error } = await supabase
-    .from('lost_reports')
-    .delete()
-    .eq('pet_id', petId)
-    .select('photo_path');
-  if (error) {
-    throw error;
-  }
-  await removeReportPhotos(
-    (data as { photo_path: string | null }[]).flatMap(({ photo_path: path }) =>
-      path ? [path] : [],
-    ),
-  );
-  await supabase.from('pet_tags').delete().eq('pet_id', petId);
+  await apiRequest(`${petPath(petId)}/lost-data`, { method: 'DELETE' });
   reportChanges.notify();
+  sightingChanges.notify();
 }
 
 function sightingSummary({ place, message }: SightingRow) {
   return [place, message].filter(Boolean).join('. ') || 'Konum paylaşıldı.';
 }
 
-// Uygulama açıkken gelen ihbarı anında bildirir. Kapalıyken bildirim için kendi derlememiz gerekecek.
-export function watchSightings() {
-  const channel = supabase
-    .channel('sightings-watch')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'sightings' },
-      async (payload) => {
-        sightingChanges.notify();
-        const row = payload.new as SightingRow;
-        const { data } = await supabase
-          .from('lost_reports')
-          .select('pet_name')
-          .eq('id', row.report_id)
-          .single();
-        await showSightingNotification(
-          `Yeni ihbar: ${data?.pet_name ?? 'hayvanın'}`,
-          sightingSummary(row),
-          `/lost/${row.report_id}`,
-        );
-      },
-    )
-    .subscribe();
+async function notifySighting(row: SightingRow) {
+  if (row.report_id) {
+    const report = await apiRequest<{ report: ReportRow }>(
+      `/v1/lost-reports/${encodeURIComponent(row.report_id)}`,
+    ).catch(() => null);
+    await showSightingNotification(
+      `Yeni ihbar: ${report?.report.pet_name ?? 'hayvanın'}`,
+      sightingSummary(row),
+      `/lost/${row.report_id}`,
+    );
+    return;
+  }
+  const pet = (await listPets()).find((candidate) => candidate.id === row.pet_id);
+  await showSightingNotification(
+    `${pet?.name ?? 'Hayvanın'} için haber var`,
+    sightingSummary(row),
+    `/pet-messages/${row.pet_id}`,
+  );
+}
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
+// Uygulama açıkken gelen ihbarı anında bildirir. Kapalıyken bildirim için kendi derlememiz gerekecek.
+export function watchSightings(token: string) {
+  return openEventStream(
+    token,
+    (event) => {
+      if (event.type === 'sighting') {
+        sightingChanges.notify();
+        notifySighting(event.sighting as SightingRow).catch((error) => {
+          console.warn('İhbar bildirimi gösterilemedi', error);
+        });
+      }
+    },
+    // Bağlantı yokken gelmiş olabilecekler ekranlara yansısın.
+    () => sightingChanges.notify(),
+  );
 }

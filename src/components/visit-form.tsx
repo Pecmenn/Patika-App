@@ -76,7 +76,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
       }
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders({ askPermission: isUpcoming });
@@ -89,7 +89,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
       await deleteVisit(id);
     } catch {
       setIsSaving(false);
-      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders();

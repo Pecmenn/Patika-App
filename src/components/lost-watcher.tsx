@@ -6,14 +6,14 @@ import { useSession } from '@/hooks/use-session';
 // Giriş yapılmışsa yeni ihbarları dinler. Ekranda bir şey çizmez.
 export function LostWatcher() {
   const session = useSession();
-  const userId = session?.user.id;
+  const token = session?.token;
 
   useEffect(() => {
-    if (!userId) {
+    if (!token) {
       return undefined;
     }
-    return watchSightings();
-  }, [userId]);
+    return watchSightings(token);
+  }, [token]);
 
   return null;
 }

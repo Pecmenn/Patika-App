@@ -73,6 +73,25 @@ export function regionFor(points: Point[]) {
   };
 }
 
+// QR kodunun ve ilanın gösterdiği sayfa. Sayfa, uygulamanın istek attığı sunucudan yayınlanır.
+export function lostPageLink(code: string, base: string) {
+  return `${base}/p/${code}`;
+}
+
+// İlanda yazılı görünen hali.
+export function shortLink(link: string) {
+  return link.replace(/^https?:\/\//, '');
+}
+
+// İlan yokken gelen haberler hayvan başına bir kartta toplanır, yeni gelen hayvan önde durur.
+export function groupMessagesByPet<T extends { petId: string }>(messages: T[]) {
+  const groups = new Map<string, T[]>();
+  for (const message of messages) {
+    groups.set(message.petId, [...(groups.get(message.petId) ?? []), message]);
+  }
+  return [...groups.entries()].map(([petId, items]) => ({ petId, items }));
+}
+
 // Girilen saat şu andan sonraysa dün demektir: gece yarısından sonra "23.00'te gördüm" gibi.
 export function lastSeenDate(hours: number, minutes: number, now = new Date()) {
   const date = new Date(now);

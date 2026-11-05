@@ -4,7 +4,7 @@ import { colors, fonts } from '@/constants/theme';
 
 type ButtonProps = {
   label: string;
-  variant?: 'ink' | 'text';
+  variant?: 'ink' | 'white' | 'text';
   size?: 'large' | 'small';
   disabled?: boolean;
   onPress?: () => void;
@@ -30,6 +30,7 @@ export function Button({
         styles.base,
         isSmall && styles.small,
         isInk && styles.ink,
+        variant === 'white' && styles.white,
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}>
@@ -53,6 +54,9 @@ const styles = StyleSheet.create({
   },
   ink: {
     backgroundColor: colors.ink,
+  },
+  white: {
+    backgroundColor: colors.card,
   },
   pressed: {
     opacity: 0.7,

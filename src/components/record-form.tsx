@@ -128,7 +128,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
       }
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders({ askPermission: nextDueDate !== null });
@@ -141,7 +141,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
       await deleteHealthRecord(id);
     } catch {
       setIsSaving(false);
-      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders();

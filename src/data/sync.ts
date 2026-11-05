@@ -2,6 +2,7 @@ import { AppState } from 'react-native';
 
 import {
   clearLocalKeys,
+  clearOwnership,
   COLLECTION_NAMES,
   notifyDataChanged,
   readCollection,
@@ -24,27 +25,31 @@ import {
   petPhotoExists,
   readPetPhotoBytes,
 } from '@/data/pet-photo-storage';
+import { API_URL, ApiError, apiRequest, authHeaders } from '@/lib/api';
 import { createChangeSignal } from '@/lib/change-signal';
 import { refreshReminders } from '@/lib/reminders';
-import { supabase } from '@/lib/supabase';
+import { getSession, subscribeToSession } from '@/lib/session';
 import {
   addToOutbox,
   diffItems,
   mergeRemote,
   queuePhotoChanges,
   removeFromOutbox,
+  type Outbox,
   type RemoteRow,
   type SyncItem,
 } from '@/lib/sync-logic';
 
-const TABLE = 'user_items';
-const PHOTO_BUCKET = 'pet-photos';
 const PAGE_SIZE = 1000;
 const PUSH_CHUNK = 200;
 const DEBOUNCE_MS = 1500;
 // Aynı anda yazılan satırlar kaçmasın diye son görülen zamanın biraz gerisinden okunur.
 const CURSOR_OVERLAP_MS = 5000;
-const SIGNED_URL_SECONDS = 300;
+
+type PulledPage = {
+  items: (RemoteRow & { synced_at: string })[];
+  next: string | null;
+};
 
 export type SyncStatus = {
   isSyncing: boolean;
@@ -81,27 +86,34 @@ async function bindOwner(userId: string) {
     if (owner === userId) {
       return;
     }
+    // Girişte kullanıcıya sorulur (isLocalDataOfAnotherAccount). Buraya düşerse kayıt silinmez,
+    // eşitleme durur: yanlış hesaba gönderilmez, sessizce de kaybolmaz.
     if (owner) {
-      // Başka hesabın kayıtları karışmasın.
-      await clearLocalKeys();
-      deleteAllPetPhotos();
-    } else {
-      // Hesap açılmadan önce girilen kayıtlar bu hesaba geçer.
-      const now = new Date().toISOString();
-      let outbox = await readOutbox();
-      for (const name of COLLECTION_NAMES) {
-        outbox = addToOutbox(outbox, diffItems(name, [], await readCollection(name), now));
-      }
-      await writeOutbox(outbox);
-      const pets = await readCollection<SyncItem & { photo: string | null }>('pets');
-      await writePhotoQueue(queuePhotoChanges(await readPhotoQueue(), [], pets));
+      throw new Error('Telefondaki kayıtlar başka hesaba ait');
     }
+    // Hesap açılmadan önce girilen kayıtlar bu hesaba geçer.
+    const now = new Date().toISOString();
+    let outbox = await readOutbox();
+    for (const name of COLLECTION_NAMES) {
+      outbox = addToOutbox(outbox, diffItems(name, [], await readCollection(name), now));
+    }
+    await writeOutbox(outbox);
+    const pets = await readCollection<SyncItem & { photo: string | null }>('pets');
+    await writePhotoQueue(queuePhotoChanges(await readPhotoQueue(), [], pets));
     await writeOwner(userId);
   });
 }
 
-async function applyRemote(rows: RemoteRow[]) {
+// Eşitleme sürerken hesap değiştiyse eski hesabın verisi telefona yazılmaz.
+async function assertOwner(userId: string) {
+  if ((await readOwner()) !== userId) {
+    throw new Error('Eşitleme sırasında hesap değişti');
+  }
+}
+
+async function applyRemote(rows: RemoteRow[], userId: string) {
   return runExclusive(async () => {
+    await assertOwner(userId);
     let outbox = await readOutbox();
     let changed = false;
 
@@ -122,80 +134,88 @@ async function applyRemote(rows: RemoteRow[]) {
   });
 }
 
-async function pull() {
+async function pull(userId: string) {
   const cursor = await readCursor();
   const since = cursor ? new Date(Date.parse(cursor) - CURSOR_OVERLAP_MS).toISOString() : null;
   let changed = false;
   let newest = cursor;
+  let after: string | null = null;
 
-  for (let from = 0; ; from += PAGE_SIZE) {
-    let query = supabase
-      .from(TABLE)
-      .select('collection, id, data, deleted, updated_at, synced_at')
-      .order('synced_at', { ascending: true })
-      .range(from, from + PAGE_SIZE - 1);
-    if (since) {
-      query = query.gt('synced_at', since);
+  do {
+    const position: string = after
+      ? `&after=${encodeURIComponent(after)}`
+      : since
+        ? `&since=${encodeURIComponent(since)}`
+        : '';
+    const page: PulledPage = await apiRequest<PulledPage>(`/v1/items?limit=${PAGE_SIZE}${position}`);
+    if (page.items.length > 0) {
+      changed = (await applyRemote(page.items, userId)) || changed;
+      newest = page.items[page.items.length - 1].synced_at;
     }
-    const { data, error } = await query;
-    if (error) {
-      throw error;
-    }
-    const rows = data as (RemoteRow & { synced_at: string })[];
-    if (rows.length > 0) {
-      changed = (await applyRemote(rows)) || changed;
-      newest = rows[rows.length - 1].synced_at;
-    }
-    if (rows.length < PAGE_SIZE) {
-      break;
-    }
-  }
+    after = page.next;
+  } while (after);
 
-  if (newest) {
-    await writeCursor(newest);
-  } else {
-    // Sunucuda hiç kayıt yok. Yine de bir kez okundu sayılır.
-    await writeCursor(new Date(0).toISOString());
-  }
+  await runExclusive(async () => {
+    await assertOwner(userId);
+    // Sunucuda hiç kayıt yoksa da bir kez okundu sayılır.
+    await writeCursor(newest ?? new Date(0).toISOString());
+  });
   return changed;
 }
 
-async function push(userId: string) {
+type OutboxChange = Outbox[string];
+
+async function sendChanges(changes: OutboxChange[]) {
+  try {
+    await apiRequest('/v1/items', {
+      method: 'PUT',
+      body: {
+        items: changes.map((change) => ({
+          collection: change.collection,
+          id: change.id,
+          data: change.data,
+          updated_at: change.updatedAt,
+        })),
+      },
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError) || (error.status !== 400 && error.status !== 413)) {
+      throw error;
+    }
+    // Sunucunun kabul etmediği tek bir kayıt, diğerlerinin yedeklenmesini sonsuza dek durdurmasın.
+    // O kayıt telefonda kalır, yalnızca yedeklenmez.
+    if (changes.length === 1) {
+      console.warn('Kayıt sunucuya gönderilemedi', changes[0].collection, error.code);
+      return;
+    }
+    for (const change of changes) {
+      await sendChanges([change]);
+    }
+  }
+}
+
+async function push() {
   const pending = Object.values(await readOutbox());
   for (let start = 0; start < pending.length; start += PUSH_CHUNK) {
     const chunk = pending.slice(start, start + PUSH_CHUNK);
-    const { error } = await supabase.from(TABLE).upsert(
-      chunk.map((change) => ({
-        owner_id: userId,
-        collection: change.collection,
-        id: change.id,
-        data: change.data,
-        deleted: change.data === null,
-        updated_at: change.updatedAt,
-      })),
-    );
-    if (error) {
-      throw error;
-    }
+    await sendChanges(chunk);
     await runExclusive(async () => {
       await writeOutbox(removeFromOutbox(await readOutbox(), chunk));
     });
   }
 }
 
-async function syncPhotos(userId: string) {
-  const storage = supabase.storage.from(PHOTO_BUCKET);
-  const pathOf = (name: string) => `${userId}/${name}`;
+const photoPath = (name: string) => `/v1/photos/${encodeURIComponent(name)}`;
+
+async function syncPhotos(token: string) {
   const { upload, remove } = await readPhotoQueue();
 
   for (const name of upload) {
     if (petPhotoExists(name)) {
-      const { error } = await storage.upload(pathOf(name), await readPetPhotoBytes(name), {
-        contentType: 'image/jpeg',
-        upsert: true,
-      });
-      if (error) {
-        throw error;
+      const photo = await readPetPhotoBytes(name);
+      // Tarayıcı önizlemesinde dosya sistemi yok, boş döner. Telefonda dosya her zaman doludur.
+      if (photo.byteLength > 0) {
+        await apiRequest(photoPath(name), { method: 'PUT', photo });
       }
     }
     await runExclusive(async () => {
@@ -204,17 +224,11 @@ async function syncPhotos(userId: string) {
     });
   }
 
-  if (remove.length > 0) {
-    const { error } = await storage.remove(remove.map(pathOf));
-    if (error) {
-      throw error;
-    }
+  for (const name of remove) {
+    await apiRequest(photoPath(name), { method: 'DELETE' });
     await runExclusive(async () => {
       const current = await readPhotoQueue();
-      await writePhotoQueue({
-        ...current,
-        remove: current.remove.filter((item) => !remove.includes(item)),
-      });
+      await writePhotoQueue({ ...current, remove: current.remove.filter((item) => item !== name) });
     });
   }
 
@@ -223,11 +237,12 @@ async function syncPhotos(userId: string) {
   let downloaded = false;
   for (const { photo } of pets) {
     if (photo && !petPhotoExists(photo)) {
-      const { data, error } = await storage.createSignedUrl(pathOf(photo), SIGNED_URL_SECONDS);
-      // Diğer telefon fotoğrafı henüz yüklememiş olabilir, sonraki eşitlemede yine bakılır.
-      if (!error && data) {
-        await downloadPetPhoto(data.signedUrl, photo);
+      try {
+        await downloadPetPhoto(`${API_URL}${photoPath(photo)}`, photo, authHeaders(token));
         downloaded = true;
+      } catch (error) {
+        // Diğer telefon fotoğrafı henüz yüklememiş olabilir, sonraki eşitlemede yine bakılır.
+        console.warn('Fotoğraf indirilemedi', error);
       }
     }
   }
@@ -235,19 +250,16 @@ async function syncPhotos(userId: string) {
 }
 
 async function runCycle() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) {
     return;
   }
-  const userId = session.user.id;
 
-  await bindOwner(userId);
+  await bindOwner(session.user.id);
   // Önce okunur: telefondaki eski bir değişiklik sunucudaki yenisinin üstüne yazılmasın.
-  const pulled = await pull();
-  await push(userId);
-  const downloaded = await syncPhotos(userId);
+  const pulled = await pull(session.user.id);
+  await push();
+  const downloaded = await syncPhotos(session.token);
 
   setStatus({ hasPulled: true });
   if (pulled || downloaded) {
@@ -292,7 +304,27 @@ export async function flushBeforeSignOut() {
   return countPending();
 }
 
+async function waitForRunningSync() {
+  while (running) {
+    await running;
+  }
+}
+
+// Telefondaki kayıtlar başka bir hesaba mı ait?
+export async function isLocalDataOfAnotherAccount(userId: string) {
+  const owner = await readOwner();
+  return owner !== null && owner !== userId;
+}
+
+// Kayıtlar telefonda kalır, sonraki girişte o hesaba aktarılır.
+export async function releaseLocalData() {
+  await waitForRunningSync();
+  await runExclusive(clearOwnership);
+}
+
 export async function clearLocalData() {
+  // Süren eşitleme, silinen kayıtları geri yazmasın.
+  await waitForRunningSync();
   await runExclusive(async () => {
     await clearLocalKeys();
     deleteAllPetPhotos();
@@ -315,13 +347,9 @@ export function startSync() {
       syncNow();
     }
   });
-  // Oturum olayının içinden Supabase çağrılmamalı, bu yüzden sonraya bırakılır.
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_IN') {
-      setTimeout(syncNow, 0);
-    }
+  // Giriş yapılınca hemen eşitlenir. Çıkışta oturum olmadığı için eşitleme zaten bir şey yapmaz.
+  const unsubscribeSession = subscribeToSession(() => {
+    syncNow();
   });
 
   syncNow();
@@ -330,6 +358,6 @@ export function startSync() {
     clearTimeout(timer);
     unsubscribeLocal();
     appState.remove();
-    subscription.unsubscribe();
+    unsubscribeSession();
   };
 }

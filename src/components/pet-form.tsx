@@ -84,7 +84,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
         setPickedPhotoUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Fotoğraf seçilemedi', 'Lütfen tekrar dene.');
+      Alert.alert('Fotoğraf seçilemedi', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
     }
   }
 
@@ -123,7 +123,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
       }
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     // Hayvanın adı bildirim metinlerinde geçiyor.
@@ -139,7 +139,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
       await removePet(target);
     } catch {
       setIsSaving(false);
-      Alert.alert('Silinemedi', 'Hayvan silinirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Silinemedi', 'Hayvan silinirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders();

@@ -34,7 +34,7 @@ export function WeightRangeForm({ petId, petName, range }: WeightRangeFormProps)
       await setWeightRange(petId, next);
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     router.back();

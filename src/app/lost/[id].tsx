@@ -1,101 +1,38 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
-import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
-import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
 import { useCallback, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { GlassButton } from '@/components/glass-button';
 import { LostMap } from '@/components/lost-map';
+import { SightingRow } from '@/components/sighting-row';
 import { colors, fonts } from '@/constants/theme';
 import {
   getLostDetails,
   markFound,
+  retryMissingPhoto,
   subscribeToSightings,
   type LostReport,
-  type Sighting,
 } from '@/data/lost-reports';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { formatTime, toTimeKey } from '@/lib/dates';
-import { timeAgoLabel } from '@/lib/lost';
 
 const MAP_HEIGHT = 196;
 
 async function loadLostScreen(id: string) {
   try {
-    return { ...(await getLostDetails(id)), now: new Date(), hasFailed: false as const };
+    let details = await getLostDetails(id);
+    if (await retryMissingPhoto(details.report)) {
+      details = await getLostDetails(id);
+    }
+    return { ...details, now: new Date(), hasFailed: false as const };
   } catch (error) {
     console.warn('Kayıp ilanı okunamadı', error);
     return { hasFailed: true as const };
   }
-}
-
-function openInMaps(lat: number, lng: number) {
-  const url =
-    Platform.OS === 'ios' ? `maps:?q=${lat},${lng}&ll=${lat},${lng}` : `geo:${lat},${lng}?q=${lat},${lng}`;
-  Linking.openURL(url).catch((error) => console.warn('Harita açılamadı', error));
-}
-
-// İletişim serbest metin. Telefon numarasına benziyorsa arama açılabilir.
-function phoneFrom(contact: string) {
-  const digits = contact.replace(/[^\d+]/g, '');
-  return digits.replace(/\D/g, '').length >= 7 ? digits : null;
-}
-
-function SightingRow({ sighting, now }: { sighting: Sighting; now: Date }) {
-  const { lat, lng, place, message, contact } = sighting;
-  const phone = contact ? phoneFrom(contact) : null;
-  const hasLocation = lat !== null && lng !== null;
-
-  return (
-    <View style={styles.sighting}>
-      <View style={styles.sightingIcon}>
-        <EyeIcon size={20} weight="bold" color={colors.alertText} />
-      </View>
-      <Pressable
-        accessibilityHint={hasLocation ? 'Haritada açmak için dokun' : undefined}
-        accessibilityRole={hasLocation ? 'button' : 'text'}
-        disabled={!hasLocation}
-        onPress={() => {
-          if (lat !== null && lng !== null) {
-            openInMaps(lat, lng);
-          }
-        }}
-        style={styles.sightingCopy}>
-        <Text style={styles.sightingTitle}>
-          {place ?? (hasLocation ? 'Konum paylaşıldı' : 'Mesaj geldi')}
-        </Text>
-        <Text style={styles.sightingTime}>
-          {timeAgoLabel(sighting.createdAt, now)}
-          {hasLocation ? ', haritada aç' : ''}
-        </Text>
-        {message && <Text style={styles.sightingMessage}>{message}</Text>}
-        {contact && !phone && <Text style={styles.sightingContact}>İletişim: {contact}</Text>}
-      </Pressable>
-      {phone && (
-        <Pressable
-          accessibilityLabel={`${contact} numarasını ara`}
-          accessibilityRole="button"
-          onPress={() => Linking.openURL(`tel:${phone}`)}
-          style={styles.call}>
-          <PhoneIcon size={18} weight="bold" color={colors.ink} />
-        </Pressable>
-      )}
-    </View>
-  );
 }
 
 export default function LostScreen() {
@@ -121,7 +58,7 @@ export default function LostScreen() {
     } catch (error) {
       console.warn('Kayıp modu kapatılamadı', error);
       setIsClosing(false);
-      Alert.alert('Kapatılamadı', 'İnternet bağlantını kontrol edip tekrar dene.');
+      Alert.alert('Kapatılamadı', 'İnternet bağlantını kontrol edip tekrar dene.', [{ text: 'Tamam' }]);
     }
   }
 
@@ -150,13 +87,14 @@ export default function LostScreen() {
     );
   }
 
-  const { report, sightings, now, publicCode } = data;
+  const { report, sightings, now } = data;
   const lastSeenClock = formatTime(toTimeKey(report.lastSeenAt));
 
   return (
     <View style={styles.screen}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 2 }]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View style={styles.top}>
           <GlassButton label="Geri" onPress={goBack}>
@@ -189,6 +127,22 @@ export default function LostScreen() {
           {report.description ? ` ${report.description}` : ''}
         </Text>
 
+        {!report.photoUrl && (
+          <View style={styles.noPhotoNote}>
+            <Text style={styles.noPhotoText}>
+              Bu ilanda fotoğraf yok. Fotoğraflı ilan çok daha kolay tanınır.
+            </Text>
+            <Button
+              label="Fotoğraf ekle"
+              size="small"
+              variant="white"
+              onPress={() =>
+                router.push({ pathname: '/edit-pet', params: { id: report.petId } })
+              }
+            />
+          </View>
+        )}
+
         <View style={styles.mapCard}>
           <LostMap report={report} sightings={sightings} />
         </View>
@@ -202,7 +156,7 @@ export default function LostScreen() {
           </View>
           {sightings.length === 0 && (
             <Text style={styles.noSighting}>
-              Biri kayıp sayfasından konum ya da mesaj gönderince burada görünür.
+              İlanı paylaş. Biri kayıp sayfasından konum ya da mesaj gönderince burada görünür.
             </Text>
           )}
           {sightings.map((sighting, index) => (
@@ -211,17 +165,23 @@ export default function LostScreen() {
             </View>
           ))}
         </View>
-
-        {/* Yalnızca geliştirirken: testten ihbar göndermek için. Paylaşma gelince kalkacak. */}
-        {__DEV__ && <Text style={styles.devCode}>Kod: {publicCode}</Text>}
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button
-          disabled={isClosing}
-          label={isClosing ? 'Kapatılıyor...' : 'Bulundu'}
-          onPress={() => confirmFound(report)}
-        />
+        <View style={styles.action}>
+          <Button
+            label="İlanı paylaş"
+            variant="white"
+            onPress={() => router.push({ pathname: '/poster/[id]', params: { id: report.id } })}
+          />
+        </View>
+        <View style={styles.action}>
+          <Button
+            disabled={isClosing}
+            label={isClosing ? 'Kapatılıyor...' : 'Bulundu'}
+            onPress={() => confirmFound(report)}
+          />
+        </View>
       </View>
     </View>
   );
@@ -318,6 +278,16 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     color: colors.ink,
   },
+  noPhotoNote: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  noPhotoText: {
+    fontFamily: fonts.uiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: colors.ink,
+  },
   mapCard: {
     height: MAP_HEIGHT,
     borderRadius: 24,
@@ -359,64 +329,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
-  sighting: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 10,
-  },
-  sightingIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.alertSoft,
-  },
-  sightingCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  sightingTitle: {
-    fontFamily: fonts.uiBold,
-    fontSize: 15,
-    color: colors.ink,
-  },
-  sightingTime: {
-    marginTop: 1,
-    fontFamily: fonts.ui,
-    fontSize: 13,
-    color: colors.ink3,
-  },
-  sightingMessage: {
-    marginTop: 4,
-    fontFamily: fonts.ui,
-    fontSize: 14.5,
-    lineHeight: 20,
-    color: colors.ink,
-  },
-  sightingContact: {
-    marginTop: 4,
-    fontFamily: fonts.uiBold,
-    fontSize: 13.5,
-    color: colors.ink2,
-  },
-  call: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.paper,
-  },
-  devCode: {
-    marginTop: 10,
-    fontFamily: fonts.uiBold,
-    fontSize: 13,
-    color: colors.ink,
-  },
   actions: {
+    flexDirection: 'row',
+    gap: 10,
     paddingHorizontal: 20,
     paddingTop: 8,
+  },
+  action: {
+    flex: 1,
   },
 });

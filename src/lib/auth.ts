@@ -1,6 +1,44 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Alert } from 'react-native';
 
-import { supabase } from '@/lib/supabase';
+import { clearLocalData, isLocalDataOfAnotherAccount, releaseLocalData } from '@/data/sync';
+import { apiRequest } from '@/lib/api';
+import { clearSession, getSession, saveSession, type Session } from '@/lib/session';
+
+const PENDING_NAME_KEY = 'patika.auth.pending-name.v1';
+
+type LocalDataChoice = 'transfer' | 'delete' | 'cancel';
+
+function askAboutLocalData() {
+  return new Promise<LocalDataChoice>((resolve) => {
+    Alert.alert(
+      'Bu telefonda başka bir hesabın kayıtları var',
+      'Daha önce farklı bir hesapla giriş yapılmış. Kayıtları bu hesaba aktarabilir ya da telefondan silebilirsin.',
+      [
+        { text: 'Vazgeç', style: 'cancel', onPress: () => resolve('cancel') },
+        { text: 'Sil', style: 'destructive', onPress: () => resolve('delete') },
+        { text: 'Bu hesaba aktar', onPress: () => resolve('transfer') },
+      ],
+      { cancelable: false },
+    );
+  });
+}
+
+// Telefondaki kayıtlar başka hesaba aitse kullanıcıya sorulur, sorulmadan hiçbir şey silinmez.
+async function finishSignIn(session: Session) {
+  if (await isLocalDataOfAnotherAccount(session.user.id)) {
+    const choice = await askAboutLocalData();
+    if (choice === 'cancel') {
+      await apiRequest('/v1/auth/logout', { method: 'POST', token: session.token }).catch(
+        (error) => console.warn('Oturum kapatılamadı', error),
+      );
+      return;
+    }
+    await (choice === 'delete' ? clearLocalData() : releaseLocalData());
+  }
+  await saveSession(session);
+}
 
 // Kullanıcı Apple penceresini kapatırsa hata sayılmaz, sessizce döner.
 export async function signInWithApple() {
@@ -22,43 +60,46 @@ export async function signInWithApple() {
   if (!credential.identityToken) {
     throw new Error('Apple kimlik bilgisi gelmedi');
   }
-  const { error } = await supabase.auth.signInWithIdToken({
-    provider: 'apple',
-    token: credential.identityToken,
-  });
-  if (error) {
-    throw error;
-  }
 
-  // Apple adı yalnızca ilk girişte gönderir, o yüzden hemen saklanır.
-  // Kaydedilemezse giriş yine geçerli, yalnızca selamlamada ad görünmez.
+  // Apple adı yalnızca ilk girişte verir. Sunucuya ulaşılamazsa kaybolmasın diye önce telefona yazılır.
   const { givenName, middleName, familyName } = credential.fullName ?? {};
   if (givenName || familyName) {
-    const { error: nameError } = await supabase.auth.updateUser({
-      data: {
+    await AsyncStorage.setItem(
+      PENDING_NAME_KEY,
+      JSON.stringify({
         full_name: [givenName, middleName, familyName].filter(Boolean).join(' '),
-        given_name: givenName,
-        family_name: familyName,
-      },
-    });
-    if (nameError) {
-      console.warn('Ad kaydedilemedi', nameError);
-    }
+        given_name: givenName ?? null,
+        family_name: familyName ?? null,
+      }),
+    );
   }
+  const pendingName = await AsyncStorage.getItem(PENDING_NAME_KEY);
+
+  const session = await apiRequest<Session>('/v1/auth/apple', {
+    method: 'POST',
+    isPublic: true,
+    body: {
+      identity_token: credential.identityToken,
+      ...(pendingName ? (JSON.parse(pendingName) as object) : {}),
+    },
+  });
+  await AsyncStorage.removeItem(PENDING_NAME_KEY);
+  await finishSignIn(session);
 }
 
-// Yalnızca bu telefondan çıkar. Başka telefondaki oturuma dokunmaz ve internet olmadan da çalışır.
+// Yalnızca bu telefondan çıkar. Sunucuya ulaşılamazsa çıkış yine geçerli olur.
 export async function signOut() {
-  const { error } = await supabase.auth.signOut({ scope: 'local' });
-  if (error) {
-    throw error;
+  const session = await getSession();
+  if (session) {
+    await apiRequest('/v1/auth/logout', { method: 'POST' }).catch((error) => {
+      console.warn('Sunucudaki oturum kapatılamadı', error);
+    });
   }
+  await clearSession();
 }
 
-// Yalnızca taklitçide eşitlemeyi denemek için. Sunucuda bu giriş türü normalde kapalıdır.
+// Yalnızca geliştirirken: Apple ile giriş olmayan taklitçi ve tarayıcıda denemek için.
+// Gerçek sunucuda bu giriş kapalıdır.
 export async function signInForDevelopment() {
-  const { error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    throw error;
-  }
+  await finishSignIn(await apiRequest<Session>('/v1/auth/dev', { method: 'POST', isPublic: true }));
 }

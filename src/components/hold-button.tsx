@@ -14,37 +14,46 @@ type HoldButtonProps = {
 };
 
 // Yanlışlıkla başlamasın diye bir saniye basılı tutmak gerekir.
+// İş parmak kalkınca başlar: ekran parmak camdayken değişirse sonraki ilk dokunuş kayboluyor
+// (taklitçideki uçtan uca testte görüldü), bu da ihbar geldiğinde arama düğmesini boşa düşürüyordu.
 // Ekran okuyucu kullananlar basılı tutamaz, onlar için çift dokunuş yeter.
 export function HoldButton({ label, disabled, onComplete }: HoldButtonProps) {
   const [progress] = useState(() => new Animated.Value(0));
+  const [isFull, setIsFull] = useState(false);
 
   function startHold() {
+    setIsFull(false);
     Animated.timing(progress, {
       toValue: 1,
       duration: HOLD_MS,
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
-        onComplete();
+        setIsFull(true);
       }
     });
   }
 
-  function cancelHold() {
+  function endHold() {
     progress.stopAnimation();
     Animated.timing(progress, { toValue: 0, duration: 150, useNativeDriver: false }).start();
+    // Parmak dolma anıyla aynı anda kalkarsa "Şimdi bırak" yazısı ekranda kalmasın.
+    setIsFull(false);
+    if (isFull) {
+      onComplete();
+    }
   }
 
   return (
     <Pressable
-      accessibilityHint="Başlatmak için bir saniye basılı tut"
+      accessibilityHint="Çubuk dolana kadar basılı tut, sonra parmağını kaldır"
       accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
       onAccessibilityTap={onComplete}
       onPressIn={startHold}
-      onPressOut={cancelHold}
+      onPressOut={endHold}
       style={[styles.track, disabled && styles.disabled]}>
       <Animated.View
         style={[
@@ -56,7 +65,7 @@ export function HoldButton({ label, disabled, onComplete }: HoldButtonProps) {
       />
       <View style={styles.content}>
         <SirenIcon size={20} weight="fill" color={colors.ink} />
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label}>{isFull ? 'Şimdi bırak' : label}</Text>
       </View>
     </Pressable>
   );

@@ -93,7 +93,7 @@ export function TaskForm({ task }: { task?: Task }) {
       }
     } catch {
       setIsSaving(false);
-      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders({ askPermission: true });
@@ -106,7 +106,7 @@ export function TaskForm({ task }: { task?: Task }) {
       await deleteTask(id);
     } catch {
       setIsSaving(false);
-      Alert.alert('Silinemedi', 'Görev silinirken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert('Silinemedi', 'Görev silinirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
     await refreshReminders();
