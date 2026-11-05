@@ -4,31 +4,39 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/button';
 import type { DatePickerSheetProps } from '@/components/date-picker-sheet';
 import { colors } from '@/constants/theme';
-import { fromDateKey, toDateKey } from '@/lib/dates';
+import { atTime, fromDateKey, toDateKey, toTimeKey } from '@/lib/dates';
 
-// Yalnızca tarayıcı önizlemesi için: telefondaki tarih seçici tarayıcıda çalışmıyor.
+// Yalnızca tarayıcı önizlemesi için: telefondaki seçici tarayıcıda çalışmıyor.
 export function DatePickerSheet({
   value,
+  mode = 'date',
   minimumDate,
   maximumDate,
   onConfirm,
   onCancel,
 }: DatePickerSheetProps) {
-  const [draft, setDraft] = useState(toDateKey(value));
+  const isTime = mode === 'time';
+  const [draft, setDraft] = useState(isTime ? toTimeKey(value) : toDateKey(value));
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable accessibilityLabel="Tarih seçimini kapat" onPress={onCancel} style={styles.backdrop} />
+      <Pressable accessibilityLabel="Seçimi kapat" onPress={onCancel} style={styles.backdrop} />
       <View style={styles.sheet}>
         <input
-          aria-label="Tarih"
+          aria-label={isTime ? 'Saat' : 'Tarih'}
           max={maximumDate ? toDateKey(maximumDate) : undefined}
           min={minimumDate ? toDateKey(minimumDate) : undefined}
-          type="date"
+          type={mode}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />
-        <Button label="Tamam" disabled={!draft} onPress={() => onConfirm(fromDateKey(draft))} />
+        <Button
+          label="Tamam"
+          disabled={!draft}
+          onPress={() =>
+            onConfirm(isTime ? atTime(toDateKey(value), draft) : fromDateKey(draft))
+          }
+        />
       </View>
     </Modal>
   );

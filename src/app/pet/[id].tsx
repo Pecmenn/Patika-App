@@ -16,6 +16,12 @@ import { useFocusData } from '@/hooks/use-focus-data';
 import { ageLabel } from '@/lib/dates';
 import { splitVaccines } from '@/lib/vaccines';
 
+// Saat de verilerle birlikte okunuyor: uygulama ertesi gün açılırsa sayaçlar yenilensin.
+async function loadRecord() {
+  const [pets, vaccines] = await Promise.all([listPets(), listVaccines()]);
+  return { pets, vaccines, now: new Date() };
+}
+
 function petSummary(pet: Pet) {
   const age = pet.birthDate ? ageLabel(pet.birthDate, pet.birthDateIsApproximate) : null;
   return [pet.breed ?? SPECIES[pet.species].label, age].filter(Boolean).join(', ');
@@ -24,13 +30,13 @@ function petSummary(pet: Pet) {
 export default function PetRecordScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const pets = useFocusData(listPets);
-  const vaccines = useFocusData(listVaccines);
+  const data = useFocusData(loadRecord);
 
-  const pet = pets?.find((candidate) => candidate.id === id);
-  if (!pet || vaccines === null) {
+  const pet = data?.pets.find((candidate) => candidate.id === id);
+  if (!data || !pet) {
     return null;
   }
+  const { vaccines, now } = data;
 
   const { due, others } = splitVaccines(vaccines.filter((vaccine) => vaccine.petId === pet.id));
   const hasRecords = due.length > 0 || others.length > 0;
@@ -70,6 +76,7 @@ export default function PetRecordScreen() {
             {due.map((vaccine) => (
               <DueVaccineSticker
                 key={vaccine.id}
+                now={now}
                 vaccine={vaccine}
                 onDone={() =>
                   router.push({

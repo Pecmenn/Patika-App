@@ -89,12 +89,14 @@ export function VaccineSticker({ vaccine, onEdit }: VaccineStickerProps) {
 }
 
 type DueVaccineStickerProps = VaccineStickerProps & {
+  // Uygulama ertesi gün açılınca sayaç yenilensin diye dışarıdan geliyor.
+  now: Date;
   onDone: () => void;
 };
 
-export function DueVaccineSticker({ vaccine, onDone, onEdit }: DueVaccineStickerProps) {
+export function DueVaccineSticker({ vaccine, now, onDone, onEdit }: DueVaccineStickerProps) {
   const dueDate = vaccine.nextDueDate ?? vaccine.givenDate;
-  const days = daysUntil(dueDate);
+  const days = daysUntil(dueDate, now);
 
   return (
     <StickerFrame isDue>

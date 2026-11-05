@@ -8,7 +8,7 @@ type TextFieldProps = {
   value: string;
   placeholder?: string;
   maxLength?: number;
-  autoCapitalize?: 'words' | 'characters';
+  autoCapitalize?: 'words' | 'characters' | 'sentences';
   onChangeText: (text: string) => void;
 };
 

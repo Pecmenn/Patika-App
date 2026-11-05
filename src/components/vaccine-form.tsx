@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { ChoiceChips } from '@/components/choice-chips';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
@@ -23,7 +24,7 @@ import { listPets, type Species } from '@/data/pets';
 import { addVaccine, deleteVaccine, updateVaccine, type Vaccine } from '@/data/vaccines';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { addYears, formatLongDate, fromDateKey, toDateKey } from '@/lib/dates';
-import { requestReminderPermission, syncVaccineReminders } from '@/lib/vaccine-reminders';
+import { refreshReminders } from '@/lib/reminders';
 
 // Yalnızca yazmayı hızlandıran kısayollar. Hangi aşının gerektiğine veteriner karar verir.
 const NAME_SUGGESTIONS: Record<Species, string[]> = {
@@ -71,19 +72,6 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
     }
   }
 
-  // Kayıt değişti. Hatırlatma kurulamazsa kayıt yine geçerli, kullanıcıyı durdurmuyoruz.
-  async function refreshRemindersAndClose(needsReminders: boolean) {
-    try {
-      if (needsReminders) {
-        await requestReminderPermission();
-      }
-      await syncVaccineReminders();
-    } catch (error) {
-      console.warn('Hatırlatmalar kurulamadı', error);
-    }
-    router.back();
-  }
-
   async function save() {
     const fields = {
       petId,
@@ -104,7 +92,8 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
       Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
       return;
     }
-    await refreshRemindersAndClose(nextDueDate !== null);
+    await refreshReminders({ askPermission: nextDueDate !== null });
+    router.back();
   }
 
   async function remove(id: string) {
@@ -116,7 +105,8 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
       Alert.alert('Silinemedi', 'Kayıt silinirken bir sorun oldu. Lütfen tekrar dene.');
       return;
     }
-    await refreshRemindersAndClose(false);
+    await refreshReminders();
+    router.back();
   }
 
   function confirmRemove({ id, name: savedName }: Vaccine) {
@@ -156,23 +146,11 @@ export function VaccineForm({ petId, vaccine, initialName }: VaccineFormProps) {
         <TextField label="Aşı adı" maxLength={40} value={name} onChangeText={setName} />
 
         {suggestions.length > 0 && (
-          <View style={styles.chips}>
-            {suggestions.map((suggestion) => {
-              const isSelected = trimmedName === suggestion;
-              return (
-                <Pressable
-                  key={suggestion}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
-                  onPress={() => setName(suggestion)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}>
-                  <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>
-                    {suggestion}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <ChoiceChips
+            options={suggestions.map((suggestion) => ({ value: suggestion, label: suggestion }))}
+            value={trimmedName}
+            onChange={setName}
+          />
         )}
 
         <View style={styles.field}>
@@ -287,33 +265,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     color: colors.ink2,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-  },
-  chip: {
-    justifyContent: 'center',
-    height: 36,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-  },
-  chipSelected: {
-    borderColor: colors.ink,
-    backgroundColor: colors.ink,
-  },
-  chipLabel: {
-    fontFamily: fonts.uiBold,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  chipLabelSelected: {
-    color: colors.card,
   },
   field: {
     marginTop: 10,

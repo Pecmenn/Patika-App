@@ -8,6 +8,7 @@ import { colors } from '@/constants/theme';
 
 export type DatePickerSheetProps = {
   value: Date;
+  mode?: 'date' | 'time';
   minimumDate?: Date;
   maximumDate?: Date;
   onConfirm: (date: Date) => void;
@@ -16,6 +17,7 @@ export type DatePickerSheetProps = {
 
 export function DatePickerSheet({
   value,
+  mode = 'date',
   minimumDate,
   maximumDate,
   onConfirm,
@@ -24,11 +26,12 @@ export function DatePickerSheet({
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(value);
 
-  // Android tarih seçiciyi kendi penceresinde açar.
+  // Android seçiciyi kendi penceresinde açar.
   if (Platform.OS === 'android') {
     return (
       <DateTimePicker
-        mode="date"
+        is24Hour
+        mode={mode}
         maximumDate={maximumDate}
         minimumDate={minimumDate}
         value={value}
@@ -41,7 +44,7 @@ export function DatePickerSheet({
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable
-        accessibilityLabel="Tarih seçimini kapat"
+        accessibilityLabel="Seçimi kapat"
         accessibilityRole="button"
         onPress={onCancel}
         style={styles.backdrop}
@@ -52,7 +55,7 @@ export function DatePickerSheet({
           locale="tr-TR"
           maximumDate={maximumDate}
           minimumDate={minimumDate}
-          mode="date"
+          mode={mode}
           textColor={colors.ink}
           themeVariant="light"
           value={draft}

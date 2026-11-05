@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -7,15 +6,13 @@ import { useFocusData } from '@/hooks/use-focus-data';
 import {
   getReminderPermission,
   requestReminderPermission,
-  syncVaccineReminders,
-  type ReminderPermission,
-} from '@/lib/vaccine-reminders';
+  subscribeToReminderPermission,
+  syncReminders,
+} from '@/lib/reminders';
 
 // İzin verilmemişse hatırlatmaların gelmeyeceğini söyler ve açmanın yolunu gösterir.
 export function ReminderPermissionCard() {
-  const stored = useFocusData(getReminderPermission);
-  const [requested, setRequested] = useState<ReminderPermission | null>(null);
-  const permission = requested ?? stored;
+  const permission = useFocusData(getReminderPermission, subscribeToReminderPermission);
 
   if (permission === null || permission === 'granted') {
     return null;
@@ -27,8 +24,8 @@ export function ReminderPermissionCard() {
       return;
     }
     try {
-      setRequested(await requestReminderPermission());
-      await syncVaccineReminders();
+      await requestReminderPermission();
+      await syncReminders();
     } catch (error) {
       console.warn('Hatırlatmalar kurulamadı', error);
       Alert.alert('Hatırlatmalar açılamadı', 'Lütfen tekrar dene.');
@@ -40,8 +37,8 @@ export function ReminderPermissionCard() {
       <Text style={styles.title}>Hatırlatmalar kapalı</Text>
       <Text style={styles.body}>
         {permission === 'denied'
-          ? 'Aşı hatırlatmalarını alabilmek için telefon ayarlarından bildirimleri aç.'
-          : 'Aşının zamanı yaklaşınca sana bildirim gönderebilmemiz için izin ver.'}
+          ? 'Hatırlatmaları alabilmek için telefon ayarlarından bildirimleri aç.'
+          : 'Zamanı gelince sana bildirim gönderebilmemiz için izin ver.'}
       </Text>
       <View style={styles.actions}>
         <Button

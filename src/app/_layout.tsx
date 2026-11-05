@@ -10,10 +10,11 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 
 import { NotificationObserver } from '@/components/notification-observer';
 import { colors } from '@/constants/theme';
-import { configureReminders, syncVaccineReminders } from '@/lib/vaccine-reminders';
+import { configureReminders, refreshReminders } from '@/lib/reminders';
 
 SplashScreen.preventAutoHideAsync();
 configureReminders();
@@ -35,8 +36,15 @@ export default function RootLayout() {
     }
   }, [ready]);
 
+  // Bildirimler önceden kuruluyor, uygulama her açıldığında süreleri uzuyor.
   useEffect(() => {
-    syncVaccineReminders().catch((error) => console.warn('Hatırlatmalar kurulamadı', error));
+    refreshReminders();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        refreshReminders();
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   if (!ready) {
@@ -54,6 +62,8 @@ export default function RootLayout() {
         <Stack.Screen name="add-pet" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-vaccine" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-vaccine" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="today" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />

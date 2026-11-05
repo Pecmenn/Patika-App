@@ -16,6 +16,12 @@ const weekdayFormat = new Intl.DateTimeFormat('tr-TR', {
   month: 'long',
 });
 
+const weekdayNameFormat = new Intl.DateTimeFormat('tr-TR', { weekday: 'long' });
+
+export function formatWeekdayName(date: Date) {
+  return weekdayNameFormat.format(date).toLocaleLowerCase('tr-TR');
+}
+
 export function formatLongDate(date: Date) {
   return longDateFormat.format(date);
 }
@@ -40,6 +46,30 @@ export function fromDateKey(key: string) {
   return new Date(year, month - 1, day);
 }
 
+// Saatler SS:DD biçiminde saklanır, ekranda Türkçe yazımıyla (09.00) görünür.
+export function toTimeKey(date: Date) {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+export function formatTime(timeKey: string) {
+  return timeKey.replace(':', '.');
+}
+
+export function atTime(dateKey: string, timeKey: string) {
+  const [hours, minutes] = timeKey.split(':').map(Number);
+  const result = fromDateKey(dateKey);
+  result.setHours(hours, minutes, 0, 0);
+  return result;
+}
+
+export function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 export function addYears(date: Date, years: number) {
   const result = new Date(date);
   result.setFullYear(result.getFullYear() + years);
@@ -51,8 +81,7 @@ export function yearsAgo(years: number) {
 }
 
 // Bugünden o tarihe kaç gün var. Geçmişteyse eksi döner.
-export function daysUntil(key: string) {
-  const now = new Date();
+export function daysUntil(key: string, now = new Date()) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((fromDateKey(key).getTime() - today.getTime()) / 86_400_000);
 }

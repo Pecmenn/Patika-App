@@ -13,12 +13,14 @@ import { dueCountLabel } from '@/lib/vaccines';
 type UpNextCardProps = {
   pet: Pet;
   vaccine: Vaccine;
+  // Uygulama ertesi gün açılınca sayaç yenilensin diye dışarıdan geliyor.
+  now: Date;
   onDone: () => void;
 };
 
-export function UpNextCard({ pet, vaccine, onDone }: UpNextCardProps) {
+export function UpNextCard({ pet, vaccine, now, onDone }: UpNextCardProps) {
   const dueDate = vaccine.nextDueDate ?? vaccine.givenDate;
-  const days = daysUntil(dueDate);
+  const days = daysUntil(dueDate, now);
 
   return (
     <View style={[styles.card, { backgroundColor: SPECIES[pet.species].color }]}>

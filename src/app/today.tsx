@@ -1,25 +1,47 @@
 import { router } from 'expo-router';
 import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PetAvatar } from '@/components/pet-avatar';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
+import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
+import { listTasks, setTaskCompleted, subscribeToTasks } from '@/data/tasks';
 import { listVaccines } from '@/data/vaccines';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { formatWeekday, greetingFor } from '@/lib/dates';
 import { hasUpcomingReminder } from '@/lib/reminder-plan';
+import { refreshReminders } from '@/lib/reminders';
+import { tasksForToday, type TodayTask } from '@/lib/tasks';
 import { splitVaccines } from '@/lib/vaccines';
+
+// Saat de verilerle birlikte okunuyor: uygulama ertesi gün açılırsa ekran yeni güne geçsin.
+async function loadToday() {
+  const [pets, vaccines, tasks] = await Promise.all([listPets(), listVaccines(), listTasks()]);
+  return { pets, vaccines, tasks, now: new Date() };
+}
+
+async function toggleTask({ task, date, isDone }: TodayTask) {
+  try {
+    await setTaskCompleted(task.id, date, !isDone);
+  } catch {
+    Alert.alert('Kaydedilemedi', 'Görev işaretlenirken bir sorun oldu. Lütfen tekrar dene.');
+    return;
+  }
+  await refreshReminders();
+}
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const pets = useFocusData(listPets);
-  const vaccines = useFocusData(listVaccines);
-  const now = new Date();
+  const data = useFocusData(loadToday, subscribeToTasks);
+  const pets = data?.pets;
+  const vaccines = data?.vaccines;
+  const tasks = data?.tasks;
+  const now = data?.now ?? new Date();
 
   const upNext = vaccines ? splitVaccines(vaccines).due[0] : undefined;
   const upNextPet = upNext ? pets?.find((pet) => pet.id === upNext.petId) : undefined;
@@ -66,6 +88,7 @@ export default function TodayScreen() {
       {upNext && upNextPet ? (
         <View style={styles.content}>
           <UpNextCard
+            now={now}
             pet={upNextPet}
             vaccine={upNext}
             onDone={() =>
@@ -85,7 +108,18 @@ export default function TodayScreen() {
         </View>
       )}
 
-      {vaccines && hasUpcomingReminder(vaccines) && <ReminderPermissionCard />}
+      {vaccines && tasks && hasUpcomingReminder(vaccines, tasks, now) && (
+        <ReminderPermissionCard />
+      )}
+
+      {pets && tasks && (
+        <TodayTasks
+          hasAnyTask={tasks.length > 0}
+          items={tasksForToday(tasks, now)}
+          pets={pets}
+          onToggle={toggleTask}
+        />
+      )}
     </ScrollView>
   );
 }

@@ -18,6 +18,9 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
 | Veri saklama | Şimdilik telefonda (AsyncStorage), hesap sistemi gelince sunucuya taşınacak | Kesin |
+| Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
+| Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
+| Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
 | Sunucu | Henüz seçilmedi | Açık |
 
 ## İlk sürüm: tasarımdan gelen 11 ekran
@@ -31,7 +34,7 @@ Tasarımdaki adlar `screens.html` içindeki `data-screen` değerleridir.
 | Bugün | `home` | Yaklaşan aşılar ve günün görevleri, kayıp modu düğmesi. Randevu düğmesi yok |
 | Sağlık kaydı | `records` | Kayıtlar elle girilir ve "Elle girildi" yazar. Tarama ve randevu düğmesi yok |
 | Kilo | `weight` | Kayıt ve grafik. Sağlıklı aralık yalnızca kullanıcı girerse görünür |
-| Hatırlatmalar | `lock-daily` | Bildirim ve "Verildi" ile "1 saat sonra" seçenekleri. Widget yok |
+| Hatırlatmalar | `lock-daily` | Bildirim ve "Yapıldı" ile "1 saat sonra" seçenekleri. Widget yok |
 | Kayıp modu başlatma | `start-lost` | Basılı tutarak başlar. Listede yalnızca gerçekten olacak şeyler yazar |
 | Arama | `lost` | Harita, ihbarlar, ilanı paylaşma, bulundu. Komşu sayısı ve arama düğmesi yok |
 | İlan | `poster` | Story, gönderi ve A4 biçimleri, QR ve bağlantı. Telefon numarası yok |
@@ -46,6 +49,7 @@ Bu ekranlar yeni özellik değil, onaylanan özelliklerin çalışması için ge
 - Aşı, tedavi ve ziyaret kaydı ekleme formu (tarama olmadığı için şart)
 - Kilo ekleme formu
 - Görev ve hatırlatma ekleme formu
+- Tüm görevler listesi (bugün görünmeyen görevleri düzeltmek ve silmek için)
 - Hayvanlar listesi (alt menüdeki sekme için)
 - Sağlık kaydının Tedaviler ve Ziyaretler bölümleri
 - Ayarlar ve hesap silme (Apple, hesap açılan uygulamalarda hesap silmeyi uygulama içinde ister)
@@ -81,13 +85,14 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - [ ] Hayvan düzenleme ve silmeyi ekle (Hayvanlar listesiyle birlikte)
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
-- [ ] Görev ve ilaç hatırlatmalarında "Verildi" ve "1 saat sonra" seçeneklerini ekle (aşılarda şimdilik yok)
+- [ ] Android sürümünde hatırlatmalara `delivery: 'alarmClock'` ayarını ve tam zamanlı alarm iznini ekle. Expo Go'da bu izin olmadığı için bildirim 27 dakika ile 1 saat arasında gecikebiliyor (taklitçide görüldü)
+- [ ] Android sürümünde düğmeye basılan bildirimin kapandığını kendi derlemede dene (Expo Go'da ekranda kalıyor)
 
 ## Yol haritası
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı bölümü (düzeltme ve silme dahil) ve aşı hatırlatmaları kodlandı. Hatırlatmalar iPhone'da denendi. Bugün'de yalnızca "sırada" kartı var. Sırada görevler, tedaviler, ziyaretler ve kilo)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı bölümü (düzeltme ve silme dahil), aşı hatırlatmaları, görevler ve Bugün listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada tedaviler, ziyaretler ve kilo)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
@@ -116,7 +121,9 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - İkon paketi çok büyük. İkonları tek tek al: `phosphor-react-native/src/icons/Check`.
 - `android emulator create` istenmeyen ek bir telefon görüntüsü indiriyor. Sanal telefon oluştururken `avdmanager` kullan. `android` aracını `--no-metrics` ile çalıştır.
 - Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
-- Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç.
+- Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç. `adb root` bu yönlendirmeyi siler, yeniden çalıştır.
+- Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
+- Uygulama arka plandan dönünce ekran yenilensin diye tarih hesapları veriyle birlikte okunan `now` değerini kullanıyor. React Compiler hesabı önbelleğe aldığı için bileşen içindeki `new Date()` eski kalabiliyor.
 
 ## Pazar bilgisi (5 Kasım 2026'da kontrol edildi)
 
