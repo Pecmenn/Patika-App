@@ -1,13 +1,28 @@
+import { Redirect, router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { WelcomeCollage } from '@/components/welcome-collage';
 import { colors, fonts } from '@/constants/theme';
+import { usePets } from '@/hooks/use-pets';
 
 const MAX_CONTENT_WIDTH = 430;
 
-export default function WelcomeScreen() {
+// Uygulamanın giriş noktası: hayvan varsa Bugün'e, yoksa Karşılama'ya gider.
+export default function IndexScreen() {
+  const pets = usePets();
+
+  if (pets === null) {
+    return null;
+  }
+  if (pets.length > 0) {
+    return <Redirect href="/today" />;
+  }
+  return <Welcome />;
+}
+
+function Welcome() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const contentWidth = Math.min(width, MAX_CONTENT_WIDTH);
@@ -30,7 +45,7 @@ export default function WelcomeScreen() {
         </ScrollView>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <Button label="İlk hayvanını ekle" />
+          <Button label="İlk hayvanını ekle" onPress={() => router.push('/add-pet')} />
           <Button label="Zaten hesabım var" variant="text" />
         </View>
       </View>

@@ -20,7 +20,12 @@ export const colors = {
 // Bu adlar src/app/_layout.tsx içinde yüklenen yazı tipleriyle aynı olmalı.
 export const fonts = {
   display: 'Unbounded_700Bold',
+  displaySemi: 'Unbounded_600SemiBold',
   ui: 'Figtree_500Medium',
+  uiSemi: 'Figtree_600SemiBold',
   uiBold: 'Figtree_700Bold',
   uiHeavy: 'Figtree_800ExtraBold',
 } as const;
+
+export const cardShadow =
+  '0 1px 2px rgba(29, 36, 82, 0.04), 0 10px 24px -16px rgba(29, 36, 82, 0.18)';

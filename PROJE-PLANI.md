@@ -17,6 +17,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
 | Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
+| Veri saklama | Şimdilik telefonda (AsyncStorage), hesap sistemi gelince sunucuya taşınacak | Kesin |
 | Sunucu | Henüz seçilmedi | Açık |
 
 ## İlk sürüm: tasarımdan gelen 11 ekran
@@ -26,7 +27,7 @@ Tasarımdaki adlar `screens.html` içindeki `data-screen` değerleridir.
 | Ekran | Tasarımdaki adı | İlk sürümde nasıl çalışacak |
 |---|---|---|
 | Karşılama | `welcome` | Apple ile girişe götürür |
-| Hayvan ekleme | `add-pet` | Ad, tür, ırk, fotoğraf, doğum tarihi veya yaklaşık yaş |
+| Hayvan ekleme | `add-pet` | Tek adım. Ad ve tür zorunlu; ırk (serbest metin), fotoğraf, doğum tarihi veya yaklaşık yaş isteğe bağlı |
 | Bugün | `home` | Yaklaşan aşılar ve günün görevleri, kayıp modu düğmesi. Randevu düğmesi yok |
 | Sağlık kaydı | `records` | Kayıtlar elle girilir ve "Elle girildi" yazar. Tarama ve randevu düğmesi yok |
 | Kilo | `weight` | Kayıt ve grafik. Sağlıklı aralık yalnızca kullanıcı girerse görünür |
@@ -76,13 +77,16 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
-- [ ] Karşılama ekranındaki düğmeleri bağla (hayvan ekleme ve Apple ile giriş hazır olunca)
+- [ ] Karşılama ekranındaki "Zaten hesabım var" düğmesini bağla (Apple ile giriş hazır olunca)
+- [ ] Hayvan düzenleme ve silmeyi ekle (Hayvanlar listesiyle birlikte)
+- [ ] Tarih seçicideki eski `onChange` kullanımını `onValueChange` ve `onDismiss` ile değiştir (sunucu uyarı veriyor)
+- [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 
 ## Yol haritası
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama ekranı kodlandı)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama ve Hayvan ekleme kodlandı, Bugün yalnızca iskelet)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
@@ -92,6 +96,14 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - **Şimdilik:** Kod Windows'ta yazılıyor. Sonuç iPhone'da Expo Go uygulamasıyla, tarayıcıda da web önizlemesiyle görülüyor. Windows'ta sanal iPhone çalışmıyor.
 - **Sonra:** Expo Go sınırlı bir deneme aracı. Ek yerel modül (uygulamanın telefon özelliklerine bağlanan parçası) gerektiğinde uygulamanın kendi geliştirme sürümü derlenecek. Bunun iPhone'da çalışması için Apple geliştirici üyeliği gerekecek.
 - **Yayın:** Derleme ve App Store'a gönderim EAS (Expo'nun bulut servisi) ile yapılabiliyor, Mac şart değil. EAS ücretlerine henüz bakılmadı.
+
+**Windows'tan iPhone testi (5 Kasım 2026 araştırması):** Sanal iPhone yalnızca macOS'ta çalışıyor, ama uzaktaki bir Mac'te çalışanı Windows'tan kullanılabiliyor.
+
+- **Kendi Mac'imiz (önerilen, henüz denenmedi):** Kod Windows'ta kalır, sanal iPhone Mac'te açılır, SSH ile yönetilir. Ücretsiz, ama Mac'in açık ve aynı ağda olması, Xcode kurulması gerekir.
+- **Expo Simulators:** Tam ihtiyacımız olan hizmet, Claude Code ile kullanılabiliyor. Sınırlı önizlemede, bekleme listesi var: https://expo.dev/services/simulators
+- **Appetize:** Bulutta sanal iPhone, tarayıcıdan. Ücretsiz plan ayda 30 dakika, ücretli plan 59 dolardan başlıyor.
+- **GitHub Actions veya EAS Maestro:** Betikli test için. Canlı oturum yok.
+- **macOS sanal makinesi kullanılmaz:** Apple lisansı Apple donanımı dışında izin vermiyor.
 
 **Bu projede öğrenilenler:**
 

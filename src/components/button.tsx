@@ -5,17 +5,25 @@ import { colors, fonts } from '@/constants/theme';
 type ButtonProps = {
   label: string;
   variant?: 'ink' | 'text';
+  disabled?: boolean;
   onPress?: () => void;
 };
 
-export function Button({ label, variant = 'ink', onPress }: ButtonProps) {
+export function Button({ label, variant = 'ink', disabled = false, onPress }: ButtonProps) {
   const isInk = variant === 'ink';
 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.base, isInk && styles.ink, pressed && styles.pressed]}>
+      style={({ pressed }) => [
+        styles.base,
+        isInk && styles.ink,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}>
       <Text style={[styles.label, isInk && styles.labelOnInk]}>{label}</Text>
     </Pressable>
   );
@@ -34,6 +42,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  disabled: {
+    opacity: 0.35,
   },
   label: {
     fontFamily: fonts.uiBold,
