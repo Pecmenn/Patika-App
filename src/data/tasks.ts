@@ -1,6 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import { createChangeSignal } from '@/lib/change-signal';
+import { newId, readCollection, updateCollection } from '@/data/local-store';
 
 export type TaskRepeat = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -23,31 +21,21 @@ export type Task = {
 
 export type TaskFields = Omit<Task, 'id' | 'completedDates' | 'snooze'>;
 
-// Şimdilik telefonda saklanıyor. Sunucuya geçince yalnızca bu dosya değişecek.
-const STORAGE_KEY = 'patika.tasks.v1';
-
-const changes = createChangeSignal();
-export const subscribeToTasks = changes.subscribe;
-
-export async function listTasks(): Promise<Task[]> {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
-  return stored ? (JSON.parse(stored) as Task[]) : [];
-}
-
-async function saveTasks(tasks: Task[]) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  changes.notify();
+export function listTasks(): Promise<Task[]> {
+  return readCollection<Task>('tasks');
 }
 
 async function changeTask(id: string, change: (task: Task) => Task) {
-  const tasks = await listTasks();
-  await saveTasks(tasks.map((task) => (task.id === id ? change(task) : task)));
+  await updateCollection<Task>('tasks', (tasks) =>
+    tasks.map((task) => (task.id === id ? change(task) : task)),
+  );
 }
 
 export async function addTask(fields: TaskFields): Promise<void> {
-  const tasks = await listTasks();
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  await saveTasks([...tasks, { ...fields, id, completedDates: [], snooze: null }]);
+  await updateCollection<Task>('tasks', (tasks) => [
+    ...tasks,
+    { ...fields, id: newId(), completedDates: [], snooze: null },
+  ]);
 }
 
 export async function updateTask(id: string, fields: TaskFields): Promise<void> {
@@ -55,13 +43,11 @@ export async function updateTask(id: string, fields: TaskFields): Promise<void> 
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const tasks = await listTasks();
-  await saveTasks(tasks.filter((task) => task.id !== id));
+  await updateCollection<Task>('tasks', (tasks) => tasks.filter((task) => task.id !== id));
 }
 
 export async function deleteTasksOfPet(petId: string): Promise<void> {
-  const tasks = await listTasks();
-  await saveTasks(tasks.filter((task) => task.petId !== petId));
+  await updateCollection<Task>('tasks', (tasks) => tasks.filter((task) => task.petId !== petId));
 }
 
 export async function setTaskCompleted(id: string, date: string, completed: boolean): Promise<void> {

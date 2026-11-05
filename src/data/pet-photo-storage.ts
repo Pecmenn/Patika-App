@@ -4,15 +4,19 @@ function photosDirectory() {
   return new Directory(Paths.document, 'pet-photos');
 }
 
-// Seçilen fotoğraf geçici klasörde durur ve silinebilir, bu yüzden kalıcı klasöre kopyalanır.
-// Tam yol uygulama güncellenince değişebildiği için yalnızca dosya adı saklanır.
-export async function storePetPhoto(sourceUri: string): Promise<string> {
+function ensurePhotosDirectory() {
   const directory = photosDirectory();
   if (!directory.exists) {
     directory.create();
   }
+  return directory;
+}
+
+// Seçilen fotoğraf geçici klasörde durur ve silinebilir, bu yüzden kalıcı klasöre kopyalanır.
+// Tam yol uygulama güncellenince değişebildiği için yalnızca dosya adı saklanır.
+export async function storePetPhoto(sourceUri: string): Promise<string> {
   const fileName = `${Date.now()}.jpg`;
-  await new File(sourceUri).copy(new File(directory, fileName));
+  await new File(sourceUri).copy(new File(ensurePhotosDirectory(), fileName));
   return fileName;
 }
 
@@ -21,6 +25,25 @@ export function deletePetPhoto(photo: string) {
   if (file.exists) {
     file.delete();
   }
+}
+
+export function deleteAllPetPhotos() {
+  const directory = photosDirectory();
+  if (directory.exists) {
+    directory.delete();
+  }
+}
+
+export function petPhotoExists(photo: string) {
+  return new File(photosDirectory(), photo).exists;
+}
+
+export function readPetPhotoBytes(photo: string) {
+  return new File(photosDirectory(), photo).arrayBuffer();
+}
+
+export async function downloadPetPhoto(url: string, photo: string) {
+  await File.downloadFileAsync(url, new File(ensurePhotosDirectory(), photo));
 }
 
 export function resolvePetPhotoUri(photo: string) {

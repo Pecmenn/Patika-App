@@ -13,7 +13,7 @@ import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listHealthRecords } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
-import { listTasks, setTaskCompleted, subscribeToTasks } from '@/data/tasks';
+import { listTasks, setTaskCompleted } from '@/data/tasks';
 import { listVisits } from '@/data/visits';
 import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
@@ -51,7 +51,7 @@ async function toggleTask({ task, date, isDone }: TodayTask) {
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const data = useFocusData(loadToday, subscribeToTasks);
+  const data = useFocusData(loadToday);
   const session = useSession();
   const givenName = session?.user.user_metadata.given_name as string | undefined;
   const pets = data?.pets;

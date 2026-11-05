@@ -47,8 +47,17 @@ export async function signInWithApple() {
   }
 }
 
+// Yalnızca bu telefondan çıkar. Başka telefondaki oturuma dokunmaz ve internet olmadan da çalışır.
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error) {
+    throw error;
+  }
+}
+
+// Yalnızca taklitçide eşitlemeyi denemek için. Sunucuda bu giriş türü normalde kapalıdır.
+export async function signInForDevelopment() {
+  const { error } = await supabase.auth.signInAnonymously();
   if (error) {
     throw error;
   }

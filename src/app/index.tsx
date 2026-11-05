@@ -9,6 +9,7 @@ import { colors, fonts } from '@/constants/theme';
 import { listPets } from '@/data/pets';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { useSession } from '@/hooks/use-session';
+import { useSyncStatus } from '@/hooks/use-sync-status';
 
 const MAX_CONTENT_WIDTH = 430;
 
@@ -19,6 +20,7 @@ const REQUIRES_SIGN_IN = Platform.OS === 'ios';
 export default function IndexScreen() {
   const pets = useFocusData(listPets);
   const session = useSession();
+  const sync = useSyncStatus();
 
   if (pets === null || session === undefined) {
     return null;
@@ -27,10 +29,12 @@ export default function IndexScreen() {
   if (isSignedIn && pets.length > 0) {
     return <Redirect href="/today" />;
   }
-  return <Welcome isSignedIn={isSignedIn} />;
+  // Yeni telefonda kayıtlar sunucudan gelene kadar "İlk hayvanını ekle" gösterilmez.
+  const isRestoring = session !== null && !sync.hasPulled && !sync.hasError;
+  return <Welcome isRestoring={isRestoring} isSignedIn={isSignedIn} />;
 }
 
-function Welcome({ isSignedIn }: { isSignedIn: boolean }) {
+function Welcome({ isRestoring, isSignedIn }: { isRestoring: boolean; isSignedIn: boolean }) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const contentWidth = Math.min(width, MAX_CONTENT_WIDTH);
@@ -53,11 +57,11 @@ function Welcome({ isSignedIn }: { isSignedIn: boolean }) {
         </ScrollView>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          {isSignedIn ? (
+          {isRestoring && <Text style={styles.restoring}>Kayıtların getiriliyor...</Text>}
+          {!isRestoring && isSignedIn && (
             <Button label="İlk hayvanını ekle" onPress={() => router.push('/add-pet')} />
-          ) : (
-            <AppleSignInButton />
           )}
+          {!isRestoring && !isSignedIn && <AppleSignInButton />}
         </View>
       </View>
     </View>
@@ -96,6 +100,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.ui,
     fontSize: 16,
     lineHeight: 23,
+    color: colors.ink2,
+  },
+  restoring: {
+    paddingVertical: 18,
+    textAlign: 'center',
+    fontFamily: fonts.uiBold,
+    fontSize: 16,
     color: colors.ink2,
   },
   actions: {

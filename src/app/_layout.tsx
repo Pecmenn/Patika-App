@@ -14,6 +14,7 @@ import { AppState } from 'react-native';
 
 import { NotificationObserver } from '@/components/notification-observer';
 import { colors } from '@/constants/theme';
+import { startSync } from '@/data/sync';
 import { configureReminders, refreshReminders } from '@/lib/reminders';
 
 SplashScreen.preventAutoHideAsync();
@@ -46,6 +47,8 @@ export default function RootLayout() {
     });
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => startSync(), []);
 
   if (!ready) {
     return null;

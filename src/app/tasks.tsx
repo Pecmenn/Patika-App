@@ -8,7 +8,7 @@ import { GlassButton } from '@/components/glass-button';
 import { TaskRow } from '@/components/task-row';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { listPets, type Pet } from '@/data/pets';
-import { listTasks, subscribeToTasks, type Task } from '@/data/tasks';
+import { listTasks, type Task } from '@/data/tasks';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { toDateKey } from '@/lib/dates';
 import { pendingOccurrence, scheduleLabel } from '@/lib/tasks';
@@ -49,7 +49,7 @@ function TaskGroup({ title, tasks, pets }: { title?: string; tasks: Task[]; pets
 
 export default function TasksScreen() {
   const insets = useSafeAreaInsets();
-  const data = useFocusData(loadTasksScreen, subscribeToTasks);
+  const data = useFocusData(loadTasksScreen);
 
   if (!data) {
     return null;

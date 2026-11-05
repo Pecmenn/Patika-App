@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { newId, readCollection, updateCollection } from '@/data/local-store';
 
 export type Species = 'cat' | 'dog' | 'rabbit' | 'bird';
 
@@ -16,29 +16,20 @@ export type Pet = {
 
 export type NewPet = Omit<Pet, 'id'>;
 
-// Şimdilik telefonda saklanıyor. Sunucuya geçince yalnızca bu dosya değişecek.
-const STORAGE_KEY = 'patika.pets.v1';
-
-export async function listPets(): Promise<Pet[]> {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
-  return stored ? (JSON.parse(stored) as Pet[]) : [];
+export function listPets(): Promise<Pet[]> {
+  return readCollection<Pet>('pets');
 }
 
 export async function addPet(newPet: NewPet): Promise<void> {
-  const pets = await listPets();
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...pets, { ...newPet, id }]));
+  await updateCollection<Pet>('pets', (pets) => [...pets, { ...newPet, id: newId() }]);
 }
 
 export async function updatePet(id: string, changes: NewPet): Promise<void> {
-  const pets = await listPets();
-  await AsyncStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(pets.map((pet) => (pet.id === id ? { ...changes, id } : pet))),
+  await updateCollection<Pet>('pets', (pets) =>
+    pets.map((pet) => (pet.id === id ? { ...changes, id } : pet)),
   );
 }
 
 export async function deletePet(id: string): Promise<void> {
-  const pets = await listPets();
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pets.filter((pet) => pet.id !== id)));
+  await updateCollection<Pet>('pets', (pets) => pets.filter((pet) => pet.id !== id));
 }

@@ -1,31 +1,67 @@
 import { router } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { GlassButton } from '@/components/glass-button';
 import { cardShadow, colors, fonts } from '@/constants/theme';
+import { clearLocalData, flushBeforeSignOut, type SyncStatus } from '@/data/sync';
 import { useSession } from '@/hooks/use-session';
-import { signOut } from '@/lib/auth';
+import { useSyncStatus } from '@/hooks/use-sync-status';
+import { signInForDevelopment, signOut } from '@/lib/auth';
 
 async function leave() {
   try {
     await signOut();
+    await clearLocalData();
   } catch (error) {
     console.warn('Çıkış yapılamadı', error);
-    Alert.alert('Çıkış yapılamadı', 'Lütfen bağlantını kontrol edip tekrar dene.');
+    Alert.alert('Çıkış yapılamadı', 'Lütfen tekrar dene.');
     return;
   }
   router.dismissAll();
   router.replace('/');
 }
 
-function confirmLeave() {
-  Alert.alert('Çıkış yapılsın mı?', 'Kayıtların bu telefonda kalır. Tekrar girince görürsün.', [
-    { text: 'Vazgeç', style: 'cancel' },
-    { text: 'Çıkış yap', onPress: leave },
-  ]);
+async function confirmLeave() {
+  let pendingCount = 0;
+  try {
+    pendingCount = await flushBeforeSignOut();
+  } catch (error) {
+    console.warn('Son eşitleme yapılamadı', error);
+  }
+
+  if (pendingCount > 0) {
+    Alert.alert(
+      'Gönderilmemiş değişiklikler var',
+      `${pendingCount} değişiklik henüz sunucuya gitmedi. Şimdi çıkarsan bunlar kaybolur. İnternete bağlanıp yeniden denemeni öneririz.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        { text: 'Yine de çık', style: 'destructive', onPress: leave },
+      ],
+    );
+    return;
+  }
+
+  Alert.alert(
+    'Çıkış yapılsın mı?',
+    'Kayıtların sunucuda duruyor, tekrar girince geri gelir. Bu telefondaki kopyası silinir.',
+    [
+      { text: 'Vazgeç', style: 'cancel' },
+      { text: 'Çıkış yap', onPress: leave },
+    ],
+  );
+}
+
+function backupLabel({ isSyncing, pendingCount, hasError }: SyncStatus) {
+  if (isSyncing) {
+    return 'Eşitleniyor...';
+  }
+  if (pendingCount > 0) {
+    return `${pendingCount} değişiklik internet bekliyor`;
+  }
+  return hasError ? 'Sunucuya ulaşılamadı, sonra yeniden denenecek' : 'Kayıtların sunucuda';
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -40,6 +76,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const session = useSession();
+  const sync = useSyncStatus();
   const fullName = session?.user.user_metadata.full_name as string | undefined;
   const email = session?.user.email;
 
@@ -64,11 +101,29 @@ export default function SettingsScreen() {
         <Row label="Giriş yöntemi" value={session ? 'Apple ile giriş' : 'Giriş yapılmadı'} />
         {fullName ? <Row label="Ad" value={fullName} /> : null}
         {email ? <Row label="E-posta" value={email} /> : null}
+        {session ? <Row label="Yedekleme" value={backupLabel(sync)} /> : null}
       </View>
 
       {session && (
         <View style={styles.action}>
           <Button label="Çıkış yap" size="small" variant="text" onPress={confirmLeave} />
+        </View>
+      )}
+
+      {/* Apple ile giriş Android'de yok. Eşitlemeyi taklitçide denemek için, yalnızca geliştirirken. */}
+      {__DEV__ && !session && Platform.OS === 'android' && (
+        <View style={styles.action}>
+          <Button
+            label="Deneme hesabıyla gir"
+            size="small"
+            variant="text"
+            onPress={() =>
+              signInForDevelopment().catch((error) => {
+                console.warn('Deneme girişi başarısız', error);
+                Alert.alert('Deneme girişi başarısız', String(error));
+              })
+            }
+          />
         </View>
       )}
     </ScrollView>

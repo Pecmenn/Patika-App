@@ -17,7 +17,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
 | Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
-| Veri saklama | Şimdilik telefonda (AsyncStorage), hesap sistemi gelince sunucuya taşınacak | Kesin |
+| Veri saklama | Telefon önce: kayıt önce telefona yazılır (AsyncStorage), internet olunca Supabase'e gider. Çakışmada son değişiklik kazanır. Çıkış yapınca telefondaki kopya silinir, gönderilmemiş değişiklik varsa önce uyarır | Kesin |
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
 | Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
 | Kilo kaydı | Kilo, tarih ve not. Sağlıklı aralığı uygulama önermez, kullanıcı veterinerinden öğrendiğini yazar. Bugün'deki kart en son tartılan hayvanı gösterir | Kesin |
@@ -88,7 +88,7 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Hesap silmeyi ekle: sunucu işlevi (gizli anahtar uygulamada duramaz) ve Apple'ın istediği giriş izni iptali. Apple geliştirici üyeliği gerektirir, App Store'dan önce şart
 - [ ] Kendi derlememize geçince Supabase'de Apple "Client IDs" listesine uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni)
-- [ ] Sunucuya taşıma aşamasında çıkış yapınca telefondaki kayıtları temizle (şimdilik telefonda kalıyor)
+- [ ] Yayından önce Supabase'teki deneme (anonim) kullanıcılarını ve verilerini temizle. Hesap silerken önce fotoğraflar silinmeli, fotoğrafı olan kullanıcı silinemiyor
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
@@ -119,14 +119,14 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
 | Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | 5 puan |
-| Sunucu ve verilerin sunucuya taşınması | 12 | Devam ediyor (Supabase seçildi) |
+| Sunucu ve verilerin sunucuya taşınması | 12 | Bitti |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Başlamadı |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Başlamadı |
 | Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: %39**
+**Toplam: %51**
 
 ## Test ve derleme
 
@@ -154,6 +154,9 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
 - Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç. `adb root` bu yönlendirmeyi siler, yeniden çalıştır.
 - Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
+- Testler: `npm test` tarih, görev, kilo ve eşitleme kurallarını sınar. `npm run test:access` iki hesapla gerçek sunucudaki erişim kurallarını sınar; önce panelde anonim girişi geçici olarak aç, sonra kapat. Sunucu kuralı değişince mutlaka çalıştır.
+- Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, anonim giriş açıkken). Yeni telefon sınaması için `adb root` sonrası `databases/RKStorage-scoped-experience-...` dosyasını ve `pet-photos` klasörünü sil, oturum `files/SQLite/ExpoSQLiteStorage` içinde kalır.
+- `phone.ps1` Türkçe büyük harfi eşleştiremiyor: onay düğmesine "ÇIKIŞ YAP" gibi tam yazılışıyla dokun.
 - Expo Go'nun dişli düğmesi sağ üstte duruyor ve oradaki düğmelerin üstüne biniyor. Taklitçide `adb shell input swipe 971 110 971 1700 600` ile kenara çek. Gerçek uygulamada yok.
 - Alt menüde `left` ve `right` işe yaramıyor, kenar boşluğu `marginHorizontal` ile veriliyor.
 - Uygulama arka plandan dönünce ekran yenilensin diye tarih hesapları veriyle birlikte okunan `now` değerini kullanıyor. React Compiler hesabı önbelleğe aldığı için bileşen içindeki `new Date()` eski kalabiliyor.
