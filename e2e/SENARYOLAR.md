@@ -24,7 +24,7 @@ Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, s
 Hayvan fotoğrafının yüklenmesi, yer seçmeden başlatamama, kısa dokunuşun başlatmaması, haritadan yer seçimi, ilan fotoğrafı, canlı ihbar, bildirim, arama düğmesi, ihbar türleri, üç ilan biçimi, QR'ın ekrandan, görselden ve PDF içinden okunması, A4'ün tek sayfa ve sayfayı doldurması, bağlantı kopyalama, Android Chrome'dan ihbar, bulundu (vazgeçme, fotoğrafın silinmesi), QR ekranı, yazdırma ekranı, ilan yokken haber, haberden kayıp modu başlatma.
 
 ### Dayanıklılık (taklitçi)
-Sunucu kapalıyken kayıt, uyarı ve geri gelince eşitleme, sunucu sonrası canlı bağlantı, oturum düşünce kayıtların kalması, başka hesapla girişte soru (vazgeç, aktar), yeni telefona kayıt ve fotoğraf gelmesi, çıkış.
+Sunucu kapalıyken kayıt, uyarı ve geri gelince eşitleme, sunucu sonrası canlı bağlantı, oturum düşünce kayıtların kalması, başka hesapla girişte soru (vazgeç, aktar), yeni telefona kayıt ve fotoğraf gelmesi, çıkış. Hesap silme: açık ilan uyarısı, vazgeçme, sunucu kapalıyken onay sorulmaması, onaydan sonra sunucu giderse telefonda hiçbir şeyin silinmemesi, başarıda sunucu ve telefonun temizlenmesi, QR sayfasının kapanması, başka hesaba dokunulmaması.
 
 ### Sunucu
 Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı, süresi dolmuş, değiştirilmiş, imzasız), tüm korumalı uçlar, kullanıcılar arası erişim, son değişiklik kazanır, ileri saat, yarım emoji, sayfalama, geçersiz girdiler, fotoğraf sınırları ve klasör atlatma, GPS ve üst verinin silinmesi, kayıp ilanı kuralları, herkese açık alanlar, ihbar sınırları, haberin ilana eklenmesi, hayvan ve hesap silme, canlı bağlantı, ayarlar, güvenlik başlıkları.
@@ -33,7 +33,7 @@ Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı,
 Tüm durumlar (kayıp, bulundu, ilan yok, bulunamadı, sunucu hatası), form (boş, konum izni var ve yok, gönderim hatası, çift basış, sınırlar), kötü niyetli metin, dış istek olmaması, yatay taşma, dokunma boyutu, yazı tipleri, sayfa ağırlığı.
 
 ### Piksel karşılaştırması
-- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu.
+- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu, hesap silme onayı.
 - **Kayıp sayfası:** 13 durum, 3 ekran ölçüsünde.
 
 ## Kapsanmayanlar
@@ -46,6 +46,7 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - `http` ve `ws` ile gerçek ağ üzerinden bağlantı (taklitçi hep `127.0.0.1` kullanıyor)
 - Kilit ekranından "Yapıldı" sonrası uygulamanın açılması
 - Apple Haritalar, "Konumumu kullan"
+- Hesap silmede Apple izni iptali (henüz yazılmadı, Apple geliştirici üyeliği gerekiyor)
 
 ### Taklitçide yapılamıyor
 - **"Konumumu kullan":** Taklitçide Google'ın konum doğruluğu izni gerekiyor, bu izin bilerek verilmedi. iPhone'da denenecek.

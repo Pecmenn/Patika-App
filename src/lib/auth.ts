@@ -98,8 +98,13 @@ export async function signOut() {
   await clearSession();
 }
 
-// Yalnızca geliştirirken: Apple ile giriş olmayan taklitçi ve tarayıcıda denemek için.
-// Gerçek sunucuda bu giriş kapalıdır.
+// Hesabı ve sunucudaki tüm verileri siler. Sunucu onaylamazsa hata verir, oturum ve kayıtlar durur.
+export async function deleteAccount() {
+  await apiRequest('/v1/me', { method: 'DELETE' });
+  await clearSession();
+}
+
+// Yalnızca geliştirirken: tek kullanımlık boş bir hesap açar. Gerçek sunucuda bu giriş kapalıdır.
 export async function signInForDevelopment() {
   await finishSignIn(await apiRequest<Session>('/v1/auth/dev', { method: 'POST', isPublic: true }));
 }

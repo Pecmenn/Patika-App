@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppleSignInButton } from '@/components/apple-sign-in-button';
 import { Button } from '@/components/button';
+import { DevSignInButton } from '@/components/dev-sign-in-button';
 import { WelcomeCollage } from '@/components/welcome-collage';
 import { colors, fonts } from '@/constants/theme';
 import { listPets } from '@/data/pets';
@@ -62,6 +63,8 @@ function Welcome({ isRestoring, isSignedIn }: { isRestoring: boolean; isSignedIn
             <Button label="İlk hayvanını ekle" onPress={() => router.push('/add-pet')} />
           )}
           {!isRestoring && !isSignedIn && <AppleSignInButton />}
+          {/* iPhone'da girişsiz Ayarlar'a ulaşılamıyor. Mağaza sürümünde bu düğme yok. */}
+          {__DEV__ && !isRestoring && !isSignedIn && <DevSignInButton />}
         </View>
       </View>
     </View>

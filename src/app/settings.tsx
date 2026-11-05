@@ -1,15 +1,24 @@
 import { router } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
+import { useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { DevSignInButton } from '@/components/dev-sign-in-button';
 import { GlassButton } from '@/components/glass-button';
 import { cardShadow, colors, fonts } from '@/constants/theme';
+import { readActiveReports, type LostReport } from '@/data/lost-reports';
 import { clearLocalData, flushBeforeSignOut, type SyncStatus } from '@/data/sync';
 import { useSession } from '@/hooks/use-session';
 import { useSyncStatus } from '@/hooks/use-sync-status';
-import { signInForDevelopment, signOut } from '@/lib/auth';
+import { ApiError } from '@/lib/api';
+import { deleteAccount, signOut } from '@/lib/auth';
+
+function goToStart() {
+  router.dismissAll();
+  router.replace('/');
+}
 
 async function leave() {
   try {
@@ -20,8 +29,27 @@ async function leave() {
     Alert.alert('Çıkış yapılamadı', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
     return;
   }
-  router.dismissAll();
-  router.replace('/');
+  goToStart();
+}
+
+function deletionWarning(openReports: LostReport[]) {
+  const lostNote =
+    openReports.length > 0
+      ? `${openReports.map((report) => report.petName).join(', ')} için açık kayıp ilanın var. İlan sayfası kapanır, gelen ihbarlar da silinir.\n\n`
+      : '';
+  return `${lostNote}Tüm hayvanların, kayıtların ve fotoğrafların sunucudan ve bu telefondan silinir. Bastığın QR kodlar artık çalışmaz. Bu işlem geri alınamaz.`;
+}
+
+function showDeleteError(error: unknown) {
+  console.warn('Hesap silinemedi', error);
+  const isSessionOver = error instanceof ApiError && error.status === 401;
+  Alert.alert(
+    'Hesap silinemedi',
+    isSessionOver
+      ? 'Oturumun kapanmış. Uygulamayı kapatıp yeniden aç, giriş yaptıktan sonra tekrar dene.'
+      : 'Hesabı silmek için sunucuya ulaşmak gerekiyor. İnternet bağlantını kontrol edip tekrar dene.',
+    [{ text: 'Tamam' }],
+  );
 }
 
 async function confirmLeave() {
@@ -80,6 +108,51 @@ export default function SettingsScreen() {
   const fullName = session?.user.full_name;
   const email = session?.user.email;
   const providerLabel = session?.user.provider === 'apple' ? 'Apple ile giriş' : 'Deneme hesabı';
+  const [isBusy, setIsBusy] = useState(false);
+
+  async function removeAccount() {
+    setIsBusy(true);
+    try {
+      await deleteAccount();
+    } catch (error) {
+      setIsBusy(false);
+      showDeleteError(error);
+      return;
+    }
+    // Hesap artık yok. Telefondaki kopya silinemese de kullanıcı bunu doğru öğrenmeli.
+    let isPhoneCleared = true;
+    try {
+      await clearLocalData();
+    } catch (error) {
+      console.warn('Telefondaki kayıtlar silinemedi', error);
+      isPhoneCleared = false;
+    }
+    Alert.alert(
+      'Hesabın silindi',
+      isPhoneCleared
+        ? 'Tüm kayıtların sunucudan ve bu telefondan silindi.'
+        : 'Kayıtların sunucudan silindi ama bu telefondaki kopyası silinemedi. Uygulamayı kaldırırsan o da silinir.',
+      [{ text: 'Tamam' }],
+    );
+    goToStart();
+  }
+
+  async function confirmDelete() {
+    setIsBusy(true);
+    let openReports: LostReport[];
+    try {
+      openReports = await readActiveReports();
+    } catch (error) {
+      showDeleteError(error);
+      return;
+    } finally {
+      setIsBusy(false);
+    }
+    Alert.alert('Hesabın silinsin mi?', deletionWarning(openReports), [
+      { text: 'Vazgeç', style: 'cancel' },
+      { text: 'Hesabı sil', style: 'destructive', onPress: removeAccount },
+    ]);
+  }
 
   return (
     <ScrollView
@@ -106,25 +179,32 @@ export default function SettingsScreen() {
       </View>
 
       {session && (
-        <View style={styles.action}>
-          <Button label="Çıkış yap" size="small" variant="text" onPress={confirmLeave} />
-        </View>
+        <>
+          <View style={styles.action}>
+            <Button
+              label="Çıkış yap"
+              size="small"
+              variant="text"
+              disabled={isBusy}
+              onPress={confirmLeave}
+            />
+          </View>
+          <View style={styles.action}>
+            <Button
+              label={isBusy ? 'Lütfen bekle...' : 'Hesabı sil'}
+              size="small"
+              variant="text"
+              disabled={isBusy}
+              onPress={confirmDelete}
+            />
+          </View>
+        </>
       )}
 
       {/* Apple ile giriş yalnızca iPhone'da var. Taklitçi ve tarayıcıda denemek için, yalnızca geliştirirken. */}
       {__DEV__ && !session && Platform.OS !== 'ios' && (
         <View style={styles.action}>
-          <Button
-            label="Deneme hesabıyla gir"
-            size="small"
-            variant="text"
-            onPress={() =>
-              signInForDevelopment().catch((error) => {
-                console.warn('Deneme girişi başarısız', error);
-                Alert.alert('Deneme girişi başarısız', String(error));
-              })
-            }
-          />
+          <DevSignInButton />
         </View>
       )}
     </ScrollView>

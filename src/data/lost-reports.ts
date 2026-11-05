@@ -116,14 +116,19 @@ export const subscribeToSightings = sightingChanges.subscribe;
 
 const petPath = (petId: string) => `/v1/pets/${encodeURIComponent(petId)}`;
 
+// Hata gizlenmez: hesap silme onayında internet yokken "açık ilan yok" sanılmasın.
+export async function readActiveReports(): Promise<LostReport[]> {
+  const { reports } = await apiRequest<{ reports: ReportRow[] }>('/v1/lost-reports?active=true');
+  return reports.map(toReport);
+}
+
 // Bugün ekranı içindir: internet yoksa ya da giriş yapılmamışsa boş döner, ekranı durdurmaz.
 export async function listActiveReports(): Promise<LostReport[]> {
   if (!(await getSession())) {
     return [];
   }
   try {
-    const { reports } = await apiRequest<{ reports: ReportRow[] }>('/v1/lost-reports?active=true');
-    return reports.map(toReport);
+    return await readActiveReports();
   } catch (error) {
     console.warn('Kayıp ilanları okunamadı', error);
     return [];

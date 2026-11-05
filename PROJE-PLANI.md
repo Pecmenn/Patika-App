@@ -1,6 +1,6 @@
 # Patika Proje Planı
 
-Son güncelleme: 5 Kasım 2026
+Son güncelleme: 6 Kasım 2026
 
 Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan, zamanı gelince hatırlatan ve hayvan kaybolduğunda ilan ile QR sayfası sunan bir telefon uygulaması. Hedef, portfolyodaki tasarımı App Store'da yayınlanan gerçek bir ürüne dönüştürmek.
 
@@ -36,6 +36,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Basılı tutma düğmesi | 1 saniyede dolar, "Şimdi bırak" yazar, iş parmak kalkınca başlar. Doluyken parmak düğmeden kayarsa da başlar | Kesin |
 | Başka hesapla giriş | Telefondaki kayıtlar başka hesaba aitse sorulur: bu hesaba aktar, sil ya da vazgeç. Sorulmadan hiçbir şey silinmez | Kesin |
 | İlan fotoğrafı | Sunucu GPS ve diğer üst verileri siler. İlan görselinde fotoğraf kırpılmaz, kenarda zemin rengi kalır | Kesin |
+| Hesap silme | Ayarlar'da düğme, tek onay penceresi. Açık ilan varsa hayvanın adıyla uyarır. Sunucu onaylamadan telefondaki hiçbir şey silinmez, sunucuya ulaşılamıyorsa onay sorulmaz. Silinince QR sayfaları da kapanır | Kesin |
 
 ## İlk sürüm: tasarımdan gelen 11 ekran
 
@@ -99,7 +100,9 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor, Türkiye'deyse bu yükümlülük doğmayabilir. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
-- [ ] Hesap silmeyi tamamla: sunucu ucu hazır (`DELETE /v1/me`, testli). Eksik: Ayarlar'daki düğme ve Apple'ın istediği giriş izni iptali (Apple geliştirici üyeliği gerektirir). App Store'dan önce şart
+- [ ] Hesap silmeyi tamamla: düğme ve sunucu ucu hazır. Eksik: Apple'ın istediği giriş izni iptali (Apple geliştirici üyeliği gerektirir). Sunucu silme sırasında Apple'a iptal isteği gönderecek. App Store'dan önce şart
+- [ ] Kodun internette yedeği yok, iki repo da yalnızca bu bilgisayarda: özel GitHub deposu aç
+- [ ] Oturum düşünce kullanıcıya haber ver: iPhone'da uygulama açıkken oturum geçersiz olursa Bugün ekranında kalınıyor, eşitleme sessizce duruyor, giriş düğmesi ancak uygulama yeniden açılınca çıkıyor (TestFlight öncesi)
 - [ ] Kendi derlememize geçince backend'in `APPLE_AUDIENCES` ayarına uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni). `ALLOW_DEV_LOGIN` gerçek sunucuda kapalı olmalı
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Uygulama kapalıyken ihbar bildirimi: Apple geliştirici üyeliği ve kendi derlememiz gerekiyor, TestFlight'tan önce yapılacak (Expo Push Service). Şimdilik ihbarlar uygulama açıkken anında, kapalıyken açılınca görünüyor
@@ -121,7 +124,7 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
 3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı ve iPhone'da denendi. Bu aşama tamamlandı)
-4. Hesap sistemi, kendi backend'imiz, kayıp ilanı ve QR sayfası (tamamlandı, iPhone'da denendi. Yalnızca hesap silme düğmesi kaldı)
+4. Hesap sistemi, kendi backend'imiz, kayıp ilanı ve QR sayfası (tamamlandı, iPhone'da denendi. Hesap silmede yalnızca Apple izni iptali kaldı, üyelik gerektiriyor)
 5. Backend'i internete açık sunucuya alma
 6. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 7. App Store başvurusu ve Apple incelemesi
@@ -140,7 +143,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
-| Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş ve ayarlar iPhone'da denendi (5 puan). Hesap silme düğmesi ve Apple izni iptali kaldı (3 puan) |
+| Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş, ayarlar ve hesap silme düğmesi iPhone'da denendi (7 puan). Apple izni iptali üyelik bekliyor (1 puan) |
 | Kendi backend'imiz ve verilerin sunucuya taşınması | 12 | Bitti |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Bitti |
@@ -149,7 +152,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: 106 puanın 79'u, yaklaşık %75.** Kalan 27 puan: hesap silme (3), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6).
+**Toplam: 106 puanın 81'i, yaklaşık %76.** Kalan 25 puan: Apple izni iptali (1), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6).
 
 ## Test ve derleme
 
@@ -182,13 +185,14 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
 - Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç. `adb root` bu yönlendirmeyi siler, yeniden çalıştır.
 - Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
-- Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, backend'de `ALLOW_DEV_LOGIN=true`). Her basış yeni, boş bir hesap açar.
+- Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, backend'de `ALLOW_DEV_LOGIN=true`). Her basış yeni, boş bir hesap açar. iPhone'da girişsiz Ayarlar'a ulaşılamadığı için aynı düğme orada Karşılama'da duruyor. Silme gibi geri alınamayan denemelerde gerçek Apple hesabı yerine bunu kullan.
 - Taklitçide basılı tutma `adb shell input swipe X Y X Y 1400`, konum verme `adb emu geo fix BOYLAM ENLEM`. Kaydırırken ekranın kenarından kaydır, ortada harita varsa hareket haritaya gider.
 - Playwright Android sürücüsü: `device.wait` uygulama açılırken güvenilir değil, `device.info` ile yokla. Metin eşleştirmesi yazının tamamına bakar, "içinde geçiyor" için `/.*yazı.*/`. Android onay düğmeleri büyük harfli gelir.
 - Expo Go'da PDF'in yazıldığı `cache/Print` klasörüne dosya ve paylaşım modülleri erişemiyor. PDF içerik olarak alınıp kendi klasörümüze yazılıyor.
 - `File.move` ve `File.write` bu SDK'da bekleme gerektiriyor (`await`). Beklenmezse hata sessizce kaybolur, tip kontrolü de yakalamaz.
 - Expo Go'nun ekranda yüzen "Tools" düğmesi dokunuşları kendine alıyor: taklitçide arada ilk dokunuş uygulamaya ulaşmıyordu. Düğme, geliştirici menüsündeki "Tools button" anahtarıyla kapatılıyor. Gerçek uygulamada yok.
 - Piksel testinde `--update-snapshots` hiçbir şey karşılaştırmaz. Görseli yeniledikten sonra bayraksız çalıştır.
+- Piksel testinde oranlı sınır (`maxDiffPixelRatio`) yeni eklenen bir düğmeyi kaçırdı: büyük ekranda %0,1 binlerce piksel ediyor. Sınır piksel sayısıyla verilir (`maxDiffPixels`). Ekranı değiştirince karşılaştırma görseli değişmediyse test bir şey görmüyor demektir, ona bak.
 - Docker görüntüsü kayıp sayfasını içinde taşıyor: `public/` değişince yeniden derle, yoksa testler de telefon da eski sayfayı görür.
 - `phone.ps1` Türkçe büyük harfi eşleştiremiyor: onay düğmesine "ÇIKIŞ YAP" gibi tam yazılışıyla dokun.
 - Expo Go'nun dişli düğmesi sağ üstte duruyor ve oradaki düğmelerin üstüne biniyor. Taklitçide `adb shell input swipe 971 110 971 1700 600` ile kenara çek. Gerçek uygulamada yok.

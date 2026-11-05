@@ -1,5 +1,6 @@
 // Kayıp modu, ilan, QR ve haberler. 01 numaralı dosyanın bıraktığı deneme hesabı ve hayvanla devam eder.
 import { execFileSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -34,6 +35,10 @@ const LINK = `${API_URL}/p/${CODE}`;
 const DELETE_BUTTON = /^S[İIiı][Ll]$/;
 const CANCEL_BUTTON = /^V[Aa][Zz][Gg].*/;
 const FOUND_BUTTON = 'EVET, BULUNDU';
+const DELETE_ACCOUNT_BUTTON = /^HESABI S[İI]L$/;
+const OK_BUTTON = /^(TAMAM|Tamam)$/;
+// Mesaj birden çok satır: Android eşleştirmesi "." ile satır sonunu geçemiyor.
+const LOST_WARNING = /[\s\S]*Silinecek için açık kayıp ilanın var[\s\S]*/;
 // Haritanın başlangıç noktası. Geçmişte seçilen yer yerine hep bu nokta kaydoluyordu.
 const MAP_START = { latitude: 41.015, longitude: 28.979 };
 
@@ -651,4 +656,96 @@ test('çıkış: onay istenir, telefon temizlenir, sunucudaki oturum kapanır, k
   expect(rows).toHaveLength(0);
   const items = await query('SELECT id FROM user_items WHERE owner_id = ?', [owner]);
   expect(items.length, 'sunucudaki kayıtlar durur').toBeGreaterThan(0);
+});
+
+test('hesap silme: sunucu yokken hiçbir şey silinmez, vazgeçilebilir, onaylanınca her şey gider', async () => {
+  test.setTimeout(300_000);
+  await phone.tap('İlk hayvanını ekle');
+  await phone.fill('Ad', 'Silinecek');
+  await phone.hideKeyboard();
+  await phone.tap('Kedi');
+  await phone.tap('Kaydet');
+  await phone.see('Hayvanım kayıp');
+  await phone.tap('Hayvanlar');
+  await phone.tapLabel('Ayarlar');
+  await phone.tap('Deneme hesabıyla gir');
+  await phone.see('Kayıtların sunucuda');
+  const account = await newestDevAccountId();
+  expect(account).not.toBe(owner);
+
+  const petRows = () =>
+    query(`SELECT id FROM user_items WHERE owner_id = ? AND collection = 'pets' AND deleted = 0`, [account]);
+  await expect.poll(async () => (await petRows()).length).toBe(1);
+  const [{ id: petId }] = await petRows();
+
+  // Açık ilan ve QR kodu sunucuda hazırlanır: bunların telefondan açılması yukarıda sınandı.
+  const code = randomBytes(6).toString('hex');
+  await query('INSERT INTO pet_tags (owner_id, pet_id, public_code) VALUES (?, ?, ?)', [account, petId, code]);
+  await query(
+    `INSERT INTO lost_reports (id, owner_id, pet_id, pet_name, species, last_seen_area, last_seen_lat, last_seen_lng, last_seen_at)
+     VALUES (UUID(), ?, ?, 'Silinecek', 'cat', 'Moda', 41, 29, CURRENT_TIMESTAMP(3))`,
+    [account, petId],
+  );
+  const accountRows = () => query('SELECT id FROM users WHERE id = ?', [account]);
+
+  await phone.tap('Hesabı sil');
+  await phone.see('Hesabın silinsin mi?');
+  await phone.see(LOST_WARNING);
+  await phone.wait(500);
+  expect(await phone.screenshot()).toMatchSnapshot('hesap-silme-onayi.png');
+  await phone.tap(CANCEL_BUTTON);
+  await phone.see('Çıkış yap');
+  expect(await accountRows(), 'vazgeçince hesap durur').toHaveLength(1);
+
+  // Sunucuya ulaşılamıyorsa onay bile sorulmaz.
+  compose('stop', 'api');
+  try {
+    await phone.tap('Hesabı sil');
+    await phone.see('Hesap silinemedi', 40_000);
+    await phone.tap(OK_BUTTON);
+  } finally {
+    compose('start', 'api');
+    await waitForApi();
+  }
+
+  // Onay penceresi açıkken sunucu giderse: telefondaki kayıtlar ve oturum durur.
+  await phone.tap('Hesabı sil');
+  await phone.see(LOST_WARNING, 40_000);
+  compose('stop', 'api');
+  try {
+    await phone.tap(DELETE_ACCOUNT_BUTTON);
+    await phone.see('Hesap silinemedi', 40_000);
+    await phone.tap(OK_BUTTON);
+    await phone.see('Çıkış yap');
+    await phone.see('Hesabı sil');
+  } finally {
+    compose('start', 'api');
+    await waitForApi();
+  }
+  expect(await accountRows(), 'silinemeyince hesap durur').toHaveLength(1);
+  await phone.tapLabel('Geri');
+  await phone.see('Silinecek');
+  await phone.tapLabel('Ayarlar');
+
+  await phone.tap('Hesabı sil');
+  await phone.see(LOST_WARNING, 40_000);
+  await phone.tap(DELETE_ACCOUNT_BUTTON);
+  await phone.see('Hesabın silindi', 40_000);
+  await phone.tap(OK_BUTTON);
+  // Karşılama ancak telefonda hayvan kalmadıysa açılır: telefon da temizlendi demektir.
+  await phone.see('İlk hayvanını ekle', 30_000);
+
+  for (const [table, column] of [
+    ['users', 'id'],
+    ['sessions', 'user_id'],
+    ['user_items', 'owner_id'],
+    ['pet_tags', 'owner_id'],
+    ['lost_reports', 'owner_id'],
+  ]) {
+    expect(await query(`SELECT 1 FROM ${table} WHERE ${column} = ?`, [account]), table).toHaveLength(0);
+  }
+  const page = await fetch(`${API_URL}/v1/public/pets/${code}`);
+  expect(page.status, 'QR sayfası kapanır').toBe(404);
+  const others = await query('SELECT id FROM user_items WHERE owner_id = ?', [owner]);
+  expect(others.length, 'başka hesabın kayıtları durur').toBeGreaterThan(0);
 });

@@ -14,7 +14,8 @@ export default defineConfig({
   timeout: 180_000,
   expect: {
     timeout: 20_000,
-    toMatchSnapshot: { maxDiffPixelRatio: 0.001, threshold: 0.1 },
+    // Oran değil piksel sayısı: %0,1 bu ekranda 2592 piksel ediyor, yeni eklenen düğme altında kalmıştı.
+    toMatchSnapshot: { maxDiffPixels: 100, threshold: 0.1 },
   },
   reporter: [['list']],
   outputDir: './e2e/test-results',
