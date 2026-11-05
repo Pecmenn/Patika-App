@@ -144,6 +144,17 @@ export async function refreshReminders({ askPermission = false } = {}) {
   }
 }
 
+export async function showSightingNotification(title: string, body: string, url: string) {
+  if ((await getReminderPermission()) !== 'granted') {
+    return;
+  }
+  const channelId = await ensureChannel();
+  await Notifications.scheduleNotificationAsync({
+    content: { title, body, data: { url } },
+    trigger: channelId ? { channelId } : null,
+  });
+}
+
 // Bildirimdeki "Yapıldı" ve "1 saat sonra" düğmeleri. Dokunulan bunlardan biri değilse false döner.
 export async function handleTaskAction({
   actionIdentifier,

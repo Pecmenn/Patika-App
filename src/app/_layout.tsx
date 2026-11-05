@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
+import { LostWatcher } from '@/components/lost-watcher';
 import { NotificationObserver } from '@/components/notification-observer';
 import { colors } from '@/constants/theme';
 import { startSync } from '@/data/sync';
@@ -71,12 +72,15 @@ export default function RootLayout() {
         <Stack.Screen name="add-weight" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-weight" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="weight-range" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="start-lost" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="found/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="index" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />
+      <LostWatcher />
     </>
   );
 }

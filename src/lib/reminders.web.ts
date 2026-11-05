@@ -18,3 +18,5 @@ export async function requestReminderPermission(): Promise<ReminderPermission> {
 export async function syncReminders() {}
 
 export async function refreshReminders(_options?: { askPermission?: boolean }) {}
+
+export async function showSightingNotification(_title: string, _body: string, _url: string) {}

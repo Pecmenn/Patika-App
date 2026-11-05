@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
+import { SirenIcon } from 'phosphor-react-native/src/icons/Siren';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +12,7 @@ import { UpNextCard } from '@/components/up-next-card';
 import { WeightCard } from '@/components/weight-card';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listHealthRecords } from '@/data/health-records';
+import { listActiveReports, subscribeToReports } from '@/data/lost-reports';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
 import { listTasks, setTaskCompleted } from '@/data/tasks';
@@ -53,6 +55,8 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const data = useFocusData(loadToday);
   const session = useSession();
+  const activeReports = useFocusData(listActiveReports, subscribeToReports);
+  const activeReport = activeReports?.[0];
   const givenName = session?.user.user_metadata.given_name as string | undefined;
   const pets = data?.pets;
   const records = data?.records;
@@ -78,7 +82,24 @@ export default function TodayScreen() {
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <Text style={styles.date}>{formatWeekday(now)}</Text>
+      <View style={styles.top}>
+        <Text style={styles.date}>{formatWeekday(now)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            activeReport
+              ? router.push({ pathname: '/lost/[id]', params: { id: activeReport.id } })
+              : router.push('/start-lost')
+          }
+          style={[styles.lostPill, activeReport && styles.lostPillActive]}>
+          <SirenIcon size={17} weight="fill" color={activeReport ? colors.ink : colors.alert} />
+          <Text
+            numberOfLines={1}
+            style={[styles.lostPillLabel, activeReport && styles.lostPillLabelActive]}>
+            {activeReport ? `${activeReport.petName} kayıp` : 'Hayvanım kayıp'}
+          </Text>
+        </Pressable>
+      </View>
       <Text accessibilityRole="header" style={styles.title}>
         {greetingFor(now)}
         {givenName ? `, ${givenName}` : ''}
@@ -189,10 +210,40 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
   },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
   date: {
+    flexShrink: 1,
     fontFamily: fonts.uiSemi,
     fontSize: 15,
     color: colors.ink3,
+  },
+  lostPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+    paddingVertical: 7,
+    paddingRight: 13,
+    paddingLeft: 10,
+    borderRadius: 999,
+    backgroundColor: colors.alertSoft,
+  },
+  lostPillActive: {
+    backgroundColor: colors.alert,
+  },
+  lostPillLabel: {
+    flexShrink: 1,
+    fontFamily: fonts.uiBold,
+    fontSize: 14,
+    color: colors.alertText,
+  },
+  lostPillLabelActive: {
+    color: colors.ink,
   },
   title: {
     marginTop: 4,

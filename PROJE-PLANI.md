@@ -21,6 +21,9 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
 | Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
 | Kilo kaydı | Kilo, tarih ve not. Sağlıklı aralığı uygulama önermez, kullanıcı veterinerinden öğrendiğini yazar. Bugün'deki kart en son tartılan hayvanı gösterir | Kesin |
+| Kayıp sayfası gizliliği | Herkese açık sayfada yalnızca ad, fotoğraf, açıklama ve semt yazısı görünür. Tam konum, sahip ve ihbarlar görünmez. Bulununca yalnızca ad ve durum kalır, herkese açık fotoğraf silinir | Kesin |
+| İhbar | Bulan kişi konum, mesaj ve isteğe bağlı iletişim bilgisi gönderir, fotoğraf yok. Hepsini yalnızca ilanın sahibi görür. Bir ilana saatte en fazla 30, toplam 500 ihbar | Kesin |
+| Harita | `react-native-maps`: iPhone'da Apple Haritalar (anahtar gerekmez), Android'de Google Haritalar (mağaza sürümü için anahtar gerekir) | Kesin |
 | Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
 | Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
 | Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
@@ -90,6 +93,11 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Kendi derlememize geçince Supabase'de Apple "Client IDs" listesine uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni)
 - [ ] Yayından önce Supabase'teki deneme (anonim) kullanıcılarını ve verilerini temizle. Hesap silerken önce fotoğraflar silinmeli, fotoğrafı olan kullanıcı silinemiyor
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
+- [ ] Uygulama kapalıyken ihbar bildirimi: Apple geliştirici üyeliği ve kendi derlememiz gerekiyor, TestFlight'tan önce yapılacak (Expo Push Service). Şimdilik ihbarlar uygulama açıkken anında, kapalıyken açılınca görünüyor
+- [ ] TestFlight'tan önce kayıp sayfasına bot koruması ekle: şu anki ihbar sınırını kötü niyetli biri doldurursa gerçek ihbarlar da engellenir
+- [ ] Bulunan ilanların ihbarlarını (iletişim bilgisi içeriyor) belli bir süre sonra otomatik sil, süreyi gizlilik metnine yaz
+- [ ] Mağaza sürümünde konum izni metnini Türkçe göster ve kullanılmayan "her zaman" izin metinlerini kaldır
+- [ ] Android sürümü için Google Haritalar anahtarı al
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
 - [ ] Android sürümünde hatırlatmalara `delivery: 'alarmClock'` ayarını ve tam zamanlı alarm iznini ekle. Expo Go'da bu izin olmadığı için bildirim 27 dakika ile 1 saat arasında gecikebiliyor (taklitçide görüldü)
@@ -99,7 +107,7 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Bu aşamanın kodu bitti)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı ve iPhone'da denendi. Bu aşama tamamlandı)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
@@ -113,20 +121,20 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Kurulum ve uygulama iskeleti | 4 | Bitti |
 | Karşılama | 1 | Bitti |
 | Hayvan ekleme | 3 | Bitti |
-| Bugün ekranı (kayıp modu düğmesi hariç 3 puan) | 4 | 3 puan |
+| Bugün ekranı | 4 | Bitti |
 | Aşı, tedavi ve ziyaret kayıtları | 8 | Bitti |
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
 | Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | 5 puan |
 | Sunucu ve verilerin sunucuya taşınması | 12 | Bitti |
-| Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Başlamadı |
+| Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti (uzaktan bildirim kendi derlememizle gelecek) |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Başlamadı |
 | Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: %51**
+**Toplam: %67**
 
 ## Test ve derleme
 
@@ -156,6 +164,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
 - Testler: `npm test` tarih, görev, kilo ve eşitleme kurallarını sınar. `npm run test:access` iki hesapla gerçek sunucudaki erişim kurallarını sınar; önce panelde anonim girişi geçici olarak aç, sonra kapat. Sunucu kuralı değişince mutlaka çalıştır.
 - Taklitçide eşitleme: Ayarlar'daki "Deneme hesabıyla gir" (yalnızca geliştirirken, anonim giriş açıkken). Yeni telefon sınaması için `adb root` sonrası `databases/RKStorage-scoped-experience-...` dosyasını ve `pet-photos` klasörünü sil, oturum `files/SQLite/ExpoSQLiteStorage` içinde kalır.
+- Taklitçide basılı tutma `adb shell input swipe X Y X Y 1300`, konum verme `adb emu geo fix BOYLAM ENLEM`. Kayıp modu ekranı geliştirirken ilanın kodunu gösteriyor, testten ihbar göndermek için.
 - `phone.ps1` Türkçe büyük harfi eşleştiremiyor: onay düğmesine "ÇIKIŞ YAP" gibi tam yazılışıyla dokun.
 - Expo Go'nun dişli düğmesi sağ üstte duruyor ve oradaki düğmelerin üstüne biniyor. Taklitçide `adb shell input swipe 971 110 971 1700 600` ile kenara çek. Gerçek uygulamada yok.
 - Alt menüde `left` ve `right` işe yaramıyor, kenar boşluğu `marginHorizontal` ile veriliyor.
@@ -183,6 +192,8 @@ Fiyatlar resmî sayfalardan okundu, değişebilir. Hiçbir seçeneğin Türkiye'
 | Ücretli plan | Aylık 25 dolardan başlar, günlük yedek, harcama sınırı varsayılan açık | Kullandığın kadar öde. Toplam harcama sınırı yok, yalnızca bazı servislerde var | Geliştirici başına aylık 25 dolar |
 | Avrupa'da veri | Frankfurt | Var, ama ücretsiz dosya kotası yalnızca ABD bölgelerinde | İrlanda, %30 ek ücretli |
 | Apple ile giriş | Belgeli, Expo Go'da denenebilir | Bugün ayrıca doğrulanmadı | Beta |
+
+**Kayıp sayfasının adresi (QR için):** Supabase'in kendi adresinde web sayfası çalışmıyor, HTML düz metne çevriliyor. Expo'nun EAS Hosting hizmeti ücretsiz planda `*.expo.app` adresi veriyor (ayda 100 bin istek). Kendi alan adı (patika.pet) için aylık 19 dolarlık Starter planı gerekiyor. Sayfa işinde başka seçeneklerle karşılaştırılacak.
 
 **KVKK:** Sunucusu yurt dışında olan servis, yurt dışına veri aktarımı sayılıyor. Kurumun kendi standart sözleşmesi imzalanıp 5 iş günü içinde bildirilmeli, AB sözleşmesi tek başına yetmiyor. Hukuk bürolarının yazılarına göre, bildirilmezse 2026 için 90.308 ile 1.806.177 TL arası ceza var. Supabase, Google veya Convex'in bu sözleşmeyi imzalayıp imzalamadığına dair kaynak bulunamadı. Türkiye'de sunucu kullanılırsa bu yükümlülük doğmuyor. Bu notlar hukuki görüş değildir.
 

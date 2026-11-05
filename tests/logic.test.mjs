@@ -433,3 +433,57 @@ test('fotoğraf: yeni yüklenir, eski silinir, yüklenmeden silinen gönderilmez
   assert.deepEqual(s.queuePhotoChanges({ upload: ['a.jpg'], remove: [] }, [{ photo: 'a.jpg' }], []), { upload: [], remove: ['a.jpg'] });
   assert.deepEqual(s.queuePhotoChanges(empty, [{ photo: null }], [{ photo: null }]), empty);
 });
+
+const lost = await import('@/lib/lost');
+
+test('kayıp: geçen süre yazıları', () => {
+  const now = at('2026-11-05T12:00');
+  assert.equal(lost.timeAgoLabel(at('2026-11-05T11:59:30'), now), 'Az önce');
+  assert.equal(lost.timeAgoLabel(at('2026-11-05T11:54'), now), '6 dk önce');
+  assert.equal(lost.timeAgoLabel(at('2026-11-05T09:30'), now), '2 sa önce');
+  assert.equal(lost.timeAgoLabel(at('2026-11-02T12:00'), now), '3 gün önce');
+  assert.equal(lost.durationLabel(at('2026-11-05T11:25'), now), '35 dk');
+  assert.equal(lost.durationLabel(at('2026-11-05T11:59:50'), now), '1 dk');
+  assert.equal(lost.durationLabel(at('2026-11-05T09:50'), now), '2 sa 10 dk');
+  assert.equal(lost.durationLabel(at('2026-11-05T10:00'), now), '2 sa');
+  assert.equal(lost.durationLabel(at('2026-11-02T12:00'), now), '3 gün');
+});
+
+test('kayıp: herkese görünen semt yazısı sokak ve bina içermez', () => {
+  const address = { name: 'Bahariye Cd. No:12', street: 'Bahariye Cd.', streetNumber: '12', district: 'Moda', subregion: 'Kadıköy', city: 'İstanbul', region: 'İstanbul' };
+  const area = lost.areaFromAddress(address);
+  assert.equal(area, 'Moda, Kadıköy');
+  assert.ok(!area.includes('Bahariye') && !area.includes('12'));
+  assert.equal(lost.areaFromAddress({ district: null, subregion: null, city: 'İstanbul' }), 'İstanbul');
+  assert.equal(lost.areaFromAddress({ district: 'Kadıköy', subregion: 'Kadıköy' }), 'Kadıköy', 'tekrar etmez');
+  assert.equal(lost.areaFromAddress({}), '');
+});
+
+test('kayıp: harita görünümü tüm noktaları içine alır', () => {
+  const one = lost.regionFor([{ latitude: 41, longitude: 29 }]);
+  assert.equal(one.latitude, 41);
+  assert.ok(one.latitudeDelta > 0, 'tek noktada da yakınlık sıfır olmaz');
+  const pts = [{ latitude: 40.98, longitude: 29.02 }, { latitude: 41.02, longitude: 29.06 }];
+  const r = lost.regionFor(pts);
+  for (const p of pts) {
+    assert.ok(Math.abs(p.latitude - r.latitude) <= r.latitudeDelta / 2);
+    assert.ok(Math.abs(p.longitude - r.longitude) <= r.longitudeDelta / 2);
+  }
+});
+
+test('kayıp: gelecekte kalan saat dünkü sayılır', () => {
+  const now = at('2026-11-05T00:30');
+  const d = lost.lastSeenDate(23, 0, now);
+  assert.equal(d.getDate(), 4);
+  assert.equal(d.getHours(), 23);
+  const noon = at('2026-11-05T12:00');
+  assert.equal(lost.lastSeenDate(11, 30, noon).getDate(), 5);
+  assert.equal(lost.lastSeenDate(12, 0, noon).getDate(), 5, 'şu an aynı gün');
+});
+
+test('kayıp: harita duraklarında aynı nokta denetimi', () => {
+  const target = { latitude: 40.9877, longitude: 29.0262 };
+  assert.equal(lost.isSameSpot({ latitude: 40.98771, longitude: 29.02619 }, target), true, 'hedefe vardı');
+  assert.equal(lost.isSameSpot({ latitude: 41.015, longitude: 28.979 }, target), false, 'haritanın açılış noktası seçim sayılmaz');
+  assert.equal(lost.isSameSpot({ latitude: 40.9877, longitude: 29.0272 }, target), false, 'yaklaşık 100 metre öte aynı değil');
+});

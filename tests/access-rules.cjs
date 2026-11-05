@@ -18,6 +18,110 @@ const row = (owner_id, id, data = { id, name: 'gizli' }) => ({
 });
 const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
 
+// --- kayip modu ---
+async function testLostMode(a, b, anon, A, B) {
+  const tag = await a.from('pet_tags').upsert({ owner_id: A, pet_id: 'pet1' }, { ignoreDuplicates: true });
+  check('A hayvan kodu olusturur', !tag.error, tag.error?.message);
+  let r = await a.from('pet_tags').select('public_code').eq('pet_id', 'pet1').single();
+  const code = r.data?.public_code;
+  check('kod tahmin edilemeyecek uzunlukta', typeof code === 'string' && code.length === 12, code);
+
+  const SECRET_LAT = 40.987654; const SECRET_LNG = 29.123456;
+  r = await a.from('lost_reports').insert({
+    owner_id: A, pet_id: 'pet1', pet_name: 'Zeytin', species: 'dog', breed: 'Melez', description: 'Mavi tasma',
+    last_seen_area: 'Moda, Kadikoy', last_seen_lat: SECRET_LAT, last_seen_lng: SECRET_LNG, last_seen_at: new Date().toISOString(),
+  }).select('id').single();
+  check('A ilan acar', !r.error, r.error?.message);
+  const reportId = r.data?.id;
+
+  r = await a.from('lost_reports').insert({
+    owner_id: A, pet_id: 'pet1', pet_name: 'Zeytin', species: 'dog',
+    last_seen_area: 'Moda', last_seen_lat: 1, last_seen_lng: 1, last_seen_at: new Date().toISOString(),
+  });
+  check('ayni hayvana ikinci acik ilan acilamaz', r.error?.code === '23505', r.error?.code);
+  r = await b.from('lost_reports').insert({
+    owner_id: A, pet_id: 'x', pet_name: 'Sahte', species: 'dog',
+    last_seen_area: 'Moda', last_seen_lat: 1, last_seen_lng: 1, last_seen_at: new Date().toISOString(),
+  });
+  check('B, A adina ilan ACAMAZ', !!r.error, r.error?.code);
+
+  r = await b.from('lost_reports').select('id');
+  check('B, A ilanini GOREMEZ', !r.error && r.data.length === 0);
+  r = await anon.from('lost_reports').select('id');
+  check('giris yapmayan tabloyu OKUYAMAZ', !!r.error || r.data.length === 0, r.error?.code);
+  r = await b.from('lost_reports').update({ pet_name: 'Degisti' }).eq('id', reportId).select();
+  check('B, A ilanini DEGISTIREMEZ', !r.error && r.data.length === 0);
+  r = await b.from('pet_tags').select('public_code');
+  check('B, A kodunu GOREMEZ', !r.error && r.data.length === 0);
+
+  // herkese acik okuma: giris yapmayan, yalnizca izinli alanlar
+  r = await anon.rpc('get_lost_report', { code });
+  check('giris yapmayan ilan sayfasini okur', !r.error && r.data.length === 1, r.error?.message);
+  const page = r.data?.[0] ?? {};
+  check('sayfada ad ve semt var', page.pet_name === 'Zeytin' && page.last_seen_area === 'Moda, Kadikoy' && page.status === 'lost');
+  const pageText = JSON.stringify(page);
+  check('sayfada TAM KONUM YOK', !pageText.includes('40.98') && !pageText.includes('29.12') && !('last_seen_lat' in page) && !('last_seen_lng' in page));
+  check('sayfada SAHIP BILGISI YOK', !pageText.includes(A) && !('owner_id' in page));
+  r = await anon.rpc('get_lost_report', { code: 'yanliskod123' });
+  check('yanlis kod bos doner', !r.error && r.data.length === 0);
+
+  // ihbar: giris yapmayan
+  r = await anon.rpc('add_sighting', { code, sighting_place: 'Bahariye', sighting_lat: 40.99, sighting_lng: 29.03, sighting_message: 'Gordum', sighting_contact: '05551234567' });
+  check('giris yapmayan ihbar gonderir', !r.error, r.error?.message);
+  r = await anon.rpc('add_sighting', { code });
+  check('bos ihbar reddedilir', !!r.error, r.error?.message);
+  r = await anon.rpc('add_sighting', { code, sighting_lat: 40.99 });
+  check('yarim konum reddedilir', !!r.error, r.error?.message);
+  r = await anon.rpc('add_sighting', { code, sighting_message: 'x'.repeat(501) });
+  check('cok uzun mesaj reddedilir', !!r.error, r.error?.code);
+  r = await anon.rpc('add_sighting', { code: 'yanliskod123', sighting_message: 'merhaba' });
+  check('yanlis koda ihbar gitmez', !!r.error, r.error?.message);
+  r = await anon.from('sightings').insert({ report_id: reportId, owner_id: A, message: 'dogrudan' });
+  check('tabloya DOGRUDAN ihbar yazilamaz (giris yapmayan)', !!r.error, r.error?.code);
+  r = await b.from('sightings').insert({ report_id: reportId, owner_id: A, message: 'dogrudan' });
+  check('tabloya DOGRUDAN ihbar yazilamaz (B)', !!r.error, r.error?.code);
+
+  // ihbari yalnizca sahibi gorur
+  r = await a.from('sightings').select('*').eq('report_id', reportId);
+  check('A ihbari ve iletisimi gorur', !r.error && r.data.length === 1 && r.data[0].contact === '05551234567');
+  r = await b.from('sightings').select('*');
+  check('B ihbari GOREMEZ', !r.error && r.data.length === 0);
+  r = await anon.from('sightings').select('*');
+  check('giris yapmayan ihbari GOREMEZ', !!r.error || r.data.length === 0, r.error?.code);
+  r = await anon.rpc('get_lost_report', { code });
+  check('sayfada IHBARCI ILETISIMI YOK', !JSON.stringify(r.data).includes('05551234567'));
+
+  // ilan fotografi
+  const sa = a.storage.from('lost-photos'); const sb = b.storage.from('lost-photos');
+  r = await sa.upload(`${A}/lost.jpg`, jpg, { contentType: 'image/jpeg' });
+  check('A ilan fotografi yukler', !r.error, r.error?.message);
+  const pub = await fetch(`${URL}/storage/v1/object/public/lost-photos/${A}/lost.jpg`);
+  check('ilan fotografi herkese acik', pub.ok, `HTTP ${pub.status}`);
+  r = await sb.upload(`${A}/sahte.jpg`, jpg, { contentType: 'image/jpeg' });
+  check('B, A klasorune ilan fotografi YUKLEYEMEZ', !!r.error, r.error?.message);
+  r = await sb.remove([`${A}/lost.jpg`]);
+  check('B, A ilan fotografini SILEMEZ', !r.error && (r.data ?? []).length === 0);
+  r = await anon.storage.from('lost-photos').upload('hic/sahte.jpg', jpg, { contentType: 'image/jpeg' });
+  check('giris yapmayan fotograf YUKLEYEMEZ', !!r.error, r.error?.message);
+  r = await sa.remove([`${A}/lost.jpg`]);
+  check('A ilan fotografini siler', !r.error && r.data.length === 1);
+
+  // bulundu
+  r = await a.from('lost_reports').update({ found_at: new Date().toISOString() }).eq('id', reportId);
+  check('A bulundu isaretler', !r.error, r.error?.message);
+  r = await anon.rpc('get_lost_report', { code });
+  const after = r.data?.[0] ?? {};
+  check('bulununca sayfada yalniz ad ve durum kalir', after.status === 'found' && after.pet_name === 'Zeytin' && after.last_seen_area === null && after.description === null);
+  r = await anon.rpc('add_sighting', { code, sighting_message: 'gec kaldim' });
+  check('bulunan ilana ihbar gitmez', !!r.error, r.error?.message);
+
+  // temizlik
+  await a.from('lost_reports').delete().eq('id', reportId);
+  await a.from('pet_tags').delete().eq('pet_id', 'pet1');
+  r = await a.from('sightings').select('id');
+  check('ilan silinince ihbarlari da gider', !r.error && r.data.length === 0);
+}
+
 (async () => {
   const a = client();
   const b = client();
@@ -101,6 +205,8 @@ const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
   check('giris yapmayan INDIREMEZ', !!r.error);
   r = await sa.upload(`${A}/test.png`, jpg, { contentType: 'image/png' });
   check('JPEG olmayan reddedilir', !!r.error, r.error?.message);
+
+  await testLostMode(a, b, anon, A, B);
 
   // --- temizlik ---
   r = await sa.remove([`${A}/test.jpg`]);

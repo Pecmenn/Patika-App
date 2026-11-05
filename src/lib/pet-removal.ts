@@ -1,4 +1,5 @@
 import { deleteHealthRecordsOfPet, listHealthRecords } from '@/data/health-records';
+import { deleteReportsOfPet } from '@/data/lost-reports';
 import { deletePetPhoto } from '@/data/pet-photo-storage';
 import { deletePet, type Pet } from '@/data/pets';
 import { deleteTasksOfPet, listTasks } from '@/data/tasks';
@@ -53,5 +54,11 @@ export async function removePet(pet: Pet) {
   ]);
   if (pet.photo) {
     deletePetPhoto(pet.photo);
+  }
+  // Kayıp ilanı da kalkar. İnternet yoksa hayvan yine silinir, açık ilan sunucuda kalır.
+  try {
+    await deleteReportsOfPet(pet.id);
+  } catch (error) {
+    console.warn('Kayıp ilanı silinemedi', error);
   }
 }
