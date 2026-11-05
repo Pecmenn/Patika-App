@@ -40,7 +40,9 @@ export default function PetRecordScreen() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 2 }]}
         showsVerticalScrollIndicator={false}>
-        <GlassButton label="Geri" onPress={() => router.back()}>
+        <GlassButton
+          label="Geri"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}>
           <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
         </GlassButton>
 

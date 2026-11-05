@@ -7,8 +7,8 @@ function seriesKey(vaccine: Vaccine) {
   return `${vaccine.petId}:${vaccine.name.trim().toLocaleLowerCase('tr-TR')}`;
 }
 
-// Aynı aşının yalnızca en son kaydı "sırada" sayılır: yeni doz eklenince eskisi listeden düşer.
-export function splitVaccines(vaccines: Vaccine[]) {
+// Aynı aşının yalnızca en son kaydı geçerlidir: yeni doz eklenince eskisi "sırada" sayılmaz.
+export function latestInSeries(vaccines: Vaccine[]) {
   const latestBySeries = new Map<string, Vaccine>();
   for (const vaccine of vaccines) {
     const key = seriesKey(vaccine);
@@ -17,8 +17,11 @@ export function splitVaccines(vaccines: Vaccine[]) {
       latestBySeries.set(key, vaccine);
     }
   }
+  return [...latestBySeries.values()];
+}
 
-  const due = [...latestBySeries.values()]
+export function splitVaccines(vaccines: Vaccine[]) {
+  const due = latestInSeries(vaccines)
     .filter(
       (vaccine) =>
         vaccine.nextDueDate !== null && daysUntil(vaccine.nextDueDate) <= DUE_SOON_DAYS,

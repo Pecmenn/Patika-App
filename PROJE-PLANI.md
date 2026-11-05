@@ -79,13 +79,16 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Karşılama ekranındaki "Zaten hesabım var" düğmesini bağla (Apple ile giriş hazır olunca)
 - [ ] Hayvan düzenleme ve silmeyi ekle (Hayvanlar listesiyle birlikte)
+- [ ] Aşı kaydı düzeltme ve silmeyi ekle (şu an yanlış girilen tarih düzeltilemiyor, hatırlatma da o yanlış tarihe göre gidiyor)
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
+- [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
+- [ ] Görev ve ilaç hatırlatmalarında "Verildi" ve "1 saat sonra" seçeneklerini ekle (aşılarda şimdilik yok)
 
 ## Yol haritası
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme ve Sağlık kaydının aşı bölümü kodlandı. Bugün'de yalnızca "sırada" kartı var. Sırada hatırlatmalar, görevler, tedaviler, ziyaretler ve kilo)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı bölümü ve aşı hatırlatmaları kodlandı. Hatırlatmalar iPhone'da denendi. Bugün'de yalnızca "sırada" kartı var. Sırada görevler, tedaviler, ziyaretler ve kilo)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi

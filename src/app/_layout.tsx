@@ -11,9 +11,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { NotificationObserver } from '@/components/notification-observer';
 import { colors } from '@/constants/theme';
+import { configureReminders, syncVaccineReminders } from '@/lib/vaccine-reminders';
 
 SplashScreen.preventAutoHideAsync();
+configureReminders();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -32,6 +35,10 @@ export default function RootLayout() {
     }
   }, [ready]);
 
+  useEffect(() => {
+    syncVaccineReminders().catch((error) => console.warn('Hatırlatmalar kurulamadı', error));
+  }, []);
+
   if (!ready) {
     return null;
   }
@@ -48,6 +55,7 @@ export default function RootLayout() {
         <Stack.Screen name="add-vaccine" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="today" options={{ gestureEnabled: false }} />
       </Stack>
+      <NotificationObserver />
     </>
   );
 }

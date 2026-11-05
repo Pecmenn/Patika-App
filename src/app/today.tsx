@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PetAvatar } from '@/components/pet-avatar';
+import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { UpNextCard } from '@/components/up-next-card';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
@@ -11,6 +12,7 @@ import { listPets } from '@/data/pets';
 import { listVaccines } from '@/data/vaccines';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { formatWeekday, greetingFor } from '@/lib/dates';
+import { hasUpcomingReminder } from '@/lib/reminder-plan';
 import { splitVaccines } from '@/lib/vaccines';
 
 export default function TodayScreen() {
@@ -82,6 +84,8 @@ export default function TodayScreen() {
           </Text>
         </View>
       )}
+
+      {vaccines && hasUpcomingReminder(vaccines) && <ReminderPermissionCard />}
     </ScrollView>
   );
 }

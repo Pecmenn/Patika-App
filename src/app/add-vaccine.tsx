@@ -23,6 +23,7 @@ import { listPets, type Species } from '@/data/pets';
 import { addVaccine } from '@/data/vaccines';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { addYears, formatLongDate, toDateKey } from '@/lib/dates';
+import { requestReminderPermission, syncVaccineReminders } from '@/lib/vaccine-reminders';
 
 // Yalnızca yazmayı hızlandıran kısayollar. Hangi aşının gerektiğine veteriner karar verir.
 const NAME_SUGGESTIONS: Record<Species, string[]> = {
@@ -73,11 +74,22 @@ export default function AddVaccineScreen() {
         nextDueDate: nextDueDate ? toDateKey(nextDueDate) : null,
         batch: batch.trim() || null,
       });
-      router.back();
     } catch {
       setIsSaving(false);
       Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.');
+      return;
     }
+
+    // Aşı kaydedildi. Hatırlatma kurulamazsa kayıt yine geçerli, kullanıcıyı durdurmuyoruz.
+    try {
+      if (nextDueDate) {
+        await requestReminderPermission();
+      }
+      await syncVaccineReminders();
+    } catch (error) {
+      console.warn('Hatırlatmalar kurulamadı', error);
+    }
+    router.back();
   }
 
   return (
@@ -146,6 +158,11 @@ export default function AddVaccineScreen() {
             {nextDueDate ? 'Sonraki tarihi kaldır' : 'Bir yıl sonrasını seç'}
           </Text>
         </Pressable>
+        {nextDueDate && (
+          <Text style={styles.reminderNote}>
+            Bu tarihten 7 gün önce ve son gün sabah 09.00&apos;da sana hatırlatırız.
+          </Text>
+        )}
 
         <View style={styles.field}>
           <TextField
@@ -256,6 +273,14 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     color: colors.ink,
     textDecorationLine: 'underline',
+  },
+  reminderNote: {
+    marginTop: 4,
+    marginHorizontal: 4,
+    fontFamily: fonts.uiSemi,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: colors.ink2,
   },
   note: {
     marginTop: 12,
