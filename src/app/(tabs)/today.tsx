@@ -17,6 +17,7 @@ import { listTasks, setTaskCompleted, subscribeToTasks } from '@/data/tasks';
 import { listVisits } from '@/data/visits';
 import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
+import { useSession } from '@/hooks/use-session';
 import { formatWeekday, greetingFor } from '@/lib/dates';
 import { splitRecords } from '@/lib/health-records';
 import { hasUpcomingReminder } from '@/lib/reminder-plan';
@@ -51,6 +52,8 @@ async function toggleTask({ task, date, isDone }: TodayTask) {
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const data = useFocusData(loadToday, subscribeToTasks);
+  const session = useSession();
+  const givenName = session?.user.user_metadata.given_name as string | undefined;
   const pets = data?.pets;
   const records = data?.records;
   const tasks = data?.tasks;
@@ -78,6 +81,7 @@ export default function TodayScreen() {
       <Text style={styles.date}>{formatWeekday(now)}</Text>
       <Text accessibilityRole="header" style={styles.title}>
         {greetingFor(now)}
+        {givenName ? `, ${givenName}` : ''}
       </Text>
 
       <ScrollView

@@ -71,6 +71,7 @@ export default function RootLayout() {
         <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="index" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />
     </>

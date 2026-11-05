@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+import { GearSixIcon } from 'phosphor-react-native/src/icons/GearSix';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { GlassButton } from '@/components/glass-button';
 import { PetAvatar } from '@/components/pet-avatar';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
@@ -23,9 +25,14 @@ export default function PetsScreen() {
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Hayvanlar
-      </Text>
+      <View style={styles.head}>
+        <Text accessibilityRole="header" style={styles.title}>
+          Hayvanlar
+        </Text>
+        <GlassButton label="Ayarlar" onPress={() => router.push('/settings')}>
+          <GearSixIcon size={20} weight="bold" color={colors.ink} />
+        </GlassButton>
+      </View>
 
       <View style={styles.list}>
         {pets?.map((pet) => (
@@ -63,6 +70,11 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     fontFamily: fonts.displaySemi,

@@ -1,29 +1,36 @@
 import { Redirect, router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppleSignInButton } from '@/components/apple-sign-in-button';
 import { Button } from '@/components/button';
 import { WelcomeCollage } from '@/components/welcome-collage';
 import { colors, fonts } from '@/constants/theme';
 import { listPets } from '@/data/pets';
 import { useFocusData } from '@/hooks/use-focus-data';
+import { useSession } from '@/hooks/use-session';
 
 const MAX_CONTENT_WIDTH = 430;
 
-// Uygulamanın giriş noktası: hayvan varsa Bugün'e, yoksa Karşılama'ya gider.
+// Apple ile giriş yalnızca iPhone'da var. Android ve tarayıcıdaki denemeler girişsiz sürer.
+const REQUIRES_SIGN_IN = Platform.OS === 'ios';
+
+// Uygulamanın giriş noktası: giriş yapılmamışsa veya hayvan yoksa Karşılama, yoksa Bugün açılır.
 export default function IndexScreen() {
   const pets = useFocusData(listPets);
+  const session = useSession();
 
-  if (pets === null) {
+  if (pets === null || session === undefined) {
     return null;
   }
-  if (pets.length > 0) {
+  const isSignedIn = session !== null || !REQUIRES_SIGN_IN;
+  if (isSignedIn && pets.length > 0) {
     return <Redirect href="/today" />;
   }
-  return <Welcome />;
+  return <Welcome isSignedIn={isSignedIn} />;
 }
 
-function Welcome() {
+function Welcome({ isSignedIn }: { isSignedIn: boolean }) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const contentWidth = Math.min(width, MAX_CONTENT_WIDTH);
@@ -46,8 +53,11 @@ function Welcome() {
         </ScrollView>
 
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <Button label="İlk hayvanını ekle" onPress={() => router.push('/add-pet')} />
-          <Button label="Zaten hesabım var" variant="text" />
+          {isSignedIn ? (
+            <Button label="İlk hayvanını ekle" onPress={() => router.push('/add-pet')} />
+          ) : (
+            <AppleSignInButton />
+          )}
         </View>
       </View>
     </View>

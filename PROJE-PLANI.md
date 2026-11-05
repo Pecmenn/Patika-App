@@ -12,7 +12,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | App Store adı | Patika: Evcil Hayvan Karnesi | Öneri, Apple'da ad ayırırken doğrulanacak |
 | Hedef | Önce App Store, Türkiye | Kesin |
 | Dil | Önce Türkçe, İngilizce eklenebilecek şekilde | Kesin |
-| Giriş | Apple ile giriş | Kesin |
+| Giriş | Apple ile giriş. Karşılama'da tek düğme var, yeni ve eski kullanıcı aynı düğmeyi kullanır. Android ve tarayıcıda şimdilik girişsiz denenir | Kesin |
 | İlk sürüm kapsamı | Aşağıdaki liste | Kesin |
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
 | Çalışma yeri | Windows bilgisayar, kod `Desktop\Patika-App` klasöründe | Kesin |
@@ -24,7 +24,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Görev tekrarı | Bir kez, her gün, her hafta, her ay; isteğe bağlı bitiş tarihi. Günde iki doz iki ayrı görevdir | Kesin |
 | Tamamlama düğmesi | Her yerde "Yapıldı" | Kesin |
 | Görev hatırlatmaları | Bildirimler önceden tek tek kurulur (günlük 14, haftalık 28, aylık 62 gün). Uygulama açılınca süre uzar, bitmek üzereyken "Patika'yı aç" uyarısı gider. Saatinden önce "Yapıldı" denirse o bildirim iptal olur | Kesin |
-| Sunucu | Henüz seçilmedi | Açık |
+| Sunucu | Supabase, Frankfurt bölgesi. Geliştirirken ücretsiz plan ve yalnızca deneme verisi, gerçek kullanıcılardan önce ücretli plan (aylık 25 dolardan başlıyor) | Kesin |
 
 ## İlk sürüm: tasarımdan gelen 11 ekran
 
@@ -82,11 +82,14 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] TürkPatent'te "Patika" markasını kontrol et (9, 42 ve 44. sınıflar): https://www.turkpatent.gov.tr/arastirma-yap?form=trademark
 - [ ] Kontrol temizse patika.pet alan adını satın al
 - [ ] Apple geliştirici üyeliğini aç (Apple ile giriş adımında gerekecek, 99 dolar/yıl, TL fiyatı doğrulanmadı)
-- [ ] Sunucu servisini seç
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
+- [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor. Sağlayıcıya bu sözleşmeyi imzalayıp imzalamadığını yazılı sor. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
-- [ ] Karşılama ekranındaki "Zaten hesabım var" düğmesini bağla (Apple ile giriş hazır olunca)
+- [ ] Hesap silmeyi ekle: sunucu işlevi (gizli anahtar uygulamada duramaz) ve Apple'ın istediği giriş izni iptali. Apple geliştirici üyeliği gerektirir, App Store'dan önce şart
+- [ ] Kendi derlememize geçince Supabase'de Apple "Client IDs" listesine uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni)
+- [ ] Sunucuya taşıma aşamasında çıkış yapınca telefondaki kayıtları temizle (şimdilik telefonda kalıyor)
+- [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
 - [ ] Android sürümünde hatırlatmalara `delivery: 'alarmClock'` ayarını ve tam zamanlı alarm iznini ekle. Expo Go'da bu izin olmadığı için bildirim 27 dakika ile 1 saat arasında gecikebiliyor (taklitçide görüldü)
@@ -115,15 +118,15 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
-| Apple ile giriş, ayarlar ve hesap silme | 8 | Başlamadı |
-| Sunucu ve verilerin sunucuya taşınması | 12 | Başlamadı |
+| Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | 5 puan |
+| Sunucu ve verilerin sunucuya taşınması | 12 | Devam ediyor (Supabase seçildi) |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Başlamadı |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Başlamadı |
 | Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: %34**
+**Toplam: %39**
 
 ## Test ve derleme
 
@@ -166,6 +169,19 @@ App Store'daki benzer adlı uygulamalar:
 - [Patika Pet](https://apps.apple.com/us/app/patika-pet/id6762758279): evcil hayvan sosyal ağı. Nisan 2026.
 
 Uygulamalar denenmedi, yalnızca mağaza metinleri okundu.
+
+## Sunucu araştırması (5 Kasım 2026'da kontrol edildi)
+
+Fiyatlar resmî sayfalardan okundu, değişebilir. Hiçbir seçeneğin Türkiye'de sunucusu yok.
+
+| | Supabase | Firebase | Convex |
+|---|---|---|---|
+| Ücretsiz plan | 500 MB veri, 1 GB dosya, 500 bin sunucu işlevi çağrısı. 1 hafta kullanılmazsa duraklar, otomatik yedek yok | 1 GB veri. Sunucu işlevi ve dosya depolama ücretsiz planda yok | 0,5 GB veri, 1 GB dosya |
+| Ücretli plan | Aylık 25 dolardan başlar, günlük yedek, harcama sınırı varsayılan açık | Kullandığın kadar öde. Toplam harcama sınırı yok, yalnızca bazı servislerde var | Geliştirici başına aylık 25 dolar |
+| Avrupa'da veri | Frankfurt | Var, ama ücretsiz dosya kotası yalnızca ABD bölgelerinde | İrlanda, %30 ek ücretli |
+| Apple ile giriş | Belgeli, Expo Go'da denenebilir | Bugün ayrıca doğrulanmadı | Beta |
+
+**KVKK:** Sunucusu yurt dışında olan servis, yurt dışına veri aktarımı sayılıyor. Kurumun kendi standart sözleşmesi imzalanıp 5 iş günü içinde bildirilmeli, AB sözleşmesi tek başına yetmiyor. Hukuk bürolarının yazılarına göre, bildirilmezse 2026 için 90.308 ile 1.806.177 TL arası ceza var. Supabase, Google veya Convex'in bu sözleşmeyi imzalayıp imzalamadığına dair kaynak bulunamadı. Türkiye'de sunucu kullanılırsa bu yükümlülük doğmuyor. Bu notlar hukuki görüş değildir.
 
 ## Tasarım kaynakları
 

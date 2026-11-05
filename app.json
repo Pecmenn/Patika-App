@@ -8,6 +8,7 @@
     "scheme": "patika",
     "userInterfaceStyle": "light",
     "ios": {
+      "usesAppleSignIn": true,
       "icon": "./assets/expo.icon"
     },
     "android": {
@@ -42,7 +43,8 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
