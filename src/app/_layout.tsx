@@ -45,6 +45,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.paper },
         }}>
         <Stack.Screen name="add-pet" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="add-vaccine" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="today" options={{ gestureEnabled: false }} />
       </Stack>
     </>

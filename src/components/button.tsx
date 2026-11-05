@@ -5,12 +5,20 @@ import { colors, fonts } from '@/constants/theme';
 type ButtonProps = {
   label: string;
   variant?: 'ink' | 'text';
+  size?: 'large' | 'small';
   disabled?: boolean;
   onPress?: () => void;
 };
 
-export function Button({ label, variant = 'ink', disabled = false, onPress }: ButtonProps) {
+export function Button({
+  label,
+  variant = 'ink',
+  size = 'large',
+  disabled = false,
+  onPress,
+}: ButtonProps) {
   const isInk = variant === 'ink';
+  const isSmall = size === 'small';
 
   return (
     <Pressable
@@ -20,11 +28,14 @@ export function Button({ label, variant = 'ink', disabled = false, onPress }: Bu
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
+        isSmall && styles.small,
         isInk && styles.ink,
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}>
-      <Text style={[styles.label, isInk && styles.labelOnInk]}>{label}</Text>
+      <Text style={[styles.label, isSmall && styles.labelSmall, isInk && styles.labelOnInk]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -36,6 +47,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 18,
+  },
+  small: {
+    height: 44,
   },
   ink: {
     backgroundColor: colors.ink,
@@ -50,6 +64,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.uiBold,
     fontSize: 16.5,
     color: colors.ink,
+  },
+  labelSmall: {
+    fontSize: 15,
   },
   labelOnInk: {
     color: colors.card,

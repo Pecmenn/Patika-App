@@ -5,13 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { WelcomeCollage } from '@/components/welcome-collage';
 import { colors, fonts } from '@/constants/theme';
-import { usePets } from '@/hooks/use-pets';
+import { listPets } from '@/data/pets';
+import { useFocusData } from '@/hooks/use-focus-data';
 
 const MAX_CONTENT_WIDTH = 430;
 
 // Uygulamanın giriş noktası: hayvan varsa Bugün'e, yoksa Karşılama'ya gider.
 export default function IndexScreen() {
-  const pets = usePets();
+  const pets = useFocusData(listPets);
 
   if (pets === null) {
     return null;

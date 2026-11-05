@@ -4,15 +4,23 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PetAvatar } from '@/components/pet-avatar';
+import { UpNextCard } from '@/components/up-next-card';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
-import { usePets } from '@/hooks/use-pets';
+import { listPets } from '@/data/pets';
+import { listVaccines } from '@/data/vaccines';
+import { useFocusData } from '@/hooks/use-focus-data';
 import { formatWeekday, greetingFor } from '@/lib/dates';
+import { splitVaccines } from '@/lib/vaccines';
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const pets = usePets();
+  const pets = useFocusData(listPets);
+  const vaccines = useFocusData(listVaccines);
   const now = new Date();
+
+  const upNext = vaccines ? splitVaccines(vaccines).due[0] : undefined;
+  const upNextPet = upNext ? pets?.find((pet) => pet.id === upNext.petId) : undefined;
 
   return (
     <ScrollView
@@ -30,14 +38,19 @@ export default function TodayScreen() {
         showsHorizontalScrollIndicator={false}
         style={styles.chipsRow}>
         {pets?.map((pet) => (
-          <View key={pet.id} style={styles.chip}>
+          <Pressable
+            key={pet.id}
+            accessibilityLabel={`${pet.name} kayıtları`}
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/pet/[id]', params: { id: pet.id } })}
+            style={styles.chip}>
             <PetAvatar
               photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
               size={28}
               species={pet.species}
             />
             <Text style={styles.chipLabel}>{pet.name}</Text>
-          </View>
+          </Pressable>
         ))}
         <Pressable
           accessibilityLabel="Hayvan ekle"
@@ -48,10 +61,27 @@ export default function TodayScreen() {
         </Pressable>
       </ScrollView>
 
-      <View style={styles.emptyCard}>
-        <Text style={styles.emptyTitle}>Yaklaşan bir şey yok</Text>
-        <Text style={styles.emptyBody}>Aşı ve görev ekledikçe burada görünecek.</Text>
-      </View>
+      {upNext && upNextPet ? (
+        <View style={styles.content}>
+          <UpNextCard
+            pet={upNextPet}
+            vaccine={upNext}
+            onDone={() =>
+              router.push({
+                pathname: '/add-vaccine',
+                params: { petId: upNextPet.id, name: upNext.name },
+              })
+            }
+          />
+        </View>
+      ) : (
+        <View style={[styles.content, styles.emptyCard]}>
+          <Text style={styles.emptyTitle}>Yaklaşan bir şey yok</Text>
+          <Text style={styles.emptyBody}>
+            Hayvanına dokunup aşılarını ekle, zamanı yaklaşanlar burada görünsün.
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -81,6 +111,7 @@ const styles = StyleSheet.create({
   chipsRow: {
     marginTop: 16,
     marginHorizontal: -20,
+    flexGrow: 0,
   },
   chips: {
     gap: 8,
@@ -113,8 +144,10 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.card,
   },
-  emptyCard: {
+  content: {
     marginTop: 16,
+  },
+  emptyCard: {
     padding: 20,
     borderRadius: 22,
     backgroundColor: colors.card,

@@ -7,7 +7,13 @@ import { colors } from '@/constants/theme';
 import { fromDateKey, toDateKey } from '@/lib/dates';
 
 // Yalnızca tarayıcı önizlemesi için: telefondaki tarih seçici tarayıcıda çalışmıyor.
-export function DatePickerSheet({ value, maximumDate, onConfirm, onCancel }: DatePickerSheetProps) {
+export function DatePickerSheet({
+  value,
+  minimumDate,
+  maximumDate,
+  onConfirm,
+  onCancel,
+}: DatePickerSheetProps) {
   const [draft, setDraft] = useState(toDateKey(value));
 
   return (
@@ -15,8 +21,9 @@ export function DatePickerSheet({ value, maximumDate, onConfirm, onCancel }: Dat
       <Pressable accessibilityLabel="Tarih seçimini kapat" onPress={onCancel} style={styles.backdrop} />
       <View style={styles.sheet}>
         <input
-          aria-label="Doğum tarihi"
-          max={toDateKey(maximumDate)}
+          aria-label="Tarih"
+          max={maximumDate ? toDateKey(maximumDate) : undefined}
+          min={minimumDate ? toDateKey(minimumDate) : undefined}
           type="date"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

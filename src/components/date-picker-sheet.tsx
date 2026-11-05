@@ -8,12 +8,19 @@ import { colors } from '@/constants/theme';
 
 export type DatePickerSheetProps = {
   value: Date;
-  maximumDate: Date;
+  minimumDate?: Date;
+  maximumDate?: Date;
   onConfirm: (date: Date) => void;
   onCancel: () => void;
 };
 
-export function DatePickerSheet({ value, maximumDate, onConfirm, onCancel }: DatePickerSheetProps) {
+export function DatePickerSheet({
+  value,
+  minimumDate,
+  maximumDate,
+  onConfirm,
+  onCancel,
+}: DatePickerSheetProps) {
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(value);
 
@@ -23,14 +30,10 @@ export function DatePickerSheet({ value, maximumDate, onConfirm, onCancel }: Dat
       <DateTimePicker
         mode="date"
         maximumDate={maximumDate}
+        minimumDate={minimumDate}
         value={value}
-        onChange={(event, date) => {
-          if (event.type === 'set' && date) {
-            onConfirm(date);
-          } else {
-            onCancel();
-          }
-        }}
+        onDismiss={onCancel}
+        onValueChange={(_event, date) => onConfirm(date)}
       />
     );
   }
@@ -48,15 +51,12 @@ export function DatePickerSheet({ value, maximumDate, onConfirm, onCancel }: Dat
           display="spinner"
           locale="tr-TR"
           maximumDate={maximumDate}
+          minimumDate={minimumDate}
           mode="date"
           textColor={colors.ink}
           themeVariant="light"
           value={draft}
-          onChange={(_event, date) => {
-            if (date) {
-              setDraft(date);
-            }
-          }}
+          onValueChange={(_event, date) => setDraft(date)}
         />
         <Button label="Tamam" onPress={() => onConfirm(draft)} />
       </View>

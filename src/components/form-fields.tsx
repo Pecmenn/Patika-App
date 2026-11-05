@@ -8,10 +8,18 @@ type TextFieldProps = {
   value: string;
   placeholder?: string;
   maxLength?: number;
+  autoCapitalize?: 'words' | 'characters';
   onChangeText: (text: string) => void;
 };
 
-export function TextField({ label, value, placeholder, maxLength, onChangeText }: TextFieldProps) {
+export function TextField({
+  label,
+  value,
+  placeholder,
+  maxLength,
+  autoCapitalize = 'words',
+  onChangeText,
+}: TextFieldProps) {
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -25,7 +33,7 @@ export function TextField({ label, value, placeholder, maxLength, onChangeText }
         <TextInput
           ref={inputRef}
           accessibilityLabel={label}
-          autoCapitalize="words"
+          autoCapitalize={autoCapitalize}
           autoCorrect={false}
           maxLength={maxLength}
           onBlur={() => setIsFocused(false)}

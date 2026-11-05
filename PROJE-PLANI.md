@@ -79,21 +79,21 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Karşılama ekranındaki "Zaten hesabım var" düğmesini bağla (Apple ile giriş hazır olunca)
 - [ ] Hayvan düzenleme ve silmeyi ekle (Hayvanlar listesiyle birlikte)
-- [ ] Tarih seçicideki eski `onChange` kullanımını `onValueChange` ve `onDismiss` ile değiştir (sunucu uyarı veriyor)
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 
 ## Yol haritası
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama ve Hayvan ekleme kodlandı, Bugün yalnızca iskelet)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme ve Sağlık kaydının aşı bölümü kodlandı. Bugün'de yalnızca "sırada" kartı var. Sırada hatırlatmalar, görevler, tedaviler, ziyaretler ve kilo)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
 
 ## Test ve derleme
 
-- **Şimdilik:** Kod Windows'ta yazılıyor. Sonuç iPhone'da Expo Go uygulamasıyla, tarayıcıda da web önizlemesiyle görülüyor. Windows'ta sanal iPhone çalışmıyor.
+- **Şimdilik:** Kod Windows'ta yazılıyor. Günlük testleri Claude bu bilgisayardaki Android taklitçisinde (`patika`) ve tarayıcı önizlemesinde yapıyor. iPhone'a özgü son kontrolü kullanıcı Expo Go ile kendi telefonunda yapıyor. Windows'ta sanal iPhone çalışmıyor.
+- **Taklitçiyi başlatma:** `C:\Users\user\AppData\Local\Android\Sdk\emulator\emulator.exe -avd patika`. Sunucuyu önce `$env:ANDROID_HOME = 'C:\Users\user\AppData\Local\Android\Sdk'` ayarlayıp `npx expo start --android` ile başlat. Java `C:\Users\user\AppData\Local\Android\jdk17` klasöründe.
 - **Sonra:** Expo Go sınırlı bir deneme aracı. Ek yerel modül (uygulamanın telefon özelliklerine bağlanan parçası) gerektiğinde uygulamanın kendi geliştirme sürümü derlenecek. Bunun iPhone'da çalışması için Apple geliştirici üyeliği gerekecek.
 - **Yayın:** Derleme ve App Store'a gönderim EAS (Expo'nun bulut servisi) ile yapılabiliyor, Mac şart değil. EAS ücretlerine henüz bakılmadı.
 
@@ -112,6 +112,8 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - Yeni paket kurulunca sunucu dosyaları göremeyebilir. `npx expo start --clear` ile yeniden başlat.
 - Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası aşamasında bu ayar yeniden değerlendirilecek.
 - İkon paketi çok büyük. İkonları tek tek al: `phosphor-react-native/src/icons/Check`.
+- `android emulator create` istenmeyen ek bir telefon görüntüsü indiriyor. Sanal telefon oluştururken `avdmanager` kullan. `android` aracını `--no-metrics` ile çalıştır.
+- Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
 
 ## Pazar bilgisi (5 Kasım 2026'da kontrol edildi)
 

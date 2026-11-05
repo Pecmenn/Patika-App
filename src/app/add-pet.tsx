@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { FieldRow, PressableField, TextField } from '@/components/form-fields';
+import { GlassButton } from '@/components/glass-button';
 import { PetAvatar } from '@/components/pet-avatar';
 import { SPECIES, SPECIES_KEYS } from '@/constants/species';
 import { cardShadow, colors, fonts } from '@/constants/theme';
@@ -104,13 +105,9 @@ export default function AddPetScreen() {
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Pressable
-          accessibilityLabel="Kapat"
-          accessibilityRole="button"
-          onPress={closeScreen}
-          style={styles.closeButton}>
+        <GlassButton label="Kapat" onPress={closeScreen}>
           <XIcon size={20} weight="bold" color={colors.ink} />
-        </Pressable>
+        </GlassButton>
 
         <View style={styles.head}>
           <View style={styles.headCopy}>
@@ -238,21 +235,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  closeButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 44,
-    height: 44,
-    marginBottom: 22,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    boxShadow: cardShadow,
-  },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+    marginTop: 22,
     marginBottom: 18,
   },
   headCopy: {

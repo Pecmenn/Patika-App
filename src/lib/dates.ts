@@ -4,6 +4,12 @@ const longDateFormat = new Intl.DateTimeFormat('tr-TR', {
   year: 'numeric',
 });
 
+const shortDateFormat = new Intl.DateTimeFormat('tr-TR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
 const weekdayFormat = new Intl.DateTimeFormat('tr-TR', {
   weekday: 'long',
   day: 'numeric',
@@ -12,6 +18,10 @@ const weekdayFormat = new Intl.DateTimeFormat('tr-TR', {
 
 export function formatLongDate(date: Date) {
   return longDateFormat.format(date);
+}
+
+export function formatShortDate(date: Date) {
+  return shortDateFormat.format(date);
 }
 
 export function formatWeekday(date: Date) {
@@ -30,10 +40,32 @@ export function fromDateKey(key: string) {
   return new Date(year, month - 1, day);
 }
 
+export function addYears(date: Date, years: number) {
+  const result = new Date(date);
+  result.setFullYear(result.getFullYear() + years);
+  return result;
+}
+
 export function yearsAgo(years: number) {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - years);
-  return date;
+  return addYears(new Date(), -years);
+}
+
+// Bugünden o tarihe kaç gün var. Geçmişteyse eksi döner.
+export function daysUntil(key: string) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((fromDateKey(key).getTime() - today.getTime()) / 86_400_000);
+}
+
+export function ageLabel(birthDateKey: string, isApproximate: boolean) {
+  const birth = fromDateKey(birthDateKey);
+  const now = new Date();
+  let months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth();
+  if (now.getDate() < birth.getDate()) {
+    months -= 1;
+  }
+  const age = months < 12 ? `${Math.max(months, 0)} aylık` : `${Math.floor(months / 12)} yaş`;
+  return isApproximate ? `yaklaşık ${age}` : age;
 }
 
 export function greetingFor(date: Date) {
