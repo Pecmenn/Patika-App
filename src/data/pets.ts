@@ -29,3 +29,16 @@ export async function addPet(newPet: NewPet): Promise<void> {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...pets, { ...newPet, id }]));
 }
+
+export async function updatePet(id: string, changes: NewPet): Promise<void> {
+  const pets = await listPets();
+  await AsyncStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(pets.map((pet) => (pet.id === id ? { ...changes, id } : pet))),
+  );
+}
+
+export async function deletePet(id: string): Promise<void> {
+  const pets = await listPets();
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pets.filter((pet) => pet.id !== id)));
+}

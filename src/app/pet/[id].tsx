@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
+import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,15 +15,14 @@ import {
   UpcomingVisitSticker,
   VisitSticker,
 } from '@/components/stickers';
-import { SPECIES } from '@/constants/species';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { listHealthRecords, type RecordKind } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
-import { listPets, type Pet } from '@/data/pets';
+import { listPets } from '@/data/pets';
 import { listVisits } from '@/data/visits';
 import { useFocusData } from '@/hooks/use-focus-data';
-import { ageLabel } from '@/lib/dates';
 import { splitRecords } from '@/lib/health-records';
+import { petSummary } from '@/lib/pets';
 import { splitVisits } from '@/lib/visits';
 
 type RecordTab = 'vaccines' | 'treatments' | 'visits';
@@ -61,11 +61,6 @@ async function loadRecord() {
   return { pets, records, visits, now: new Date() };
 }
 
-function petSummary(pet: Pet) {
-  const age = pet.birthDate ? ageLabel(pet.birthDate, pet.birthDateIsApproximate) : null;
-  return [pet.breed ?? SPECIES[pet.species].label, age].filter(Boolean).join(', ');
-}
-
 function openEditRecord(id: string) {
   router.push({ pathname: '/edit-record', params: { id } });
 }
@@ -91,9 +86,13 @@ export default function PetRecordScreen() {
     () => TABS.find((option) => option.value === params.tab)?.value ?? 'vaccines',
   );
 
-  const pet = data?.pets.find((candidate) => candidate.id === params.id);
-  if (!data || !pet) {
+  if (!data) {
     return null;
+  }
+  const pet = data.pets.find((candidate) => candidate.id === params.id);
+  // Silinmiş bir hayvanın eski bildirimine dokunulmuş olabilir.
+  if (!pet) {
+    return <Redirect href="/today" />;
   }
   const { records, visits, now } = data;
   const kind: RecordKind = tab === 'treatments' ? 'treatment' : 'vaccine';
@@ -120,11 +119,18 @@ export default function PetRecordScreen() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 2 }]}
         showsVerticalScrollIndicator={false}>
-        <GlassButton
-          label="Geri"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}>
-          <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
-        </GlassButton>
+        <View style={styles.navbar}>
+          <GlassButton
+            label="Geri"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}>
+            <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
+          </GlassButton>
+          <GlassButton
+            label="Hayvanı düzenle"
+            onPress={() => router.push({ pathname: '/edit-pet', params: { id: pet.id } })}>
+            <PencilSimpleIcon size={20} weight="bold" color={colors.ink} />
+          </GlassButton>
+        </View>
 
         <View style={styles.head}>
           <PetAvatar
@@ -246,6 +252,10 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingBottom: 16,
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   head: {
     flexDirection: 'row',

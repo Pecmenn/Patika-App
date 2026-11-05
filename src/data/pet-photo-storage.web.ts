@@ -3,6 +3,8 @@ export async function storePetPhoto(sourceUri: string): Promise<string> {
   return sourceUri;
 }
 
+export function deletePetPhoto(_photo: string) {}
+
 export function resolvePetPhotoUri(photo: string) {
   return photo;
 }

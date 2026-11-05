@@ -60,13 +60,14 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.paper },
         }}>
         <Stack.Screen name="add-pet" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="edit-pet" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-record" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-record" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-visit" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-visit" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="today" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />
     </>

@@ -41,3 +41,8 @@ export async function deleteVisit(id: string): Promise<void> {
   const visits = await listVisits();
   await saveVisits(visits.filter((visit) => visit.id !== id));
 }
+
+export async function deleteVisitsOfPet(petId: string): Promise<void> {
+  const visits = await listVisits();
+  await saveVisits(visits.filter((visit) => visit.petId !== petId));
+}

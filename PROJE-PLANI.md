@@ -58,7 +58,7 @@ Bu ekranlar yeni özellik değil, onaylanan özelliklerin çalışması için ge
 - QR sayfasındaki konum ve mesaj gönderme formu
 - Yazdırılabilir QR kodu ekranı
 
-Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının içinde durur.
+Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri kalktı, çünkü sağlık kaydı hayvan başına tutuluyor ve hayvana dokununca açılıyor. Tasarımdaki "+" düğmesi kapsam dışı.
 
 ## Sonraya kalanlar
 
@@ -73,6 +73,8 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 | Numarası gizli arama | | Ücretli arama servisi gerekiyor |
 | Fiziksel künye | | Fiziksel ürün, ilk sürümde QR yazdırılır |
 | Android | | Expo seçilirse aynı koddan eklenebilir |
+| Hayvanı arşivleme | | Kayıtları saklayıp hatırlatmaları durdurur. İlk sürümde yalnızca sayılı onaylı silme var |
+| Hayvan fotoğrafını kaldırma | | Şimdilik yalnızca değiştirilebiliyor |
 
 ## Açık işler
 
@@ -84,7 +86,6 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Karşılama ekranındaki "Zaten hesabım var" düğmesini bağla (Apple ile giriş hazır olunca)
-- [ ] Hayvan düzenleme ve silmeyi ekle (Hayvanlar listesiyle birlikte)
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Android sürümüne geçince iki Expo Go hatasını kendi derlemede yeniden dene: bildirim kanalı oluşturma (`setNotificationChannelAsync` NullPointerException) ve bildirime dokununca çökme (`LauncherActivity`, veritabanı hatası)
 - [ ] Android sürümünde hatırlatmalara `delivery: 'alarmClock'` ayarını ve tam zamanlı alarm iznini ekle. Expo Go'da bu izin olmadığı için bildirim 27 dakika ile 1 saat arasında gecikebiliyor (taklitçide görüldü)
@@ -94,10 +95,34 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 
 1. İsim ve marka kontrolü
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
-3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler ve Bugün listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada kilo ve Hayvanlar listesi)
+3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü ve Hayvanlar listesi kodlandı. Hatırlatmalar ve bildirim düğmeleri iPhone'da denendi, uygulama kapalıyken de çalışıyor. Sırada kilo)
 4. Hesap sistemi, sunucu, kayıp ilanı ve QR sayfası
 5. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
 6. App Store başvurusu ve Apple incelemesi
+
+## İlerleme
+
+Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyüklüğüne göre verilmiş bir tahmindir, ölçüm değildir. Bir iş ancak iPhone'da denendikten sonra "Bitti" sayılır. Kalan işler öğrenildikçe ağırlıklar değişebilir.
+
+| İş | Ağırlık | Durum |
+|---|---|---|
+| Kurulum ve uygulama iskeleti | 4 | Bitti |
+| Karşılama | 1 | Bitti |
+| Hayvan ekleme | 3 | Bitti |
+| Bugün ekranı (kayıp modu düğmesi hariç 3 puan) | 4 | 3 puan |
+| Aşı, tedavi ve ziyaret kayıtları | 8 | Bitti |
+| Görevler ve hatırlatmalar | 8 | Bitti |
+| Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
+| Kilo | 4 | Başlamadı |
+| Apple ile giriş, ayarlar ve hesap silme | 8 | Başlamadı |
+| Sunucu ve verilerin sunucuya taşınması | 12 | Başlamadı |
+| Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Başlamadı |
+| İlan, QR sayfası ve yazdırılabilir QR | 12 | Başlamadı |
+| Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
+| Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
+| App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
+
+**Toplam: %30**
 
 ## Test ve derleme
 
@@ -125,6 +150,8 @@ Alt menüde Ziyaretler sekmesi kalkar; ziyaret kayıtları sağlık kaydının i
 - Taklitçi testlerinde ekran görüntülerini `/sdcard` yerine `/data/local/tmp` altına al, yoksa fotoğraf seçicinin galerisine düşüyorlar.
 - Taklitçi yeni açıldığında Expo Go `Failed to download remote update` diyebiliyor. `adb reverse tcp:8081 tcp:8081` çalıştırıp projeyi `exp://127.0.0.1:8081` adresiyle aç. `adb root` bu yönlendirmeyi siler, yeniden çalıştır.
 - Taklitçide bildirimi saatinde bekleme: alarmın esneme payı var (`dumpsys alarm` içinde `window`). Saati bu payın ötesine al. `am force-stop` alarmları da siler, uygulama kapalıyken deneme için `am kill` kullan.
+- Expo Go'nun dişli düğmesi sağ üstte duruyor ve oradaki düğmelerin üstüne biniyor. Taklitçide `adb shell input swipe 971 110 971 1700 600` ile kenara çek. Gerçek uygulamada yok.
+- Alt menüde `left` ve `right` işe yaramıyor, kenar boşluğu `marginHorizontal` ile veriliyor.
 - Uygulama arka plandan dönünce ekran yenilensin diye tarih hesapları veriyle birlikte okunan `now` değerini kullanıyor. React Compiler hesabı önbelleğe aldığı için bileşen içindeki `new Date()` eski kalabiliyor.
 
 ## Pazar bilgisi (5 Kasım 2026'da kontrol edildi)

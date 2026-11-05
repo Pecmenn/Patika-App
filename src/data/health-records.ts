@@ -48,3 +48,8 @@ export async function deleteHealthRecord(id: string): Promise<void> {
   const records = await listHealthRecords();
   await saveHealthRecords(records.filter((record) => record.id !== id));
 }
+
+export async function deleteHealthRecordsOfPet(petId: string): Promise<void> {
+  const records = await listHealthRecords();
+  await saveHealthRecords(records.filter((record) => record.petId !== petId));
+}

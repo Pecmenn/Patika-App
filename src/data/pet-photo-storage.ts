@@ -16,6 +16,13 @@ export async function storePetPhoto(sourceUri: string): Promise<string> {
   return fileName;
 }
 
+export function deletePetPhoto(photo: string) {
+  const file = new File(photosDirectory(), photo);
+  if (file.exists) {
+    file.delete();
+  }
+}
+
 export function resolvePetPhotoUri(photo: string) {
   return new File(photosDirectory(), photo).uri;
 }

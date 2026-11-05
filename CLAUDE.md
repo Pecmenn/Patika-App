@@ -8,6 +8,7 @@ Kullanıcı yazılımcı değil ve bu projeyi yaparak öğrenmek istiyor. Türk�
 - "Patika" adını değiştirmeyi yeniden önerme; riskler bilinerek seçildi. Yeni bir somut risk çıkarsa yalnızca onu bildir.
 - İlk sürüm kapsamı dışındaki özellikleri eklemeden önce sor.
 - Soruları Türkçe sor. Metni İngilizce gelen hazır kartları (örneğin Git dalı kartı) kullanma.
+- Her iş bitiminde uygulamanın yüzde kaç bittiğini yaz. Yüzdeyi PROJE-PLANI.md içindeki İlerleme tablosundan al, tabloyu da güncelle. Tablo bir tahmindir, öyle olduğunu saklama.
 
 Kararlar, kapsam ve açık işler: @PROJE-PLANI.md
 

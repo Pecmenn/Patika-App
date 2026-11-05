@@ -4,22 +4,30 @@ import { useEffect } from 'react';
 
 import { handleTaskAction } from '@/lib/reminders';
 
-function openFromNotification(notification: Notifications.Notification) {
+function openFromNotification(notification: Notifications.Notification, isColdStart: boolean) {
   const url = notification.request.content.data?.url;
   if (typeof url !== 'string') {
     return;
   }
-  // Bugün ekranı yığının en altında durur. Üstünde başka ekran yoksa zaten oradayız.
-  if (url === '/today') {
-    if (router.canDismiss()) {
-      router.dismissTo(url);
-    }
+  if (url !== '/today') {
+    router.push(url as Href);
     return;
   }
-  router.push(url as Href);
+  // Uygulama yeni açılıyorsa zaten Bugün'e gidiyor. Açıksa üstteki ekranları kapatıp o sekmeye geçer.
+  if (isColdStart) {
+    return;
+  }
+  if (router.canDismiss()) {
+    router.dismissTo(url);
+  } else {
+    router.navigate(url);
+  }
 }
 
-async function handleResponse(response: Notifications.NotificationResponse) {
+async function handleResponse(
+  response: Notifications.NotificationResponse,
+  isColdStart: boolean,
+) {
   Notifications.clearLastNotificationResponse();
   try {
     if (await handleTaskAction(response)) {
@@ -29,7 +37,7 @@ async function handleResponse(response: Notifications.NotificationResponse) {
     console.warn('Bildirim düğmesi işlenemedi', error);
   }
   if (response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
-    openFromNotification(response.notification);
+    openFromNotification(response.notification, isColdStart);
   }
 }
 
@@ -39,10 +47,12 @@ export function NotificationObserver() {
   useEffect(() => {
     const lastResponse = Notifications.getLastNotificationResponse();
     if (lastResponse) {
-      handleResponse(lastResponse);
+      handleResponse(lastResponse, true);
     }
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) =>
+      handleResponse(response, false),
+    );
     return () => subscription.remove();
   }, []);
 

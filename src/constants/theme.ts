@@ -27,5 +27,16 @@ export const fonts = {
   uiHeavy: 'Figtree_800ExtraBold',
 } as const;
 
+export const TAB_BAR_HEIGHT = 64;
+
+// Alt menü ekranın üstünde yüzer: alttan boşluğu ve içeriğin altında bırakılacak pay.
+export function tabBarBottom(bottomInset: number) {
+  return Math.max(bottomInset, 12);
+}
+
+export function tabBarClearance(bottomInset: number) {
+  return tabBarBottom(bottomInset) + TAB_BAR_HEIGHT + 16;
+}
+
 export const cardShadow =
   '0 1px 2px rgba(29, 36, 82, 0.04), 0 10px 24px -16px rgba(29, 36, 82, 0.18)';

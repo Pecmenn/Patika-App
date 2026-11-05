@@ -8,7 +8,7 @@ import { PetAvatar } from '@/components/pet-avatar';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
-import { cardShadow, colors, fonts } from '@/constants/theme';
+import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listHealthRecords } from '@/data/health-records';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
@@ -59,7 +59,10 @@ export default function TodayScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+      contentContainerStyle={[
+        styles.scroll,
+        { paddingTop: insets.top + 8, paddingBottom: tabBarClearance(insets.bottom) },
+      ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
       <Text style={styles.date}>{formatWeekday(now)}</Text>
@@ -152,7 +155,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-    paddingBottom: 32,
   },
   date: {
     fontFamily: fonts.uiSemi,

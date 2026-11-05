@@ -97,6 +97,14 @@ export function addYears(date: Date, years: number) {
   return result;
 }
 
+export function yearsSince(dateKey: string, now = new Date()) {
+  const date = fromDateKey(dateKey);
+  const hadAnniversary =
+    now.getMonth() > date.getMonth() ||
+    (now.getMonth() === date.getMonth() && now.getDate() >= date.getDate());
+  return Math.max(now.getFullYear() - date.getFullYear() - (hadAnniversary ? 0 : 1), 0);
+}
+
 export function yearsAgo(years: number) {
   return addYears(new Date(), -years);
 }

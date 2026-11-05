@@ -59,6 +59,11 @@ export async function deleteTask(id: string): Promise<void> {
   await saveTasks(tasks.filter((task) => task.id !== id));
 }
 
+export async function deleteTasksOfPet(petId: string): Promise<void> {
+  const tasks = await listTasks();
+  await saveTasks(tasks.filter((task) => task.petId !== petId));
+}
+
 export async function setTaskCompleted(id: string, date: string, completed: boolean): Promise<void> {
   await changeTask(id, (task) => ({
     ...task,
