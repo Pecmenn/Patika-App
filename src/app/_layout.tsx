@@ -53,6 +53,7 @@ export default function RootLayout() {
         }}>
         <Stack.Screen name="add-pet" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-vaccine" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="edit-vaccine" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="today" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />

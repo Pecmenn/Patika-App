@@ -1,6 +1,7 @@
+import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Button } from '@/components/button';
@@ -39,11 +40,38 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function VaccineSticker({ vaccine }: { vaccine: Vaccine }) {
+type StickerBodyProps = {
+  name: string;
+  onEdit: () => void;
+  children: ReactNode;
+};
+
+// Kartın yazılı kısmı düzenlemeyi açar. Bütün kart değil, çünkü yanındaki "Yapıldı" düğmesi ayrı kalmalı.
+function StickerBody({ name, onEdit, children }: StickerBodyProps) {
+  return (
+    <Pressable
+      accessibilityHint="Düzenlemek için dokun"
+      accessibilityRole="button"
+      onPress={onEdit}
+      style={({ pressed }) => [styles.body, pressed && styles.bodyPressed]}>
+      <View style={styles.nameRow}>
+        <Text style={styles.name}>{name}</Text>
+        <CaretRightIcon size={14} weight="bold" color={colors.ink2} />
+      </View>
+      {children}
+    </Pressable>
+  );
+}
+
+type VaccineStickerProps = {
+  vaccine: Vaccine;
+  onEdit: () => void;
+};
+
+export function VaccineSticker({ vaccine, onEdit }: VaccineStickerProps) {
   return (
     <StickerFrame isDue={false}>
-      <View style={styles.body}>
-        <Text style={styles.name}>{vaccine.name}</Text>
+      <StickerBody name={vaccine.name} onEdit={onEdit}>
         <View style={styles.meta}>
           <Meta label="Yapıldı" value={formatShortDate(fromDateKey(vaccine.givenDate))} />
           {vaccine.nextDueDate && (
@@ -55,31 +83,29 @@ export function VaccineSticker({ vaccine }: { vaccine: Vaccine }) {
           <PencilSimpleIcon size={13} weight="bold" color={colors.ink2} />
           <Text style={styles.sourceLabel}>Elle girildi</Text>
         </View>
-      </View>
+      </StickerBody>
     </StickerFrame>
   );
 }
 
-type DueVaccineStickerProps = {
-  vaccine: Vaccine;
+type DueVaccineStickerProps = VaccineStickerProps & {
   onDone: () => void;
 };
 
-export function DueVaccineSticker({ vaccine, onDone }: DueVaccineStickerProps) {
+export function DueVaccineSticker({ vaccine, onDone, onEdit }: DueVaccineStickerProps) {
   const dueDate = vaccine.nextDueDate ?? vaccine.givenDate;
   const days = daysUntil(dueDate);
 
   return (
     <StickerFrame isDue>
-      <View style={styles.body}>
-        <Text style={styles.name}>{vaccine.name}</Text>
+      <StickerBody name={vaccine.name} onEdit={onEdit}>
         <Text style={styles.lastDose}>
           Son doz: {formatShortDate(fromDateKey(vaccine.givenDate))}
         </Text>
         <Text style={styles.dueDate}>
           {Math.abs(days)} {dueCountLabel(days)}, {formatLongDate(fromDateKey(dueDate))}
         </Text>
-      </View>
+      </StickerBody>
       <Button label="Yapıldı" size="small" onPress={onDone} />
     </StickerFrame>
   );
@@ -125,7 +151,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  bodyPressed: {
+    opacity: 0.6,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   name: {
+    flexShrink: 1,
     fontFamily: fonts.displaySemi,
     fontSize: 17,
     letterSpacing: -0.4,

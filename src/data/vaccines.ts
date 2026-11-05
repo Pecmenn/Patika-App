@@ -25,3 +25,19 @@ export async function addVaccine(newVaccine: NewVaccine): Promise<void> {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...vaccines, { ...newVaccine, id }]));
 }
+
+export async function updateVaccine(id: string, changes: NewVaccine): Promise<void> {
+  const vaccines = await listVaccines();
+  await AsyncStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(vaccines.map((vaccine) => (vaccine.id === id ? { ...changes, id } : vaccine))),
+  );
+}
+
+export async function deleteVaccine(id: string): Promise<void> {
+  const vaccines = await listVaccines();
+  await AsyncStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(vaccines.filter((vaccine) => vaccine.id !== id)),
+  );
+}

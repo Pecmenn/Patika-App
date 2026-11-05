@@ -35,6 +35,10 @@ export default function PetRecordScreen() {
   const { due, others } = splitVaccines(vaccines.filter((vaccine) => vaccine.petId === pet.id));
   const hasRecords = due.length > 0 || others.length > 0;
 
+  function openEdit(vaccineId: string) {
+    router.push({ pathname: '/edit-vaccine', params: { id: vaccineId } });
+  }
+
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -73,6 +77,7 @@ export default function PetRecordScreen() {
                     params: { petId: pet.id, name: vaccine.name },
                   })
                 }
+                onEdit={() => openEdit(vaccine.id)}
               />
             ))}
           </View>
@@ -85,7 +90,11 @@ export default function PetRecordScreen() {
               <Text style={styles.sectionCount}>{others.length} kayıt</Text>
             </View>
             {others.map((vaccine) => (
-              <VaccineSticker key={vaccine.id} vaccine={vaccine} />
+              <VaccineSticker
+                key={vaccine.id}
+                vaccine={vaccine}
+                onEdit={() => openEdit(vaccine.id)}
+              />
             ))}
           </View>
         )}
