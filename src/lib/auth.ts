@@ -87,6 +87,15 @@ export async function signInWithApple() {
   await finishSignIn(session);
 }
 
+// Veteriner hesabı telefondaki kayıtlara bağlanmaz, eşitlenmez: telefon temizlenmez, soru da sorulmaz.
+export async function signInAsVet(email: string, password: string, isNewAccount: boolean) {
+  const session = await apiRequest<Session>(
+    isNewAccount ? '/v1/auth/vet/register' : '/v1/auth/vet/login',
+    { method: 'POST', isPublic: true, body: { email, password } },
+  );
+  await saveSession(session);
+}
+
 // Yalnızca bu telefondan çıkar. Sunucuya ulaşılamazsa çıkış yine geçerli olur.
 export async function signOut() {
   const session = await getSession();

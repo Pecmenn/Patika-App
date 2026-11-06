@@ -23,10 +23,12 @@ type LastSeenMapProps = {
   onMove: (point: Point) => void;
   // Yalnızca son seçilen noktanın semt adıyla çağrılır. Bulunamazsa boş metin gelir.
   onArea: (area: string) => void;
+  // Daha önce seçilmiş bir nokta varsa harita orada açılır.
+  initialPoint?: Point;
 };
 
 // Harita kaydırılır, ortadaki iğnenin altındaki nokta seçilmiş olur.
-export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
+export function LastSeenMap({ onMove, onArea, initialPoint }: LastSeenMapProps) {
   const mapRef = useRef<ComponentRef<typeof MapView>>(null);
   const isReadyRef = useRef(false);
   // Kullanıcı haritayı elle kaydırdı mı?
@@ -35,7 +37,8 @@ export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
   const targetRef = useRef<Point | null>(null);
   const requestRef = useRef(0);
   const areaTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [hasPicked, setHasPicked] = useState(false);
+  const [hasPicked, setHasPicked] = useState(initialPoint !== undefined);
+  const hasInitialPoint = initialPoint !== undefined;
 
   const flyToTarget = useCallback(() => {
     if (targetRef.current && isReadyRef.current) {
@@ -60,7 +63,7 @@ export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
     let isActive = true;
     (async () => {
       const { granted } = await Location.getForegroundPermissionsAsync();
-      if (!granted) {
+      if (!granted || hasInitialPoint) {
         return;
       }
       const position = await Location.getCurrentPositionAsync({
@@ -74,7 +77,7 @@ export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
       isActive = false;
       clearTimeout(areaTimerRef.current);
     };
-  }, [goTo]);
+  }, [goTo, hasInitialPoint]);
 
   async function useMyLocation() {
     try {
@@ -138,7 +141,11 @@ export function LastSeenMap({ onMove, onArea }: LastSeenMapProps) {
     <View style={styles.card}>
       <MapView
         ref={mapRef}
-        initialRegion={ISTANBUL}
+        initialRegion={
+          initialPoint
+            ? { ...initialPoint, latitudeDelta: CLOSE_DELTA, longitudeDelta: CLOSE_DELTA }
+            : ISTANBUL
+        }
         onMapReady={() => {
           isReadyRef.current = true;
           flyToTarget();

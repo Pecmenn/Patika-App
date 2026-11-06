@@ -35,6 +35,8 @@ export default async function globalSetup() {
   for (const name of ['window_animation_scale', 'transition_animation_scale', 'animator_duration_scale']) {
     adb('shell', 'settings', 'put', 'global', name, '0');
   }
+  // Klavyenin "kalemini dene" tanıtımı arada açılıp ekranı kapatıyor.
+  adb('shell', 'settings', 'put', 'secure', 'stylus_handwriting_enabled', '0');
   // Tarih ve saat sabit: Bugün ekranındaki tarih ve selamlama her seferinde aynı olsun.
   adb('shell', 'settings', 'put', 'global', 'auto_time', '0');
   adb('shell', 'settings', 'put', 'global', 'auto_time_zone', '0');

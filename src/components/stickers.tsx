@@ -1,4 +1,5 @@
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+import { CalendarCheckIcon } from 'phosphor-react-native/src/icons/CalendarCheck';
 import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,7 +11,7 @@ import type { HealthRecord } from '@/data/health-records';
 import type { Visit } from '@/data/visits';
 import { daysUntil, formatLongDate, formatShortDate, formatTime, fromDateKey } from '@/lib/dates';
 import { dueCountLabel } from '@/lib/health-records';
-import { visitWhenLabel } from '@/lib/visits';
+import { visitWhenLabel, isAppointmentVisit } from '@/lib/visits';
 
 const CORNER = 20;
 
@@ -70,6 +71,15 @@ function ManualSource() {
     <View style={styles.source}>
       <PencilSimpleIcon size={13} weight="bold" color={colors.ink2} />
       <Text style={styles.sourceLabel}>Elle girildi</Text>
+    </View>
+  );
+}
+
+function AppointmentSource() {
+  return (
+    <View style={styles.source}>
+      <CalendarCheckIcon size={13} weight="bold" color={colors.ink2} />
+      <Text style={styles.sourceLabel}>Patika randevusu</Text>
     </View>
   );
 }
@@ -137,7 +147,7 @@ export function VisitSticker({ visit, onEdit }: VisitStickerProps) {
           {visit.time && <Meta label="Saat" value={formatTime(visit.time)} />}
           {visit.clinic && <Meta label="Klinik" value={visit.clinic} />}
         </View>
-        <ManualSource />
+        {isAppointmentVisit(visit) ? <AppointmentSource /> : <ManualSource />}
       </StickerBody>
     </StickerFrame>
   );

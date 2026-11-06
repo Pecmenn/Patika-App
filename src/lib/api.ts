@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 
-import { clearSession, getSession } from '@/lib/session';
+import { endRejectedSession, getSession } from '@/lib/session';
 
 const DEV_API_PORT = 4000;
 const REQUEST_TIMEOUT_MS = 20000;
@@ -82,7 +82,7 @@ export async function apiRequest<T = void>(
     if (!response.ok) {
       // Oturum geçersizse kapatılır. Telefondaki kayıtlar durur, yeniden girince devam eder.
       if (response.status === 401 && session) {
-        await clearSession(session.token);
+        await endRejectedSession(session.token);
       }
       throw new ApiError(response.status, data?.error ?? 'server_error');
     }

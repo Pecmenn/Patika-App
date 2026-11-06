@@ -196,6 +196,9 @@ test('görev eklenir, Bugün listesinde "Yapıldı" işaretlenir', async () => {
 
 test('Hayvanlar sekmesi açılır, ikinci hayvan eklenir', async () => {
   await phone.tap('Hayvanlar');
+  // "Şanslı" ve "Hayvan ekle" Bugün ekranında da var: geçiş bitmeden dokunulursa eski konuma denk gelir.
+  await phone.seeLabel('Ayarlar');
+  await phone.wait(500);
   await phone.see('Şanslı');
   await phone.tapLabel('Hayvan ekle');
   await phone.fill('Ad', 'Boncuk');

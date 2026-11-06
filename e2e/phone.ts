@@ -8,6 +8,11 @@ const PACKAGE = 'host.exp.exponent';
 const STATUS_BAR_PX = 66;
 
 const POLL_MS = 300;
+const KEYBOARD_SAFE_Y = 1150;
+
+// Expo Go, kod dosyası değişince üstte kısa süre mavi "Refreshing..." şeridi gösteriyor. Gerçek uygulamada yok.
+const REFRESH_BANNER = { x: 8, y: 86, rgb: [37, 132, 232] };
+const REFRESH_BANNER_TIMEOUT_MS = 30_000;
 
 type Region = { x: number; y: number; width: number; height: number };
 type Selector = { text?: string | RegExp; desc?: string | RegExp };
@@ -111,6 +116,10 @@ export class Phone {
     }
   }
 
+  async seeLabel(desc: string | RegExp, timeout = 25_000) {
+    await this.find({ desc }, timeout);
+  }
+
   async has(text: string | RegExp, timeout = 1200) {
     return this.find({ text }, timeout).then(() => true, () => false);
   }
@@ -126,6 +135,12 @@ export class Phone {
   }
 
   async fill(label: string, value: string) {
+    const { bounds } = await this.find({ desc: label }, 25_000);
+    // Sürücü önce alana dokunur. Klavye açılınca alan altında kalırsa yazamaz, önce yukarı alınır.
+    if (bounds.y > KEYBOARD_SAFE_Y) {
+      await this.device.shell(`input swipe 25 ${bounds.y} 25 ${bounds.y - 700} 500`);
+      await this.wait(500);
+    }
     await this.find({ desc: label }, 25_000);
     await this.device.fill({ desc: label }, value);
   }
@@ -133,6 +148,11 @@ export class Phone {
   async hideKeyboard() {
     await this.device.shell('input keyevent KEYCODE_ESCAPE');
     await this.wait(400);
+    // Çok satırlı alanda bu tuş klavyeyi kapatmıyor. Klavye açıkken "geri" ekranı kapatmaz, yalnızca klavyeyi.
+    const state = (await this.device.shell('dumpsys input_method | grep mInputShown')).toString();
+    if (state.includes('mInputShown=true')) {
+      await this.back();
+    }
   }
 
   async back() {
@@ -178,9 +198,23 @@ export class Phone {
     await this.device.shell(`input swipe ${cx} ${cy} ${cx} ${cy} ${ms}`);
   }
 
+  // Şerit görsele girmesin diye kalkması beklenir. Kalkmazsa görüntü olduğu gibi döner, karşılaştırma kalır.
+  private async captureWithoutRefreshBanner() {
+    const deadline = Date.now() + REFRESH_BANNER_TIMEOUT_MS;
+    for (;;) {
+      const image = PNG.sync.read(await this.device.screenshot());
+      const index = (image.width * REFRESH_BANNER.y + REFRESH_BANNER.x) * 4;
+      const hasBanner = REFRESH_BANNER.rgb.every((value, channel) => image.data[index + channel] === value);
+      if (!hasBanner || Date.now() > deadline) {
+        return image;
+      }
+      await this.wait(POLL_MS);
+    }
+  }
+
   async screenshot(masks: Region[] = []) {
     await this.allowExpoGoPermission();
-    const image = PNG.sync.read(await this.device.screenshot());
+    const image = await this.captureWithoutRefreshBanner();
     for (const mask of [{ x: 0, y: 0, width: image.width, height: STATUS_BAR_PX }, ...masks]) {
       for (let y = mask.y; y < Math.min(mask.y + mask.height, image.height); y += 1) {
         for (let x = mask.x; x < Math.min(mask.x + mask.width, image.width); x += 1) {

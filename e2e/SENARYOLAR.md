@@ -24,16 +24,19 @@ Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, s
 Hayvan fotoğrafının yüklenmesi, yer seçmeden başlatamama, kısa dokunuşun başlatmaması, haritadan yer seçimi, ilan fotoğrafı, canlı ihbar, bildirim, arama düğmesi, ihbar türleri, üç ilan biçimi, QR'ın ekrandan, görselden ve PDF içinden okunması, A4'ün tek sayfa ve sayfayı doldurması, bağlantı kopyalama, Android Chrome'dan ihbar, bulundu (vazgeçme, fotoğrafın silinmesi), QR ekranı, yazdırma ekranı, ilan yokken haber, haberden kayıp modu başlatma.
 
 ### Dayanıklılık (taklitçi)
-Sunucu kapalıyken kayıt, uyarı ve geri gelince eşitleme, sunucu sonrası canlı bağlantı, oturum düşünce kayıtların kalması, başka hesapla girişte soru (vazgeç, aktar), yeni telefona kayıt ve fotoğraf gelmesi, çıkış. Hesap silme: açık ilan uyarısı, vazgeçme, sunucu kapalıyken onay sorulmaması, onaydan sonra sunucu giderse telefonda hiçbir şeyin silinmemesi, başarıda sunucu ve telefonun temizlenmesi, QR sayfasının kapanması, başka hesaba dokunulmaması.
+Sunucu kapalıyken kayıt, uyarı ve geri gelince eşitleme, sunucu sonrası canlı bağlantı, oturum düşünce kayıtların kalması ve Bugün'de uyarı kartı, karttan yeniden giriş, kendi isteğiyle çıkışta ve hesap silmede kartın çıkmaması, başka hesapla girişte soru (vazgeç, aktar), yeni telefona kayıt ve fotoğraf gelmesi, çıkış. Hesap silme: açık ilan uyarısı, vazgeçme, sunucu kapalıyken onay sorulmaması, onaydan sonra sunucu giderse telefonda hiçbir şeyin silinmemesi, başarıda sunucu ve telefonun temizlenmesi, QR sayfasının kapanması, başka hesaba dokunulmaması.
+
+### Veteriner ve randevu (taklitçi)
+Veteriner hesabı (yanlış şifre, kısa şifre, kayıt, giriş), telefondaki sahip kayıtlarının veteriner hesabına gitmemesi ve çıkışta kalması, işletme formu (eksikler listesi, geçersiz telefon ve web adresi, harita, çalışma saati, tür, hizmet), onay bekleme, onaysız kliniğin listede görünmemesi, kimlik değişince yeniden onay uyarısı. Sahip: ad sırası, konum izniyle yakınlık sırası ve mesafe, klinik sayfası, arama düğmesi, girişsiz randevu istenememesi, kapalı günün seçilememesi, geçersiz telefon, istek, ikinci istekte telefonun hazır gelmesi. Onay: ekranın kendiliğinden değişmesi, ziyarete düşmesi, Bugün kartı. Red ve notu, sahip iptali (ziyaret kalkar), veteriner paneli (sahip bilgileri, arama, reddet, onayla, iptal, geçmiş), veteriner hesabını silme.
 
 ### Sunucu
-Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı, süresi dolmuş, değiştirilmiş, imzasız), tüm korumalı uçlar, kullanıcılar arası erişim, son değişiklik kazanır, ileri saat, yarım emoji, sayfalama, geçersiz girdiler, fotoğraf sınırları ve klasör atlatma, GPS ve üst verinin silinmesi, kayıp ilanı kuralları, herkese açık alanlar, ihbar sınırları, haberin ilana eklenmesi, hayvan ve hesap silme, canlı bağlantı, ayarlar, güvenlik başlıkları.
+Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı, süresi dolmuş, değiştirilmiş, imzasız), tüm korumalı uçlar, kullanıcılar arası erişim, son değişiklik kazanır, ileri saat, yarım emoji, sayfalama, geçersiz girdiler, fotoğraf sınırları ve klasör atlatma, GPS ve üst verinin silinmesi, kayıp ilanı kuralları, herkese açık alanlar, ihbar sınırları, haberin ilana eklenmesi, hayvan ve hesap silme, canlı bağlantı, ayarlar, güvenlik başlıkları. Veteriner: şifrenin özetle saklanması, rol ayrımı (iki yönlü), klinik onayı ve herkese açık alanlar, geçersiz bilgiler, fotoğraf üst verisi, boş saat hesabı, randevu kuralları ve sınırları, aynı saate çift onay, başka kliniğin randevusuna erişememe, süresi dolan istek, hayvan ve hesap silince randevular.
 
 ### Kayıp sayfası (Safari motoru ve Chrome motoru)
 Tüm durumlar (kayıp, bulundu, ilan yok, bulunamadı, sunucu hatası), form (boş, konum izni var ve yok, gönderim hatası, çift basış, sınırlar), kötü niyetli metin, dış istek olmaması, yatay taşma, dokunma boyutu, yazı tipleri, sayfa ağırlığı.
 
 ### Piksel karşılaştırması
-- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu, hesap silme onayı.
+- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu, hesap silme onayı, oturum kapandı kartı, veteriner girişi, veteriner paneli, işletme formu ve profili, veteriner listesi, klinik sayfası.
 - **Kayıp sayfası:** 13 durum, 3 ekran ölçüsünde.
 
 ## Kapsanmayanlar
@@ -47,6 +50,8 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Kilit ekranından "Yapıldı" sonrası uygulamanın açılması
 - Apple Haritalar, "Konumumu kullan"
 - Hesap silmede Apple izni iptali (henüz yazılmadı, Apple geliştirici üyeliği gerekiyor)
+- Veteriner ekranlarının ve randevu formunun iPhone'daki görünümü, klavyeyle davranışı
+- Oturum kapandı kartındaki ve Ayarlar'daki Apple düğmesi (taklitçide bu kartta deneme hesabı düğmesi var)
 
 ### Taklitçide yapılamıyor
 - **"Konumumu kullan":** Taklitçide Google'ın konum doğruluğu izni gerekiyor, bu izin bilerek verilmedi. iPhone'da denenecek.
@@ -65,6 +70,9 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Fotoğraf yükleme hatası ve ilan ekranındaki yeniden deneme, fotoğrafsız ilan uyarısı
 - `server.ts` başlangıcı, yarım kalan veritabanı değişikliği, yeniden başlatmada veri kalıcılığı, Apple anahtar servisine ulaşılamaması
 - Küçük telefon ve büyük yazı boyutu (uygulamada; kayıp sayfasında var)
+- Çalışma saatini saat seçiciyle değiştirme, "İlk günün saatlerini uygula", klinik fotoğrafı seçme ve yükleme
+- Randevu bildiriminin ekranda görünmesi ve dokununca doğru ekranın açılması
+- Veteriner uygulama açıkken istek gelince listenin değişmesi (sahip tarafında var)
 - Piksel karşılığı olmayan ekranlar: kayıp başlatma, bulundu, tedavi ve ziyaret listeleri ve formları, görev listesi, kilo grafiği
 
 ## Bilinen ve kabul edilen sınırlar

@@ -29,3 +29,8 @@ export function visitWhenLabel({ date, time }: Pick<Visit, 'date' | 'time'>) {
   const day = formatLongDate(fromDateKey(date));
   return time ? `${day}, saat ${formatTime(time)}` : day;
 }
+
+// Patika'dan alınıp klinik tarafından onaylanan randevu: sunucu ziyareti bu önekle yazar.
+export function isAppointmentVisit({ id }: { id: string }) {
+  return id.startsWith('appointment-');
+}

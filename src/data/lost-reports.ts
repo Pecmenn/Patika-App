@@ -1,9 +1,10 @@
+import { handleAppointmentEvent, refreshAppointments } from '@/data/appointments';
 import { petPhotoExists, readPetPhotoBytes } from '@/data/pet-photo-storage';
 import { listPets, type Pet, type Species } from '@/data/pets';
 import { API_URL, apiRequest } from '@/lib/api';
 import { createChangeSignal } from '@/lib/change-signal';
 import { openEventStream } from '@/lib/realtime';
-import { showSightingNotification } from '@/lib/reminders';
+import { showInstantNotification } from '@/lib/reminders';
 import { getSession } from '@/lib/session';
 
 // Kayıp ilanları telefonda tutulmaz, başkalarının ulaşması gerektiği için doğrudan sunucudadır.
@@ -266,7 +267,7 @@ async function notifySighting(row: SightingRow) {
     const report = await apiRequest<{ report: ReportRow }>(
       `/v1/lost-reports/${encodeURIComponent(row.report_id)}`,
     ).catch(() => null);
-    await showSightingNotification(
+    await showInstantNotification(
       `Yeni ihbar: ${report?.report.pet_name ?? 'hayvanın'}`,
       sightingSummary(row),
       `/lost/${row.report_id}`,
@@ -274,15 +275,16 @@ async function notifySighting(row: SightingRow) {
     return;
   }
   const pet = (await listPets()).find((candidate) => candidate.id === row.pet_id);
-  await showSightingNotification(
+  await showInstantNotification(
     `${pet?.name ?? 'Hayvanın'} için haber var`,
     sightingSummary(row),
     `/pet-messages/${row.pet_id}`,
   );
 }
 
-// Uygulama açıkken gelen ihbarı anında bildirir. Kapalıyken bildirim için kendi derlememiz gerekecek.
-export function watchSightings(token: string) {
+// Uygulama açıkken gelen ihbarı ve randevu haberini anında bildirir.
+// Kapalıyken bildirim için kendi derlememiz gerekecek.
+export function watchLiveEvents(token: string) {
   return openEventStream(
     token,
     (event) => {
@@ -291,9 +293,16 @@ export function watchSightings(token: string) {
         notifySighting(event.sighting as SightingRow).catch((error) => {
           console.warn('İhbar bildirimi gösterilemedi', error);
         });
+      } else if (event.type === 'appointment') {
+        handleAppointmentEvent(event).catch((error) => {
+          console.warn('Randevu bildirimi gösterilemedi', error);
+        });
       }
     },
     // Bağlantı yokken gelmiş olabilecekler ekranlara yansısın.
-    () => sightingChanges.notify(),
+    () => {
+      sightingChanges.notify();
+      refreshAppointments();
+    },
   );
 }

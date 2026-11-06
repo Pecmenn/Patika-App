@@ -251,7 +251,8 @@ async function syncPhotos(token: string) {
 
 async function runCycle() {
   const session = await getSession();
-  if (!session) {
+  // Veteriner hesabının eşitleyeceği kayıt yok. Telefonda sahip kaydı varsa ona bağlanmamalı.
+  if (!session || session.user.role === 'vet') {
     return;
   }
 

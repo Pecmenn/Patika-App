@@ -26,6 +26,9 @@ export default function IndexScreen() {
   if (pets === null || session === undefined) {
     return null;
   }
+  if (session?.user.role === 'vet') {
+    return <Redirect href="/vet/appointments" />;
+  }
   const isSignedIn = session !== null || !REQUIRES_SIGN_IN;
   if (isSignedIn && pets.length > 0) {
     return <Redirect href="/today" />;
@@ -65,6 +68,14 @@ function Welcome({ isRestoring, isSignedIn }: { isRestoring: boolean; isSignedIn
           {!isRestoring && !isSignedIn && <AppleSignInButton />}
           {/* iPhone'da girişsiz Ayarlar'a ulaşılamıyor. Mağaza sürümünde bu düğme yok. */}
           {__DEV__ && !isRestoring && !isSignedIn && <DevSignInButton />}
+          {!isRestoring && (
+            <Button
+              label="Veteriner girişi"
+              size="small"
+              variant="text"
+              onPress={() => router.push('/vet-auth')}
+            />
+          )}
         </View>
       </View>
     </View>

@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { DevSignInButton } from '@/components/dev-sign-in-button';
 import { GlassButton } from '@/components/glass-button';
+import { SignInButton } from '@/components/sign-in-button';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { readActiveReports, type LostReport } from '@/data/lost-reports';
 import { clearLocalData, flushBeforeSignOut, type SyncStatus } from '@/data/sync';
@@ -14,6 +14,12 @@ import { useSession } from '@/hooks/use-session';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { ApiError } from '@/lib/api';
 import { deleteAccount, signOut } from '@/lib/auth';
+
+const PROVIDER_LABELS = {
+  apple: 'Apple ile giriş',
+  development: 'Deneme hesabı',
+  email: 'E-posta ile giriş',
+};
 
 function goToStart() {
   router.dismissAll();
@@ -31,6 +37,28 @@ async function leave() {
   }
   goToStart();
 }
+
+// Veteriner hesabı telefondaki kayıtlara bağlı değil, çıkışta telefona dokunulmaz.
+async function leaveAsVet() {
+  try {
+    await signOut();
+  } catch (error) {
+    console.warn('Çıkış yapılamadı', error);
+    Alert.alert('Çıkış yapılamadı', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
+    return;
+  }
+  goToStart();
+}
+
+function confirmLeaveAsVet() {
+  Alert.alert('Çıkış yapılsın mı?', 'İşletme bilgilerin ve randevuların sunucuda kalır.', [
+    { text: 'Vazgeç', style: 'cancel' },
+    { text: 'Çıkış yap', onPress: leaveAsVet },
+  ]);
+}
+
+const VET_DELETION_WARNING =
+  'Kliniğin listeden kalkar, bilgileri ve fotoğrafı silinir. Yaklaşan randevuların iptal olur, sahipler bunu görür. Bu işlem geri alınamaz.';
 
 function deletionWarning(openReports: LostReport[]) {
   const lostNote =
@@ -107,7 +135,8 @@ export default function SettingsScreen() {
   const sync = useSyncStatus();
   const fullName = session?.user.full_name;
   const email = session?.user.email;
-  const providerLabel = session?.user.provider === 'apple' ? 'Apple ile giriş' : 'Deneme hesabı';
+  const isVet = session?.user.role === 'vet';
+  const providerLabel = PROVIDER_LABELS[session?.user.provider ?? 'development'];
   const [isBusy, setIsBusy] = useState(false);
 
   async function removeAccount() {
@@ -117,6 +146,11 @@ export default function SettingsScreen() {
     } catch (error) {
       setIsBusy(false);
       showDeleteError(error);
+      return;
+    }
+    if (isVet) {
+      Alert.alert('Hesabın silindi', 'Kliniğin ve bilgilerin silindi.', [{ text: 'Tamam' }]);
+      goToStart();
       return;
     }
     // Hesap artık yok. Telefondaki kopya silinemese de kullanıcı bunu doğru öğrenmeli.
@@ -138,6 +172,13 @@ export default function SettingsScreen() {
   }
 
   async function confirmDelete() {
+    if (isVet) {
+      Alert.alert('Hesabın silinsin mi?', VET_DELETION_WARNING, [
+        { text: 'Vazgeç', style: 'cancel' },
+        { text: 'Hesabı sil', style: 'destructive', onPress: removeAccount },
+      ]);
+      return;
+    }
     setIsBusy(true);
     let openReports: LostReport[];
     try {
@@ -175,7 +216,7 @@ export default function SettingsScreen() {
         <Row label="Giriş yöntemi" value={session ? providerLabel : 'Giriş yapılmadı'} />
         {fullName ? <Row label="Ad" value={fullName} /> : null}
         {email ? <Row label="E-posta" value={email} /> : null}
-        {session ? <Row label="Yedekleme" value={backupLabel(sync)} /> : null}
+        {session && !isVet ? <Row label="Yedekleme" value={backupLabel(sync)} /> : null}
       </View>
 
       {session && (
@@ -186,7 +227,7 @@ export default function SettingsScreen() {
               size="small"
               variant="text"
               disabled={isBusy}
-              onPress={confirmLeave}
+              onPress={isVet ? confirmLeaveAsVet : confirmLeave}
             />
           </View>
           <View style={styles.action}>
@@ -201,10 +242,15 @@ export default function SettingsScreen() {
         </>
       )}
 
-      {/* Apple ile giriş yalnızca iPhone'da var. Taklitçi ve tarayıcıda denemek için, yalnızca geliştirirken. */}
-      {__DEV__ && !session && Platform.OS !== 'ios' && (
-        <View style={styles.action}>
-          <DevSignInButton />
+      {session === null && (
+        <View style={styles.signIn}>
+          <SignInButton />
+          <Button
+            label="Veteriner girişi"
+            size="small"
+            variant="text"
+            onPress={() => router.push('/vet-auth')}
+          />
         </View>
       )}
     </ScrollView>
@@ -257,6 +303,9 @@ const styles = StyleSheet.create({
   },
   action: {
     alignSelf: 'center',
+    marginTop: 12,
+  },
+  signIn: {
     marginTop: 12,
   },
 });

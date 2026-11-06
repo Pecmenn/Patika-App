@@ -28,6 +28,39 @@ export function ChoiceChips<T extends string>({ options, value, onChange }: Choi
   );
 }
 
+type MultiChoiceChipsProps<T extends string> = {
+  options: { value: T; label: string }[];
+  values: T[];
+  onChange: (values: T[]) => void;
+};
+
+// Birden çok seçim: dokununca eklenir, yeniden dokununca çıkar.
+export function MultiChoiceChips<T extends string>({ options, values, onChange }: MultiChoiceChipsProps<T>) {
+  return (
+    <View style={styles.chips}>
+      {options.map((option) => {
+        const isSelected = values.includes(option.value);
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelected }}
+            onPress={() =>
+              onChange(
+                isSelected
+                  ? values.filter((value) => value !== option.value)
+                  : [...values, option.value],
+              )
+            }
+            style={[styles.chip, isSelected && styles.chipSelected]}>
+            <Text style={[styles.label, isSelected && styles.labelSelected]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   chips: {
     flexDirection: 'row',

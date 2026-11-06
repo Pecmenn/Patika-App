@@ -4,14 +4,17 @@ import { SirenIcon } from 'phosphor-react-native/src/icons/Siren';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppointmentNoticeCard } from '@/components/appointment-notice-card';
 import { NextVisitCard } from '@/components/next-visit-card';
 import { PetAvatar } from '@/components/pet-avatar';
 import { PetMessagesCard } from '@/components/pet-messages-card';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
+import { SessionEndedCard } from '@/components/session-ended-card';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
 import { WeightCard } from '@/components/weight-card';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
+import { listMyAppointments, subscribeToAppointments } from '@/data/appointments';
 import { listHealthRecords } from '@/data/health-records';
 import {
   listActiveReports,
@@ -25,7 +28,8 @@ import { listTasks, setTaskCompleted } from '@/data/tasks';
 import { listVisits } from '@/data/visits';
 import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
-import { useSession } from '@/hooks/use-session';
+import { useSession, useSessionRejected } from '@/hooks/use-session';
+import { appointmentNotice } from '@/lib/clinics';
 import { formatWeekday, greetingFor } from '@/lib/dates';
 import { splitRecords } from '@/lib/health-records';
 import { groupMessagesByPet } from '@/lib/lost';
@@ -62,16 +66,19 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const data = useFocusData(loadToday);
   const session = useSession();
+  const isSessionRejected = useSessionRejected();
   const activeReports = useFocusData(listActiveReports, subscribeToReports);
   const activeReport = activeReports?.[0];
   const petMessages = useFocusData(listPetMessages, subscribeToSightings);
   const messageGroups = groupMessagesByPet(petMessages ?? []);
+  const appointments = useFocusData(listMyAppointments, subscribeToAppointments);
   const givenName = session?.user.given_name;
   const pets = data?.pets;
   const records = data?.records;
   const tasks = data?.tasks;
   const visits = data?.visits;
   const now = data?.now ?? new Date();
+  const notice = appointmentNotice(appointments ?? [], now);
 
   const upNext = records ? splitRecords(records, now).due[0] : undefined;
   const upNextPet = upNext ? pets?.find((pet) => pet.id === upNext.petId) : undefined;
@@ -142,6 +149,18 @@ export default function TodayScreen() {
           <PlusIcon size={17} weight="bold" color={colors.ink} />
         </Pressable>
       </ScrollView>
+
+      {isSessionRejected && (
+        <View style={styles.message}>
+          <SessionEndedCard />
+        </View>
+      )}
+
+      {notice && (
+        <View style={styles.message}>
+          <AppointmentNoticeCard body={notice.body} title={notice.title} />
+        </View>
+      )}
 
       {messageGroups.map(({ petId, items }) => {
         const pet = pets?.find((candidate) => candidate.id === petId);

@@ -144,7 +144,7 @@ export async function refreshReminders({ askPermission = false } = {}) {
   }
 }
 
-export async function showSightingNotification(title: string, body: string, url: string) {
+export async function showInstantNotification(title: string, body: string, url: string) {
   if ((await getReminderPermission()) !== 'granted') {
     return;
   }

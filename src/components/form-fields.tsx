@@ -8,9 +8,11 @@ type TextFieldProps = {
   value: string;
   placeholder?: string;
   maxLength?: number;
-  autoCapitalize?: 'words' | 'characters' | 'sentences';
-  keyboardType?: 'default' | 'decimal-pad';
+  autoCapitalize?: 'words' | 'characters' | 'sentences' | 'none';
+  keyboardType?: 'default' | 'decimal-pad' | 'email-address' | 'phone-pad' | 'url';
   multiline?: boolean;
+  secureTextEntry?: boolean;
+  textContentType?: 'emailAddress' | 'password' | 'newPassword' | 'telephoneNumber';
   onChangeText: (text: string) => void;
 };
 
@@ -22,6 +24,8 @@ export function TextField({
   autoCapitalize = 'words',
   keyboardType = 'default',
   multiline = false,
+  secureTextEntry = false,
+  textContentType,
   onChangeText,
 }: TextFieldProps) {
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -48,8 +52,10 @@ export function TextField({
           placeholder={placeholder}
           placeholderTextColor={colors.ink3}
           returnKeyType="done"
+          secureTextEntry={secureTextEntry}
           selectionColor={colors.ink}
           style={styles.input}
+          textContentType={textContentType}
           value={value}
         />
       </View>

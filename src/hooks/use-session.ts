@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { getSession, subscribeToSession, type Session } from '@/lib/session';
+import { getSession, subscribeToSession, wasSessionRejected, type Session } from '@/lib/session';
+
+export function useSessionRejected() {
+  return useSyncExternalStore(subscribeToSession, wasSessionRejected);
+}
 
 // Oturum okunurken undefined, giriş yapılmamışsa null döner.
 export function useSession() {

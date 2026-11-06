@@ -25,7 +25,7 @@ import { addVisit, deleteVisit, updateVisit, type Visit } from '@/data/visits';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { atTime, formatLongDate, formatTime, fromDateKey, toDateKey, toTimeKey } from '@/lib/dates';
 import { refreshReminders } from '@/lib/reminders';
-import { isUpcomingVisit } from '@/lib/visits';
+import { isAppointmentVisit, isUpcomingVisit } from '@/lib/visits';
 
 const DEFAULT_TIME = '10:00';
 
@@ -99,7 +99,9 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
   function confirmRemove({ id, reason: savedReason }: Visit) {
     Alert.alert(
       `${savedReason} silinsin mi?`,
-      'Bu ziyaret ve hatırlatmaları silinir. Bu işlem geri alınamaz.',
+      isAppointmentVisit({ id })
+        ? 'Bu ziyaret ve hatırlatmaları silinir ama klinikteki randevun iptal olmaz. İptal için Veterinerler ekranındaki Randevularım bölümüne git.'
+        : 'Bu ziyaret ve hatırlatmaları silinir. Bu işlem geri alınamaz.',
       [
         { text: 'Vazgeç', style: 'cancel' },
         { text: 'Sil', style: 'destructive', onPress: () => remove(id) },

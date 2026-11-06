@@ -76,7 +76,11 @@ export default function RootLayout() {
         <Stack.Screen name="found/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="edit-task" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="vet-auth" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="vet-clinic-form" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="book/[id]" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="vet" options={{ gestureEnabled: false }} />
         <Stack.Screen name="index" options={{ gestureEnabled: false }} />
       </Stack>
       <NotificationObserver />

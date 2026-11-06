@@ -557,3 +557,112 @@ test('haberler: hayvan başına toplanır, en yeni haberin hayvanı önde', () =
   assert.deepEqual(groups.map((group) => group.petId), ['b', 'a']);
   assert.deepEqual(groups[0].items.map((item) => item.id), ['m3', 'm1']);
 });
+
+const { appointmentNotice, bookingDays, distanceKm, formatAppointmentWhen, formatDistance, hasValidHours, isValidInstagram, isValidPhone, isValidWebsite, openStatus, sortClinics } = await import('@/lib/clinics');
+const { isAppointmentVisit } = await import('@/lib/visits');
+
+const DAY = { open: '09:00', close: '18:00' };
+const WEEK = [DAY, DAY, DAY, DAY, DAY, DAY, null]; // Pazar kapalı
+
+test('mesafe: bilinen iki nokta arası doğru hesaplanır', () => {
+  const kadikoy = { latitude: 40.99, longitude: 29.03 };
+  const taksim = { latitude: 41.037, longitude: 28.985 };
+  const km = distanceKm(kadikoy, taksim);
+  assert.ok(km > 6 && km < 7, String(km));
+  assert.equal(distanceKm(kadikoy, kadikoy), 0);
+});
+
+test('mesafe yazısı: metre, virgüllü kilometre, tam kilometre', () => {
+  assert.equal(formatDistance(0.004), '10 m');
+  assert.equal(formatDistance(0.65), '650 m');
+  assert.equal(formatDistance(1.44), '1,4 km');
+  assert.equal(formatDistance(12.6), '13 km');
+});
+
+test('klinik sıralaması: konum varsa en yakın başta, yoksa Türkçe ad sırası', () => {
+  const clinics = [
+    { name: 'Zeytin Vet', latitude: 41.0, longitude: 29.0 },
+    { name: 'Çınar Vet', latitude: 40.0, longitude: 29.0 },
+    { name: 'Ada Vet', latitude: 42.0, longitude: 29.0 },
+  ];
+  const here = { latitude: 40.1, longitude: 29.0 };
+  assert.deepEqual(sortClinics(clinics, here).map((c) => c.name), ['Çınar Vet', 'Zeytin Vet', 'Ada Vet']);
+  assert.ok(sortClinics(clinics, here)[0].distance < 12);
+  const named = sortClinics(clinics, null);
+  assert.deepEqual(named.map((c) => c.name), ['Ada Vet', 'Çınar Vet', 'Zeytin Vet']);
+  assert.equal(named[0].distance, null);
+  assert.equal(clinics[0].name, 'Zeytin Vet', 'gelen liste değişmez');
+});
+
+test('açık-kapalı: Türkiye saatine göre, telefonun saat diliminden bağımsız', () => {
+  // 5 Kasım 2026 perşembe. UTC 07.00, Türkiye 10.00.
+  assert.deepEqual(openStatus(WEEK, at('2026-11-05T07:00:00Z')), { isOpen: true, label: 'Şimdi açık, kapanış 18.00' });
+  // Türkiye 08.00
+  assert.deepEqual(openStatus(WEEK, at('2026-11-05T05:00:00Z')), { isOpen: false, label: 'Kapalı, açılış 09.00' });
+  // Türkiye 18.00: kapanış anı kapalı sayılır, ertesi gün açılır.
+  assert.deepEqual(openStatus(WEEK, at('2026-11-05T15:00:00Z')), { isOpen: false, label: 'Kapalı, yarın 09.00' });
+  // Cumartesi akşamı, pazar kapalı: pazartesi yazar.
+  assert.deepEqual(openStatus(WEEK, at('2026-11-07T17:00:00Z')), { isOpen: false, label: 'Kapalı, Pzt 09.00' });
+  // Pazar sabahı
+  assert.deepEqual(openStatus(WEEK, at('2026-11-08T07:00:00Z')), { isOpen: false, label: 'Kapalı, yarın 09.00' });
+  // UTC ile Türkiye günü farklıyken doğru gün: UTC cuma 22.00, Türkiye cumartesi 01.00.
+  const onlySaturday = [null, null, null, null, null, { open: '00:30', close: '02:00' }, null];
+  assert.equal(openStatus(onlySaturday, at('2026-11-06T22:00:00Z')).isOpen, true);
+  assert.equal(openStatus(Array(7).fill(null), at('2026-11-05T07:00:00Z')).label, 'Kapalı');
+});
+
+test('randevu günleri: 14 gün, kapalı günler işaretli, Türkiye gününden başlar', () => {
+  const days = bookingDays(WEEK, at('2026-11-07T22:30:00Z')); // UTC cumartesi gecesi, Türkiye pazar 01.30
+  assert.equal(days.length, 14);
+  assert.deepEqual(days[0], { date: '2026-11-08', weekday: 'Paz', dayOfMonth: 8, month: 'Kas', isClosed: true });
+  assert.deepEqual(days[1], { date: '2026-11-09', weekday: 'Pzt', dayOfMonth: 9, month: 'Kas', isClosed: false });
+  assert.equal(days[7].isClosed, true);
+});
+
+test('randevu tarihi yazısı', () => {
+  assert.equal(formatAppointmentWhen('2026-11-05', '15:30'), '5 Kas Per, 15.30');
+  assert.equal(formatAppointmentWhen('2027-01-03', '09:00'), '3 Oca Paz, 09.00');
+});
+
+test('form kuralları: saat, telefon, web, instagram', () => {
+  assert.equal(hasValidHours(WEEK), true);
+  assert.equal(hasValidHours(Array(7).fill(null)), false, 'en az bir gün açık olmalı');
+  assert.equal(hasValidHours([{ open: '18:00', close: '09:00' }, ...WEEK.slice(1)]), false);
+  assert.equal(isValidPhone('0532 555 00 11'), true);
+  assert.equal(isValidPhone('+90 (532) 555-00-11'), true);
+  assert.equal(isValidPhone('ara beni'), false);
+  assert.equal(isValidPhone('123'), false);
+  assert.equal(isValidWebsite(''), true, 'boş olabilir');
+  assert.equal(isValidWebsite('https://moda.example'), true);
+  assert.equal(isValidWebsite('javascript:alert(1)'), false);
+  assert.equal(isValidWebsite('moda.example'), false);
+  assert.equal(isValidInstagram('@moda.vet'), true);
+  assert.equal(isValidInstagram('boşluk var'), false);
+});
+
+test('Bugün kartı: olumsuz cevap öne çıkar, eski cevap kaybolur, bekleyenler sayılır', () => {
+  const now = at('2026-11-05T10:00:00Z');
+  const base = { clinicName: 'Moda', petName: 'Mia', date: '2026-11-09', time: '10:00', cancelledBy: null, respondedAt: null };
+  assert.equal(appointmentNotice([], now), null);
+  assert.equal(appointmentNotice([{ ...base, status: 'confirmed', respondedAt: now }], now), null, 'onaylanan ziyaret kartına düşer');
+
+  const pending = { ...base, status: 'pending' };
+  assert.equal(appointmentNotice([pending], now).title, 'Randevu isteğin cevap bekliyor');
+  assert.equal(appointmentNotice([pending, pending], now).title, '2 randevu isteğin cevap bekliyor');
+
+  const rejected = { ...base, status: 'rejected', respondedAt: at('2026-11-04T10:00:00Z') };
+  assert.equal(appointmentNotice([pending, rejected], now).title, 'Moda randevu isteğini reddetti');
+
+  const old = { ...rejected, respondedAt: at('2026-11-01T10:00:00Z') };
+  assert.equal(appointmentNotice([old], now), null, '3 günden eski cevap Bugün ekranını işgal etmez');
+
+  const byVet = { ...base, status: 'cancelled', cancelledBy: 'vet', respondedAt: now };
+  assert.equal(appointmentNotice([byVet], now).title, 'Moda randevunu iptal etti');
+  const byOwner = { ...base, status: 'cancelled', cancelledBy: 'owner', respondedAt: now };
+  assert.equal(appointmentNotice([byOwner], now), null, 'kendi iptalini yeniden söylemeye gerek yok');
+});
+
+test('Patika randevusundan gelen ziyaret ayırt edilir', () => {
+  assert.equal(isAppointmentVisit({ id: 'appointment-abc' }), true);
+  assert.equal(isAppointmentVisit({ id: 'abc' }), false);
+});

@@ -12,14 +12,14 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | App Store adı | Patika: Evcil Hayvan Karnesi | Öneri, Apple'da ad ayırırken doğrulanacak |
 | Hedef | Önce App Store, Türkiye | Kesin |
 | Dil | Önce Türkçe, İngilizce eklenebilecek şekilde | Kesin |
-| Giriş | Apple ile giriş. Karşılama'da tek düğme var, yeni ve eski kullanıcı aynı düğmeyi kullanır. Android ve tarayıcıda şimdilik girişsiz denenir | Kesin |
+| Giriş | İki giriş var. Sahip: Apple ile giriş, yeni ve eski kullanıcı aynı düğmeyi kullanır, Android ve tarayıcıda şimdilik girişsiz denenir. Veteriner: e-posta ve şifre, Karşılama'daki ayrı düğmeden. Bir hesap tek rol taşır | Kesin |
 | İlk sürüm kapsamı | Aşağıdaki liste | Kesin |
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
 | Çalışma yeri | Windows bilgisayar. Uygulama `Desktop\Patika-App`, sunucu `Desktop\Patika-Backend` klasöründe (ayrı repolar) | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
 | Veri saklama | Telefon önce: kayıt önce telefona yazılır (AsyncStorage), internet olunca kendi sunucumuza gider. Çakışmada son değişiklik kazanır. Çıkış yapınca telefondaki kopya silinir, gönderilmemiş değişiklik varsa önce uyarır | Kesin |
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
-| Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Randevu alma yok, kullanıcı kendisi yazar | Kesin |
+| Ziyaret kaydı | Neden, tarih, isteğe bağlı saat, klinik ve not. Geçmiş ve yaklaşan olabilir. Yaklaşan ziyaret bir gün önce 09.00'da ve o gün (saat varsa 2 saat önce, yoksa 09.00'da) hatırlatılır. Kullanıcı kendisi yazabilir, Patika'dan alınan randevu onaylanınca kendiliğinden düşer | Kesin |
 | Kilo kaydı | Kilo, tarih ve not. Sağlıklı aralığı uygulama önermez, kullanıcı veterinerinden öğrendiğini yazar. Bugün'deki kart en son tartılan hayvanı gösterir | Kesin |
 | Kayıp sayfası gizliliği | Herkese açık sayfada yalnızca ad, fotoğraf, açıklama ve semt yazısı görünür. Tam konum, sahip ve ihbarlar görünmez. Bulununca yalnızca ad ve durum kalır, herkese açık fotoğraf silinir | Kesin |
 | İhbar | Bulan kişi konum, mesaj ve isteğe bağlı iletişim bilgisi gönderir, fotoğraf yok. Hepsini yalnızca ilanın sahibi görür. Bir ilana saatte en fazla 30, toplam 500 ihbar | Kesin |
@@ -36,9 +36,17 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | Basılı tutma düğmesi | 1 saniyede dolar, "Şimdi bırak" yazar, iş parmak kalkınca başlar. Doluyken parmak düğmeden kayarsa da başlar | Kesin |
 | Başka hesapla giriş | Telefondaki kayıtlar başka hesaba aitse sorulur: bu hesaba aktar, sil ya da vazgeç. Sorulmadan hiçbir şey silinmez | Kesin |
 | İlan fotoğrafı | Sunucu GPS ve diğer üst verileri siler. İlan görselinde fotoğraf kırpılmaz, kenarda zemin rengi kalır | Kesin |
+| Veteriner onayı | Kayıt olan klinik, sicil bilgisi kontrol edilip elle onaylanınca listeye girer. Onaydan sonra klinik adı, hekim adı ya da sicil numarası değişirse yeniden onaya gider | Kesin |
+| Klinik bilgileri | Ad, hekim, oda sicil no (herkese görünmez), telefon, adres, harita konumu, çalışma saatleri, baktığı türler, hizmetler, açıklama, fotoğraf, web, Instagram, randevu aralığı. Yıldız puanı yok | Kesin |
+| Veteriner listesi | Alt menüde üçüncü sekme. Yakınlığa göre sıralanır, konum izni yoksa ad sırası. Konum telefondan çıkmaz: liste indirilir, sıralama telefonda yapılır | Kesin |
+| Randevu | İstek ve onay. Sahip çalışma saatlerinden gün ve saat seçer, veteriner onaylar ya da reddeder. Onaylanan randevu sahibin ziyaretlerine düşer, hatırlatmalar çalışır. İki taraf da iptal edebilir | Kesin |
+| Randevuda paylaşılan | Sahibin adı ve telefonu, hayvanın adı, türü, ırkı, yaşı, neden ve not. Sağlık kayıtları paylaşılmaz | Kesin |
 | Hesap silme | Ayarlar'da düğme, tek onay penceresi. Açık ilan varsa hayvanın adıyla uyarır. Sunucu onaylamadan telefondaki hiçbir şey silinmez, sunucuya ulaşılamıyorsa onay sorulmaz. Silinince QR sayfaları da kapanır | Kesin |
+| Backoffice paneli | Yönetim ekranı, `Patika-Backend` içinde, sunucunun `/admin` adresinden tarayıcıyla açılır. İlk sürümde klinik onayı, özet rakamlar, kayıp ilanı denetimi ve kullanıcı yönetimi | Kesin |
+| Panele giriş | E-posta ve şifre. Kayıt düğmesi yok, hesabı kullanıcı terminalde komutla açar, şifreyi kendisi yazar | Öneri, kullanıcı onayı bekliyor |
+| Oturum düşünce | Sunucu oturumu reddederse Bugün'de kart ve giriş düğmesi çıkar, Ayarlar'da da düğme var. Ekran zorla değişmez, yarım form kaybolmaz. Kayıtlar telefonda kalır, girince yedekleme sürer. Kendi isteğiyle çıkışta ve hesap silmede kart çıkmaz | Kesin |
 
-## İlk sürüm: tasarımdan gelen 11 ekran
+## İlk sürüm: tasarımdan gelen 13 ekran
 
 Tasarımdaki adlar `screens.html` içindeki `data-screen` değerleridir.
 
@@ -55,6 +63,8 @@ Tasarımdaki adlar `screens.html` içindeki `data-screen` değerleridir.
 | İlan | `poster` | Story, gönderi ve A4 biçimleri, QR ve bağlantı. Telefon numarası yok |
 | QR sayfası | `finder` | Uygulama gerektirmeyen web sayfası. Bulan kişi konum ve mesaj gönderir |
 | Bulundu | `found` | Kayıp modu kapanır, süre ve ihbar sayısı görünür. Randevu önerisi yok |
+| Veteriner listesi | `find-vet` | Yakınlığa göre liste. Harita, puan ve süzgeç yok |
+| Randevu alma | `book` | Hayvan, neden, gün, saat ve telefon. Sağlık kaydı paylaşımı yok |
 
 ## İlk sürüm: tasarımda olmayan, eklenmesi gereken ekranlar
 
@@ -71,14 +81,22 @@ Bu ekranlar yeni özellik değil, onaylanan özelliklerin çalışması için ge
 - QR sayfasındaki konum ve mesaj gönderme formu
 - Yazdırılabilir QR kodu ekranı
 
-Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri kalktı, çünkü sağlık kaydı hayvan başına tutuluyor ve hayvana dokununca açılıyor. Tasarımdaki "+" düğmesi kapsam dışı.
+- Veteriner girişi ve kayıt
+- İşletme profili (klinik bilgileri, çalışma saatleri, harita konumu)
+- Veteriner randevu paneli (bekleyen, yaklaşan, geçmiş; onayla, reddet, iptal et)
+- Sahip için Randevularım
+- Backoffice paneli (uygulamada değil, tarayıcıda)
+
+Sahibin alt menüsünde Bugün, Hayvanlar ve Veterinerler var. Kayıtlar ve Ziyaretler sekmeleri kalktı, çünkü sağlık kaydı hayvan başına tutuluyor ve hayvana dokununca açılıyor. Tasarımdaki "+" düğmesi kapsam dışı. Veterinerin alt menüsünde Randevular ve İşletme var.
 
 ## Sonraya kalanlar
 
 | Özellik | Tasarımdaki adı | Neden sonra |
 |---|---|---|
 | Karne tarama | `scan` | İlk güncellemede. Ücretli yapay zekâ gerektiriyor, yanlış tarih sağlık riski yaratır |
-| Veteriner bulma ve randevu | `find-vet`, `book` | Kliniklerin katılması gerekiyor |
+| Yıldız puanı ve yorumlar | `find-vet` içinde | Başta veri yok, sahte yorum riski var |
+| Sağlık kaydını veterinerle paylaşma | `book` içinde | Erişim kuralları ve daha ağır bir KVKK metni gerekiyor |
+| Klinik haritası, arama ve süzgeçler | `find-vet` içinde | Klinik sayısı artınca anlamlı |
 | Kilit ekranı canlı kartı | `lock-lost` | Temel akış oturduktan sonra |
 | Kilit ekranı widget'ları | `lock-daily` içinde | Temel akış oturduktan sonra |
 | 2 km komşu alarmı | | Yeterli kullanıcı gerekiyor |
@@ -95,6 +113,7 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Kontrol temizse patika.pet alan adını satın al
 - [ ] Apple geliştirici üyeliğini aç (Apple ile giriş adımında gerekecek, 99 dolar/yıl, TL fiyatı doğrulanmadı)
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
+- [ ] Gizlilik metnine Ayarlar'dan bağlantı ver: Apple bu bağlantıyı hem mağaza sayfasında hem uygulamanın içinde ister
 - [ ] Backend'i internete açık bir sunucuya al (TestFlight'tan önce şart): barındırma seçimi, HTTPS, kalıcı alan adı, veritabanı ve fotoğraf yedeği, izleme. Şimdilik yalnızca bu bilgisayarda çalışıyor, QR sayfası dışarıdan açılmıyor, telefon başka ağdayken eşitleme yapmıyor
 - [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor
 - [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor, Türkiye'deyse bu yükümlülük doğmayabilir. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
@@ -102,7 +121,6 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Hesap silmeyi tamamla: düğme ve sunucu ucu hazır. Eksik: Apple'ın istediği giriş izni iptali (Apple geliştirici üyeliği gerektirir). Sunucu silme sırasında Apple'a iptal isteği gönderecek. App Store'dan önce şart
 - [ ] Kodun internette yedeği yok, iki repo da yalnızca bu bilgisayarda: özel GitHub deposu aç
-- [ ] Oturum düşünce kullanıcıya haber ver: iPhone'da uygulama açıkken oturum geçersiz olursa Bugün ekranında kalınıyor, eşitleme sessizce duruyor, giriş düğmesi ancak uygulama yeniden açılınca çıkıyor (TestFlight öncesi)
 - [ ] Kendi derlememize geçince backend'in `APPLE_AUDIENCES` ayarına uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni). `ALLOW_DEV_LOGIN` gerçek sunucuda kapalı olmalı
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Uygulama kapalıyken ihbar bildirimi: Apple geliştirici üyeliği ve kendi derlememiz gerekiyor, TestFlight'tan önce yapılacak (Expo Push Service). Şimdilik ihbarlar uygulama açıkken anında, kapalıyken açılınca görünüyor
@@ -111,6 +129,13 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 - [ ] Gerçek sunucu öncesi güvenlik: girişli uçlara kullanıcı başına kota ve dakikalık sınır, canlı bağlantı sayısına sınır, Apple girişinde tek kullanımlık değer (nonce), `TRUST_PROXY` için güvenilen sunucu sayısı, kapıyı yalnızca önündeki sunucuya açmak
 - [ ] Üst veri silinince fotoğraf yönü değişiyor mu gerçek telefon fotoğrafıyla dene (yön bilgisi de üst veride duruyor, kırpma aracı genelde görüntüyü zaten döndürüyor)
 - [ ] Mağaza sürümünde konum izni metnini Türkçe göster ve kullanılmayan "her zaman" izin metinlerini kaldır
+- [ ] Veteriner için şifre sıfırlama ve e-posta doğrulama: e-posta göndermek için alan adı gerekiyor. Şifre değiştirme de bununla gelecek
+- [ ] Yayından önce en az bir semtte klinik bul: liste boş kalmasın
+- [ ] Randevu bildirimi uygulama kapalıyken de gitsin (veteriner ve sahip için): Apple üyeliği ve kendi derlememiz gerekiyor, gerçek kliniklerle kullanmadan önce şart
+- [ ] Avukata sor: backoffice panelinde kullanıcı hesapları, kayıp ilanları ve ihbarlardaki iletişim bilgileri yöneticiye görünüyor. Bu erişim gizlilik metnine yazılmalı, panel internete açılmadan önce iki aşamalı giriş ve işlem kaydı değerlendirilmeli
+- [ ] Avukata sor: sahibin adı ve telefonu kliniğe gidiyor. Geçmiş randevuların ne kadar saklanacağını gizlilik metnine yaz
+- [ ] Klinik sayısı binleri geçerse listeyi bölgeye göre indir (şimdilik tamamı indirilip telefonda sıralanıyor)
+- [ ] Veteriner girişinde e-posta başına deneme sınırı (şimdilik yalnızca adres başına var)
 - [ ] Android sürümü için Google Haritalar anahtarı al
 - [ ] Expo Simulators bekleme listesine katıl: https://expo.dev/services/simulators
 - [ ] Apple geliştirici üyeliği açılınca iPhone'da otomatik testi yeniden değerlendir. Windows'tan kablo ile yalnızca ekran görüntüsü ve kayıt okunabiliyor, dokunma için imzalı WebDriverAgent gerekiyor (bu bilgisayarda denenmedi)
@@ -125,9 +150,11 @@ Alt menüde yalnızca Bugün ve Hayvanlar var. Kayıtlar ve Ziyaretler sekmeleri
 2. Kurulum ve boş uygulamayı iPhone'da açma (tamamlandı, SDK 58 App Store'daki Expo Go ile açıldı)
 3. Günlük bakım ekranları ve hatırlatmalar (başladı: Karşılama, Hayvan ekleme, Sağlık kaydının aşı, tedavi ve ziyaret bölümleri (düzeltme ve silme dahil), hatırlatmalar, görevler, Bugün listesi, alt menü, Hayvanlar listesi ve kilo kodlandı ve iPhone'da denendi. Bu aşama tamamlandı)
 4. Hesap sistemi, kendi backend'imiz, kayıp ilanı ve QR sayfası (tamamlandı, iPhone'da denendi. Hesap silmede yalnızca Apple izni iptali kaldı, üyelik gerektiriyor)
-5. Backend'i internete açık sunucuya alma
-6. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
-7. App Store başvurusu ve Apple incelemesi
+5. Veteriner hesabı, işletme profili, liste ve randevu sistemi (kodlandı, taklitçide geçti. iPhone'da kayıt, onay ve liste denendi, randevu gönderme ve onaylama bekliyor. Uygulama kapalıyken randevu bildirimi üyelik, şifre sıfırlama alan adı bekliyor)
+6. Backoffice paneli (yönetim ekranı)
+7. Backend'i internete açık sunucuya alma
+8. TestFlight (Apple'ın deneme aracı) ile gerçek kişilerle test
+9. App Store başvurusu ve Apple incelemesi
 
 ## İlerleme
 
@@ -143,23 +170,28 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Görevler ve hatırlatmalar | 8 | Bitti |
 | Hayvanlar listesi, düzenleme ve silme | 3 | Bitti |
 | Kilo | 4 | Bitti |
+| Veteriner hesabı, işletme profili ve onay | 8 | Kayıt, form ve onay iPhone'da denendi (6 puan). Yeniden giriş ve fotoğraf yükleme bekliyor (2 puan) |
+| Veteriner listesi ve yakınlık sıralaması | 4 | Bitti |
+| Randevu sistemi (istek, onay, ziyarete düşme, iptal) | 8 | Kodlandı, taklitçide geçti, iPhone'da randevu henüz gönderilmedi (0 puan, geçince 8) |
 | Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş, ayarlar ve hesap silme düğmesi iPhone'da denendi (7 puan). Apple izni iptali üyelik bekliyor (1 puan) |
 | Kendi backend'imiz ve verilerin sunucuya taşınması | 12 | Bitti |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Bitti |
+| Backoffice paneli (klinik onayı, özet rakamlar, ilan denetimi, kullanıcı yönetimi) | 8 | Başlamadı |
 | Backend'i internete açma (barındırma, HTTPS, alan adı, yedek) | 6 | Başlamadı. Supabase bunu kendisi yapıyordu, kendi sunucuya geçince iş oldu |
 | Marka, alan adı, gizlilik ve KVKK metinleri, fotoğraf hakları | 5 | Başlamadı |
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: 106 puanın 81'i, yaklaşık %76.** Kalan 25 puan: Apple izni iptali (1), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6).
+**Toplam: 134 puanın 91'i, yaklaşık %68.** iPhone'da randevu denemesi geçince 101 puan, yaklaşık %75. Kalan 43 puan: veteriner girişi ve fotoğraf (2), randevu (8), Apple izni iptali (1), backoffice paneli (8), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6). Yeni içerik eklenirse toplam büyür, yüzde düşebilir: biten bir iş kaybolmuş olmaz.
 
 ## Test ve derleme
 
 - **Şimdilik:** Kod Windows'ta yazılıyor. Testleri Claude bu bilgisayarda çalıştırıyor. iPhone'a özgü son kontrolü kullanıcı Expo Go ile kendi telefonunda yapıyor. Windows'ta sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor.
 - **Backend'i başlatma:** `Patika-Backend` klasöründe `docker compose up -d --build`. Telefon aynı ağda olmalı, uygulama sunucunun adresini kodu sunan bilgisayardan öğrenir (4000 numaralı kapı). Taklitçi için `adb reverse tcp:4000 tcp:4000`.
+- **Klinik onayı:** `Patika-Backend` klasöründe `npm run clinic -- list`, sonra `npm run clinic -- approve <kimlik>` ya da `reject`. Onaylamadan önce oda sicil numarası kontrol edilmeli. Şimdilik onayı kullanıcı söyler, Claude uygular.
 - **Testler:**
-  - `Patika-App`: `npm test` (tarih, görev, kilo, eşitleme, QR kuralları), `npm run test:e2e` (taklitçide Playwright ile uygulamanın gerçek ekranları, piksel testleri dahil)
+  - `Patika-App`: `npm test` (tarih, görev, kilo, eşitleme, QR ve klinik kuralları), `npm run test:e2e` (taklitçide Playwright ile uygulamanın gerçek ekranları, piksel testleri dahil)
   - `Patika-Backend`: `npm test` (sunucu ve erişim kuralları, gerçek MySQL), `npm run test:page` (kayıp sayfası: Safari motoru iPhone profilleri ve Chrome motoru, piksel testleri dahil)
   - Senaryo listesi ve kapsanmayanlar: `e2e/SENARYOLAR.md`
 - **Taklitçiyi başlatma:** `C:\Users\user\AppData\Local\Android\Sdk\emulator\emulator.exe -avd patika`. Sunucuyu önce `$env:ANDROID_HOME = 'C:\Users\user\AppData\Local\Android\Sdk'` ayarlayıp `npx expo start --android` ile başlat. Java `C:\Users\user\AppData\Local\Android\jdk17` klasöründe.
@@ -192,6 +224,14 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - `File.move` ve `File.write` bu SDK'da bekleme gerektiriyor (`await`). Beklenmezse hata sessizce kaybolur, tip kontrolü de yakalamaz.
 - Expo Go'nun ekranda yüzen "Tools" düğmesi dokunuşları kendine alıyor: taklitçide arada ilk dokunuş uygulamaya ulaşmıyordu. Düğme, geliştirici menüsündeki "Tools button" anahtarıyla kapatılıyor. Gerçek uygulamada yok.
 - Piksel testinde `--update-snapshots` hiçbir şey karşılaştırmaz. Görseli yeniledikten sonra bayraksız çalıştır.
+- Metro, açıkken eklenen yeni dosyayı bazen görmüyor (`Unable to resolve`). `npx expo start --clear` ile yeniden başlat.
+- Taklitçide klavye açılınca ekran küçülmüyor (Android, kenardan kenara ekran). Uzun formlarda `KeyboardAvoidingView` iki platformda da `padding` olmalı. Playwright'ın `fill` komutu önce alana dokunuyor: alan klavyenin altında kalırsa "Timed out waiting for selector" der.
+- Çok satırlı alanda `KEYCODE_ESCAPE` klavyeyi kapatmıyor, `phone.hideKeyboard` gerekirse "geri" de basar.
+- Klavyenin "Try out your stylus" penceresi taklitçide ekranı kapatabiliyor: `settings put secure stylus_handwriting_enabled 0`.
+- Randevu testinde telefon gelecek pazartesiye alınıyor, sunucu gerçek saatte kalıyor. Sunucu saatine bağlı kurallarda bu fark hesaba katılmalı (`e2e/04-veteriner.spec.ts`).
+- Expo Go konum iznini her proje için ayrıca soruyor, `pm grant` yetmiyor.
+- Expo Go kod dosyası değişince üstte mavi "Refreshing..." şeridi gösteriyor, kod değişikliğinden sonraki ilk turda görsele girebiliyor. `phone.ts` şerit kalkmadan görüntü almıyor. Yenileme turundan sonra `git status` ile yalnızca beklenen görsellerin değiştiğine bak.
+- Sekme değiştirince iki ekranda da bulunan yazıyı bekleme: geçiş bitmeden dokunulursa eski konuma denk gelir. Yalnızca hedef ekranda olan bir öğeyi bekle.
 - Piksel testinde oranlı sınır (`maxDiffPixelRatio`) yeni eklenen bir düğmeyi kaçırdı: büyük ekranda %0,1 binlerce piksel ediyor. Sınır piksel sayısıyla verilir (`maxDiffPixels`). Ekranı değiştirince karşılaştırma görseli değişmediyse test bir şey görmüyor demektir, ona bak.
 - Docker görüntüsü kayıp sayfasını içinde taşıyor: `public/` değişince yeniden derle, yoksa testler de telefon da eski sayfayı görür.
 - `phone.ps1` Türkçe büyük harfi eşleştiremiyor: onay düğmesine "ÇIKIŞ YAP" gibi tam yazılışıyla dokun.

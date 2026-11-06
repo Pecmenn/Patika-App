@@ -37,6 +37,7 @@ const CANCEL_BUTTON = /^V[Aa][Zz][Gg].*/;
 const FOUND_BUTTON = 'EVET, BULUNDU';
 const DELETE_ACCOUNT_BUTTON = /^HESABI S[İI]L$/;
 const OK_BUTTON = /^(TAMAM|Tamam)$/;
+const SESSION_CARD = 'Oturumun kapandı';
 // Mesaj birden çok satır: Android eşleştirmesi "." ile satır sonunu geçemiyor.
 const LOST_WARNING = /[\s\S]*Silinecek için açık kayıp ilanın var[\s\S]*/;
 // Haritanın başlangıç noktası. Geçmişte seçilen yer yerine hep bu nokta kaydoluyordu.
@@ -456,10 +457,17 @@ test('QR ekranı: gerçek kod okunur, değişmez, yazdırma açılır', async ()
 
   await phone.tap('Yazdır');
   await expect.poll(focus, { timeout: 20_000 }).toContain('printspooler');
+  // Pencere yerleşmeden basılan "geri" arada uygulamayı da kapatıyor (yalnızca taklitçide görüldü).
+  await phone.wait(2000);
   await phone.back();
   await phone.wait(800);
-  await phone.see('Şanslı için QR kodu');
-  await phone.tapLabel('Geri');
+  if ((await focus()).includes('ExperienceActivity')) {
+    await phone.see('Şanslı için QR kodu');
+    await phone.tapLabel('Geri');
+  } else {
+    await phone.openApp();
+    await phone.tap('Şanslı');
+  }
   await phone.see('Aşı ekle');
 });
 
@@ -564,12 +572,18 @@ test('sunucu yeniden başlayınca canlı bağlantı geri gelir', async () => {
   await phone.tapLabel('Ayarlar');
 });
 
-test('oturum geçersiz olursa çıkış yapılır, telefondaki kayıtlar silinmez', async () => {
+test('oturum geçersiz olursa Bugün ekranında uyarı çıkar, telefondaki kayıtlar silinmez', async () => {
   await query('DELETE FROM sessions WHERE user_id = ?', [owner]);
   await phone.backgroundAndReturn();
   await phone.see('Giriş yapılmadı', 40_000);
   await phone.tapLabel('Geri');
   await phone.see('Şanslı');
+  await phone.tap('Bugün');
+  await phone.see(SESSION_CARD);
+  await phone.see('Şanslı');
+  await phone.wait(600);
+  await expect(await phone.screenshot()).toMatchSnapshot('oturum-kapandi.png');
+  await phone.tap('Hayvanlar');
 });
 
 test('başka hesapla girişte sorulur: vazgeçilir, kayıt silinmez; aktarılırsa yeni hesaba gider', async () => {
@@ -582,9 +596,14 @@ test('başka hesapla girişte sorulur: vazgeçilir, kayıt silinmez; aktarılır
   await phone.tapLabel('Geri');
   await phone.see('Şanslı');
 
-  await phone.tapLabel('Ayarlar');
+  // Bu kez Bugün ekranındaki karttan: giriş yapılınca kart kaybolur.
+  await phone.tap('Bugün');
+  await phone.see(SESSION_CARD);
   await phone.tap('Deneme hesabıyla gir');
   await phone.tap(/^(Bu hesaba aktar|BU HESABA AKTAR)$/);
+  await phone.gone(SESSION_CARD, 40_000);
+  await phone.tap('Hayvanlar');
+  await phone.tapLabel('Ayarlar');
   await phone.see('Deneme hesabı');
   await phone.see('Kayıtların sunucuda', 40_000);
   const next = await newestDevAccountId();
@@ -666,6 +685,7 @@ test('hesap silme: sunucu yokken hiçbir şey silinmez, vazgeçilebilir, onaylan
   await phone.tap('Kedi');
   await phone.tap('Kaydet');
   await phone.see('Hayvanım kayıp');
+  expect(await phone.has(SESSION_CARD, 500), 'kendi isteğiyle çıkınca uyarı çıkmaz').toBe(false);
   await phone.tap('Hayvanlar');
   await phone.tapLabel('Ayarlar');
   await phone.tap('Deneme hesabıyla gir');
@@ -748,4 +768,12 @@ test('hesap silme: sunucu yokken hiçbir şey silinmez, vazgeçilebilir, onaylan
   expect(page.status, 'QR sayfası kapanır').toBe(404);
   const others = await query('SELECT id FROM user_items WHERE owner_id = ?', [owner]);
   expect(others.length, 'başka hesabın kayıtları durur').toBeGreaterThan(0);
+
+  await phone.tap('İlk hayvanını ekle');
+  await phone.fill('Ad', 'Yeni');
+  await phone.hideKeyboard();
+  await phone.tap('Kedi');
+  await phone.tap('Kaydet');
+  await phone.see('Hayvanım kayıp');
+  expect(await phone.has(SESSION_CARD, 500), 'hesap silinince uyarı çıkmaz').toBe(false);
 });

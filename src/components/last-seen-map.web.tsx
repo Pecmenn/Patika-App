@@ -6,6 +6,7 @@ import type { Point } from '@/lib/lost';
 type LastSeenMapProps = {
   onMove: (point: Point) => void;
   onArea: (area: string) => void;
+  initialPoint?: Point;
 };
 
 // Tarayıcı önizlemesinde harita yok, deneme için sabit bir nokta seçilir.

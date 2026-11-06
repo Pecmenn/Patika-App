@@ -25,5 +25,7 @@ export default defineConfig({
     // Hesap ve kayıtları hazırlar. Kırılırsa kayıp modu senaryoları yanıltıcı hata vermek yerine çalışmaz.
     { name: 'gunluk-bakim', testMatch: /01-gunluk-bakim\.spec\.ts/ },
     { name: 'kayip-modu', testMatch: /02-kayip-modu\.spec\.ts/, dependencies: ['gunluk-bakim'] },
+    // Telefonun saatini değiştirir, bu yüzden en sonda çalışır.
+    { name: 'veteriner', testMatch: /04-veteriner\.spec\.ts/, dependencies: ['kayip-modu'] },
   ],
 });
