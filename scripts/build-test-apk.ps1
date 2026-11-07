@@ -10,7 +10,12 @@ $ErrorActionPreference = 'Stop'
 $source = Split-Path -Parent $PSScriptRoot
 $work = 'C:\pa'
 
-robocopy $source $work /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1 /XD .git .expo e2e apk .gradle .cxx android | Out-Null
+# Yarım kalmış önceki derlemenin artığı yeni kopyaya karışmasın.
+if (Test-Path $work) { Remove-Item -Recurse -Force $work }
+# Proje klasörleri tam yolla dışarıda bırakılır: yalnızca adla yazılırsa paketlerin içindeki
+# aynı adlı klasörler de (ör. config-plugins içindeki "android") atlanıyor, derleme kırılıyor.
+$skip = '.git', '.expo', 'e2e', 'apk', 'android' | ForEach-Object { Join-Path $source $_ }
+robocopy $source $work /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1 /XD @skip .gradle .cxx | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "Kopyalama hatası: $LASTEXITCODE" }
 
 $env:PATIKA_TEST_APK = 'true'
