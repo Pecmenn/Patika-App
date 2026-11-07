@@ -14,6 +14,7 @@ import { PNG } from 'pngjs';
 
 import { ADB, API_URL, BACKEND_DIR } from './config';
 import {
+  callPanel,
   compose,
   newestDevAccountId,
   pinPublicCode,
@@ -66,7 +67,8 @@ async function focus() {
 
 async function goToToday() {
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    if ((await phone.has('Hayvanım kayıp', 800)) || ((await phone.has(/.* kayıp/, 300)) && (await phone.has('Bugün', 200)))) {
+    if (await phone.has('Bugün', 800)) {
+      await phone.tap('Bugün');
       return;
     }
     if (!(await focus()).includes('host.exp.exponent')) {
@@ -215,9 +217,24 @@ test('hayvana fotoğraf eklenir, sunucuya yüklenir', async () => {
   await phone.tapLabel('Geri');
 });
 
+test('alt menü: kayıp düğmesi başka sekmeden de açılır, menüden taşan yeri de dokunur, sekme değişmez', async () => {
+  await goToToday();
+  await phone.tap('Ayarlar');
+  await phone.see('Giriş yöntemi');
+  // Dairenin menünün üstüne taşan yerine gerçek parmak dokunuşu: yazının üstünde, menünün dışında.
+  const label = await phone.boundsOf({ text: 'Hayvanım kayıp' });
+  await device.shell(`input tap ${Math.round(label.x + label.width / 2)} ${label.y - 130}`);
+  await phone.see('Kayıp modunu başlat');
+  await phone.tapLabel('Kapat');
+  await phone.see('Giriş yöntemi');
+  // Android'in geri tuşu Ayarlar'dan Bugün'e döner, uygulamadan çıkmaz.
+  await phone.back();
+  await phone.gone('Giriş yöntemi');
+  await phone.seeLabel('Hayvan ekle');
+});
+
 test('kayıp modu: yer seçilmeden başlatılamaz', async () => {
   await goToToday();
-  await phone.tap('Bugün');
   await phone.tap('Hayvanım kayıp');
   await phone.see('Kayıp modunu başlat');
   await phone.see('Son görüldüğü yer');
@@ -426,6 +443,17 @@ test('Android Chrome: kayıp sayfası açılır, ihbar uygulamaya düşer', asyn
   await phone.see('4 ihbar');
 });
 
+test('açık ilan varken ortadaki düğme hayvanın adını gösterir, başka sekmeden de ilanı açar', async () => {
+  await phone.tapLabel('Geri');
+  await phone.see('Hayvanlar');
+  await phone.wait(600);
+  await expect(await phone.screenshot()).toMatchSnapshot('bugun-ilan-acik.png');
+  await phone.tap('Veterinerler');
+  expect(await phone.has('Hayvanım kayıp', 500), 'ilan açıkken eski yazı kalmaz').toBe(false);
+  await phone.tap('Şanslı kayıp');
+  await phone.see('Kayıp modu açık');
+});
+
 test('bulundu: vazgeçilebilir, onaylanınca ilan kapanır ve fotoğraf silinir', async () => {
   const before = await publicPage(CODE);
   await phone.tap('Bulundu');
@@ -510,6 +538,31 @@ test('haberden kayıp modu başlatılır, hayvan seçili gelir, haber ilana ekle
   await phone.see('Hayvanım kayıp');
 });
 
+test('yönetici ilanı kaldırınca açık ekran değişir, sayfa kapanır, yeni ilan açılabilir', async () => {
+  await phone.tap('Hayvanım kayıp');
+  await selectPlaceOnMap();
+  await fillAreaAndStart('Kaldırılacak Semt');
+  await phone.see('Kayıp modu açık');
+  const [report] = await query('SELECT id FROM lost_reports WHERE owner_id = ? AND found_at IS NULL', [owner]);
+  expect(await callPanel('POST', `/lost-reports/${report.id}/remove`)).toBe(204);
+
+  await phone.see('İlan kaldırıldı', 20_000);
+  await phone.see(/.*Patika yönetimi tarafından kaldırıldı.*/);
+  await phone.gone('Bulundu');
+  await device.shell('cmd statusbar expand-notifications');
+  await phone.see(/İlanın kaldırıldı/);
+  await device.shell('cmd statusbar collapse');
+  await phone.wait(1500);
+
+  const visitor = await fetch(`${API_URL}/v1/public/pets/${CODE}`);
+  const page = (await visitor.json()) as { status: string; last_seen_area?: string };
+  expect(page.status).not.toBe('lost');
+  expect(JSON.stringify(page)).not.toContain('Kaldırılacak Semt');
+
+  await phone.tapLabel('Geri');
+  await phone.see('Hayvanım kayıp', 20_000);
+});
+
 test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarır, açılınca eşitlenir', async () => {
   compose('stop', 'api');
   try {
@@ -535,8 +588,7 @@ test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarı
     await phone.scrollToTop();
     await phone.tapLabel('Kapat');
 
-    await phone.tap('Hayvanlar');
-    await phone.tapLabel('Ayarlar');
+    await phone.tap('Ayarlar');
     await phone.see(/.*değişiklik internet bekliyor|Sunucuya ulaşılamadı.*/);
     const before = await query(
       `SELECT id FROM user_items WHERE owner_id = ? AND JSON_EXTRACT(data, '$.name') = 'Sunucusuz aşı'`,
@@ -561,40 +613,32 @@ test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarı
 });
 
 test('sunucu yeniden başlayınca canlı bağlantı geri gelir', async () => {
-  await phone.tapLabel('Geri');
-  await phone.see('Hayvanlar');
   await phone.tap('Bugün');
   await phone.see('Hayvanım kayıp');
   await sendSighting(CODE, { message: 'Bağlantı testi' });
   await phone.see('Şanslı için haber var', 45_000);
   await query('DELETE FROM sightings WHERE owner_id = ? AND report_id IS NULL', [owner]);
-  await phone.tap('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
 });
 
 test('oturum geçersiz olursa Bugün ekranında uyarı çıkar, telefondaki kayıtlar silinmez', async () => {
   await query('DELETE FROM sessions WHERE user_id = ?', [owner]);
   await phone.backgroundAndReturn();
   await phone.see('Giriş yapılmadı', 40_000);
-  await phone.tapLabel('Geri');
-  await phone.see('Şanslı');
   await phone.tap('Bugün');
   await phone.see(SESSION_CARD);
   await phone.see('Şanslı');
   await phone.wait(600);
   await expect(await phone.screenshot()).toMatchSnapshot('oturum-kapandi.png');
-  await phone.tap('Hayvanlar');
 });
 
 test('başka hesapla girişte sorulur: vazgeçilir, kayıt silinmez; aktarılırsa yeni hesaba gider', async () => {
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.tap('Deneme hesabıyla gir');
   await phone.see('Bu telefonda başka bir hesabın kayıtları var');
   await expect(await phone.screenshot()).toMatchSnapshot('baska-hesap-sorusu.png');
   await phone.tap(CANCEL_BUTTON);
   await phone.see('Giriş yapılmadı');
-  await phone.tapLabel('Geri');
-  await phone.see('Şanslı');
 
   // Bu kez Bugün ekranındaki karttan: giriş yapılınca kart kaybolur.
   await phone.tap('Bugün');
@@ -602,8 +646,7 @@ test('başka hesapla girişte sorulur: vazgeçilir, kayıt silinmez; aktarılır
   await phone.tap('Deneme hesabıyla gir');
   await phone.tap(/^(Bu hesaba aktar|BU HESABA AKTAR)$/);
   await phone.gone(SESSION_CARD, 40_000);
-  await phone.tap('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.see('Deneme hesabı');
   await phone.see('Kayıtların sunucuda', 40_000);
   const next = await newestDevAccountId();
@@ -645,8 +688,7 @@ test('yeni telefon: kayıtlar ve fotoğraf sunucudan geri gelir', async () => {
   await phone.tap('Kedi');
   await phone.tap('Kaydet');
   await phone.see('Hayvanım kayıp');
-  await phone.tap('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.tap('Deneme hesabıyla gir');
   await phone.see('Kayıtların sunucuda');
   const next = await newestDevAccountId();
@@ -656,7 +698,7 @@ test('yeni telefon: kayıtlar ve fotoğraf sunucudan geri gelir', async () => {
   await query('UPDATE user_items SET owner_id = ?, synced_at = CURRENT_TIMESTAMP(3) WHERE owner_id = ?', [next, owner]);
   execFileSync('docker', ['exec', 'patika-api-1', 'cp', '-r', `/data/photos/pets/${owner}/.`, `/data/photos/pets/${next}/`], { stdio: 'ignore' });
   await phone.backgroundAndReturn();
-  await phone.tapLabel('Geri');
+  await phone.tap('Hayvanlar');
   await phone.see('Şanslı', 40_000);
   await phone.see('Geçici');
   await expect
@@ -666,7 +708,7 @@ test('yeni telefon: kayıtlar ve fotoğraf sunucudan geri gelir', async () => {
 });
 
 test('çıkış: onay istenir, telefon temizlenir, sunucudaki oturum kapanır, kayıtlar sunucuda kalır', async () => {
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.tap('Çıkış yap');
   await phone.see('Çıkış yapılsın mı?');
   await phone.tap('ÇIKIŞ YAP');
@@ -686,8 +728,7 @@ test('hesap silme: sunucu yokken hiçbir şey silinmez, vazgeçilebilir, onaylan
   await phone.tap('Kaydet');
   await phone.see('Hayvanım kayıp');
   expect(await phone.has(SESSION_CARD, 500), 'kendi isteğiyle çıkınca uyarı çıkmaz').toBe(false);
-  await phone.tap('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.tap('Deneme hesabıyla gir');
   await phone.see('Kayıtların sunucuda');
   const account = await newestDevAccountId();
@@ -743,9 +784,9 @@ test('hesap silme: sunucu yokken hiçbir şey silinmez, vazgeçilebilir, onaylan
     await waitForApi();
   }
   expect(await accountRows(), 'silinemeyince hesap durur').toHaveLength(1);
-  await phone.tapLabel('Geri');
+  await phone.tap('Hayvanlar');
   await phone.see('Silinecek');
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
 
   await phone.tap('Hesabı sil');
   await phone.see(LOST_WARNING, 40_000);

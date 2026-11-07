@@ -45,3 +45,6 @@ example
 # Playwright
 e2e/test-results/
 playwright-report/
+
+# Deneme APK dosyalari
+/apk

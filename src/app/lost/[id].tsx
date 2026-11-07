@@ -88,6 +88,22 @@ export default function LostScreen() {
   }
 
   const { report, sightings, now } = data;
+  if (report.removedAt) {
+    return (
+      <View style={[styles.screen, styles.removed, { paddingTop: insets.top + 2 }]}>
+        <GlassButton label="Geri" onPress={goBack}>
+          <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
+        </GlassButton>
+        <Text accessibilityRole="header" style={styles.failedTitle}>
+          İlan kaldırıldı
+        </Text>
+        <Text style={styles.lead}>
+          {`${report.petName} ilanı Patika yönetimi tarafından kaldırıldı. Kayıp sayfası artık açılmıyor. Hâlâ kayıpsa Bugün ekranından yeniden kayıp modu başlatabilirsin.`}
+        </Text>
+      </View>
+    );
+  }
+
   const lastSeenClock = formatTime(toTimeKey(report.lastSeenAt));
 
   return (
@@ -198,6 +214,10 @@ const styles = StyleSheet.create({
   },
   failed: {
     paddingHorizontal: 20,
+  },
+  removed: {
+    paddingHorizontal: 20,
+    backgroundColor: colors.paper,
   },
   failedTitle: {
     marginTop: 24,

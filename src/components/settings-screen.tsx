@@ -1,13 +1,11 @@
 import { router } from 'expo-router';
-import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { GlassButton } from '@/components/glass-button';
 import { SignInButton } from '@/components/sign-in-button';
-import { cardShadow, colors, fonts } from '@/constants/theme';
+import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { readActiveReports, type LostReport } from '@/data/lost-reports';
 import { clearLocalData, flushBeforeSignOut, type SyncStatus } from '@/data/sync';
 import { useSession } from '@/hooks/use-session';
@@ -21,8 +19,11 @@ const PROVIDER_LABELS = {
   email: 'E-posta ile giriş',
 };
 
+// Ayarlar bir sekme: altında kapatılacak ekran olmayabilir, o zaman kapatma komutu hata verir.
 function goToStart() {
-  router.dismissAll();
+  if (router.canDismiss()) {
+    router.dismissAll();
+  }
   router.replace('/');
 }
 
@@ -129,7 +130,8 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function SettingsScreen() {
+// Sahibin ve veterinerin alt menüsündeki aynı ekran.
+export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const session = useSession();
   const sync = useSyncStatus();
@@ -199,14 +201,10 @@ export default function SettingsScreen() {
     <ScrollView
       contentContainerStyle={[
         styles.scroll,
-        { paddingTop: insets.top + 2, paddingBottom: Math.max(insets.bottom, 16) },
+        { paddingTop: insets.top + 8, paddingBottom: tabBarClearance(insets.bottom) },
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <GlassButton label="Geri" onPress={() => router.back()}>
-        <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
-      </GlassButton>
-
       <Text accessibilityRole="header" style={styles.title}>
         Ayarlar
       </Text>
@@ -266,7 +264,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   title: {
-    marginTop: 22,
     fontFamily: fonts.displaySemi,
     fontSize: 25,
     lineHeight: 29,

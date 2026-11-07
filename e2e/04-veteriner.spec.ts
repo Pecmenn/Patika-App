@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import { _android, type AndroidDevice } from 'playwright';
 
-import { query } from './backend';
+import { callPanel, query } from './backend';
 import { ADB, API_URL } from './config';
 import { Phone } from './phone';
 
@@ -38,6 +38,15 @@ let deviceNow = new Date();
 
 function adb(...args: string[]) {
   return execFileSync(ADB, args, { encoding: 'utf8' }).trim();
+}
+
+// `geo fix` yalnızca biri GPS isterken işler: soğuk açılan taklitçide telefonun bildiği konum boş kalır,
+// uygulama da Google'ın Konum Doğruluğu izin penceresine düşer. O izin verilmez, Android'in test sağlayıcısı kullanılır.
+function setDeviceLocation(latitude: number, longitude: number) {
+  adb('shell', 'appops', 'set', 'com.android.shell', 'android:mock_location', 'allow');
+  adb('shell', 'cmd', 'location', 'providers', 'add-test-provider', 'gps', '--supportsAltitude', '--supportsSpeed', '--supportsBearing');
+  adb('shell', 'cmd', 'location', 'providers', 'set-test-provider-enabled', 'gps', 'true');
+  adb('shell', 'cmd', 'location', 'providers', 'set-test-provider-location', 'gps', '--location', `${latitude},${longitude}`, '--accuracy', '5');
 }
 
 async function call(method: string, path: string, { token, body }: { token?: string; body?: unknown } = {}) {
@@ -157,13 +166,14 @@ test.beforeAll(async () => {
   adb('shell', 'date', `${pad(monday.getMonth() + 1)}${pad(monday.getDate())}1000${monday.getFullYear()}.00`);
   deviceNow = monday;
   // Kadıköy. Klinikler bu noktaya göre sıralanır.
-  adb('emu', 'geo', 'fix', '29.03', '40.99');
+  setDeviceLocation(40.99, 29.03);
 });
 
 test.afterAll(async () => {
   for (const token of helpers) {
     await call('DELETE', '/v1/me', { token });
   }
+  adb('shell', 'cmd', 'location', 'providers', 'remove-test-provider', 'gps');
   await device.close();
 });
 
@@ -186,8 +196,7 @@ test('girişsiz sahip hayvan ekler, veteriner girişi ayrı bir kapıdır', asyn
 });
 
 test('veteriner: yanlış şifreyle girilemez, kısa şifreyle hesap açılamaz, doğrusuyla açılır', async () => {
-  await goToTab('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await goToTab('Ayarlar');
   await phone.tap('Veteriner girişi');
   await phone.see(/Kliniğinin hesabıyla gir.*/);
   await phone.wait(400);
@@ -325,8 +334,9 @@ test('onaylanınca profil listede görünür, kimlik değişirse yeniden onay uy
 });
 
 test('veteriner çıkınca telefondaki sahip kayıtları yerinde kalır', async () => {
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.see('E-posta ile giriş');
+  expect(await phone.has('Hayvanım kayıp', 500), 'veteriner menüsünde kayıp düğmesi yok').toBe(false);
   await phone.see(EMAIL);
   expect(await phone.has('Yedekleme', 500), 'veteriner için yedekleme satırı yok').toBe(false);
   await phone.tap('Çıkış yap');
@@ -350,7 +360,7 @@ test('sahip: klinikler yakınlığa göre sıralanır, girişsiz de görünür',
   expect(await top(CLINIC)).toBeLessThan(await top('Uzak Klinik'));
   expect(await top('Uzak Klinik')).toBeLessThan(await top('Yakın Klinik'));
 
-  adb('emu', 'geo', 'fix', '29.03', '40.99');
+  setDeviceLocation(40.99, 29.03);
   await phone.wait(1500);
   await phone.tap('Konumumu kullan');
   await phone.see(/.* km, Moda, Kadıköy/, 40_000);
@@ -358,7 +368,9 @@ test('sahip: klinikler yakınlığa göre sıralanır, girişsiz de görünür',
   expect(await top('Yakın Klinik'), 'en yakın en üstte').toBeLessThan(await top(CLINIC));
   await phone.see(/.* m, Deneme/);
   await phone.wait(600);
-  expect(await phone.screenshot()).toMatchSnapshot('veterinerler-liste.png');
+  // Üçüncü kart karşılaştırılmaz: elle açılmış gerçek klinikler sıraya girebilir.
+  const belowTwoCards = [{ x: 0, y: 1040, width: 1080, height: 1120 }];
+  expect(await phone.screenshot(belowTwoCards)).toMatchSnapshot('veterinerler-liste.png');
 });
 
 test('sahip: klinik bilgileri açılır, arama düğmesi telefonu açar', async () => {
@@ -529,8 +541,7 @@ test('veteriner paneli: bekleyen istekte sahibin bilgileri görünür, reddet ve
   });
   expect(second.status).toBe(201);
 
-  await goToTab('Hayvanlar');
-  await phone.tapLabel('Ayarlar');
+  await goToTab('Ayarlar');
   await phone.tap('Çıkış yap');
   await phone.see('Çıkış yapılsın mı?');
   await phone.tap(SIGN_OUT_BUTTON);
@@ -592,8 +603,31 @@ test('veteriner paneli: bekleyen istekte sahibin bilgileri görünür, reddet ve
   await call('DELETE', '/v1/me', { token: other.json.token });
 });
 
+test('yönetici hesabı kapatınca oturum düşer, doğru şifreyle bile girilemez, açılınca girer', async () => {
+  expect(await callPanel('POST', `/users/${vetId}/suspend`)).toBe(204);
+  await phone.backgroundAndReturn();
+  // Panel kapanır, Karşılama ekranına dönülür.
+  await phone.see('Veteriner girişi', 30_000);
+  await phone.tap('Veteriner girişi');
+  await phone.see(/Kliniğinin hesabıyla gir.*/);
+  await phone.fill('E-posta', EMAIL);
+  await phone.hideKeyboard();
+  await phone.fill('Şifre', PASSWORD);
+  await phone.hideKeyboard();
+  await phone.tap('Giriş yap');
+  await phone.see('Bu hesap Patika yönetimi tarafından kapatıldı.');
+  await phone.tap(OK_BUTTON);
+
+  const closed = await call('GET', '/v1/public/clinics');
+  expect(closed.json.clinics.map((row: { name: string }) => row.name)).not.toContain(CLINIC);
+
+  expect(await callPanel('POST', `/users/${vetId}/unsuspend`)).toBe(204);
+  await phone.tap('Giriş yap');
+  await phone.see('Randevular', 40_000);
+});
+
 test('veteriner hesabını siler: klinik listeden kalkar, giriş kapanır, telefon başa döner', async () => {
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.tap('Hesabı sil');
   await phone.see(/Kliniğin listeden kalkar.*/);
   await phone.tap(CANCEL_BUTTON);

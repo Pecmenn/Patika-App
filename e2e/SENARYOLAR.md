@@ -20,6 +20,9 @@
 ### Günlük bakım (taklitçi)
 Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, sonraki tarih, düzenleme), tedavi (not, silme onayı, vazgeçme), ziyaret, kilo (geçersiz değer, ekleme), görev ve "Yapıldı", Hayvanlar, ikinci hayvan, hayvan silme. Girişte kayıtların hesaba aktarılıp sunucuya eksiksiz gitmesi, silinenin sunucuda "silindi" olması.
 
+### Alt menü (taklitçi)
+Kayıp düğmesinin başka sekmeden açılması, dairenin menü dışına taşan yerine dokunma, kapatınca sekmenin değişmemesi, Android geri tuşunun Ayarlar'dan Bugün'e dönmesi, açık ilanda düğmenin hayvanın adını gösterip ilanı açması, veteriner menüsünde kayıp düğmesinin olmaması.
+
 ### Kayıp modu (taklitçi)
 Hayvan fotoğrafının yüklenmesi, yer seçmeden başlatamama, kısa dokunuşun başlatmaması, haritadan yer seçimi, ilan fotoğrafı, canlı ihbar, bildirim, arama düğmesi, ihbar türleri, üç ilan biçimi, QR'ın ekrandan, görselden ve PDF içinden okunması, A4'ün tek sayfa ve sayfayı doldurması, bağlantı kopyalama, Android Chrome'dan ihbar, bulundu (vazgeçme, fotoğrafın silinmesi), QR ekranı, yazdırma ekranı, ilan yokken haber, haberden kayıp modu başlatma.
 
@@ -29,6 +32,12 @@ Sunucu kapalıyken kayıt, uyarı ve geri gelince eşitleme, sunucu sonrası can
 ### Veteriner ve randevu (taklitçi)
 Veteriner hesabı (yanlış şifre, kısa şifre, kayıt, giriş), telefondaki sahip kayıtlarının veteriner hesabına gitmemesi ve çıkışta kalması, işletme formu (eksikler listesi, geçersiz telefon ve web adresi, harita, çalışma saati, tür, hizmet), onay bekleme, onaysız kliniğin listede görünmemesi, kimlik değişince yeniden onay uyarısı. Sahip: ad sırası, konum izniyle yakınlık sırası ve mesafe, klinik sayfası, arama düğmesi, girişsiz randevu istenememesi, kapalı günün seçilememesi, geçersiz telefon, istek, ikinci istekte telefonun hazır gelmesi. Onay: ekranın kendiliğinden değişmesi, ziyarete düşmesi, Bugün kartı. Red ve notu, sahip iptali (ziyaret kalkar), veteriner paneli (sahip bilgileri, arama, reddet, onayla, iptal, geçmiş), veteriner hesabını silme.
 
+### Yönetici kararlarının uygulamadaki karşılığı (taklitçi)
+İlan kaldırılınca açık ekranın "İlan kaldırıldı"ya dönmesi, bildirim, kayıp sayfasının kapanması. Hesap kapatılınca oturumun düşmesi, doğru şifreyle bile giriş uyarısı, yeniden açılınca giriş.
+
+### Yönetim paneli (Chrome motoru, masaüstü ve telefon genişliği)
+Sunucu: giriş ve çerez kuralları, e-posta başına deneme sınırı, oturumsuz ve uygulama oturumuyla hiçbir ucun çalışmaması, başka siteden gelen isteğin reddi, özet rakamlar, klinik onayı ve reddi, yaklaşan randevuların iptali, ilan kaldırma, ihbar silme, hesap kapatma ve açma, tam konum, sağlık kaydı ve Apple kimliğinin hiçbir uçtan dönmemesi. Tarayıcı: tüm akışlar gerçek sunucuyla, Vazgeç ve Esc, oturum düşmesi, sunucuya ulaşılamaması, kötü niyetli metnin çalışmaması, yatay taşma.
+
 ### Sunucu
 Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı, süresi dolmuş, değiştirilmiş, imzasız), tüm korumalı uçlar, kullanıcılar arası erişim, son değişiklik kazanır, ileri saat, yarım emoji, sayfalama, geçersiz girdiler, fotoğraf sınırları ve klasör atlatma, GPS ve üst verinin silinmesi, kayıp ilanı kuralları, herkese açık alanlar, ihbar sınırları, haberin ilana eklenmesi, hayvan ve hesap silme, canlı bağlantı, ayarlar, güvenlik başlıkları. Veteriner: şifrenin özetle saklanması, rol ayrımı (iki yönlü), klinik onayı ve herkese açık alanlar, geçersiz bilgiler, fotoğraf üst verisi, boş saat hesabı, randevu kuralları ve sınırları, aynı saate çift onay, başka kliniğin randevusuna erişememe, süresi dolan istek, hayvan ve hesap silince randevular.
 
@@ -36,8 +45,9 @@ Giriş ve oturum, Apple belgesi sahteciliği (başka uygulama, başka yayıncı,
 Tüm durumlar (kayıp, bulundu, ilan yok, bulunamadı, sunucu hatası), form (boş, konum izni var ve yok, gönderim hatası, çift basış, sınırlar), kötü niyetli metin, dış istek olmaması, yatay taşma, dokunma boyutu, yazı tipleri, sayfa ağırlığı.
 
 ### Piksel karşılaştırması
-- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu, hesap silme onayı, oturum kapandı kartı, veteriner girişi, veteriner paneli, işletme formu ve profili, veteriner listesi, klinik sayfası.
+- **Taklitçi:** Karşılama, hayvan ekleme, Bugün (boş, kartlar, görev yapıldı, haber kartı, açık ilan), aşı formu, görev formu, silme onayı, kilo, Hayvanlar, Ayarlar, kayıp ekranı, ilan (üç biçim), QR ekranı, haber ekranı, başka hesap sorusu, hesap silme onayı, oturum kapandı kartı, veteriner girişi, veteriner paneli, işletme formu ve profili, veteriner listesi, klinik sayfası.
 - **Kayıp sayfası:** 13 durum, 3 ekran ölçüsünde.
+- **Yönetim paneli:** 7 ekran, 2 ekran ölçüsünde (giriş, özet, klinikler, klinik ayrıntısı, onay penceresi, ilanlar, kullanıcılar).
 
 ## Kapsanmayanlar
 
@@ -51,11 +61,18 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Apple Haritalar, "Konumumu kullan"
 - Hesap silmede Apple izni iptali (henüz yazılmadı, Apple geliştirici üyeliği gerekiyor)
 - Veteriner ekranlarının ve randevu formunun iPhone'daki görünümü, klavyeyle davranışı
+- Alt menüdeki kayıp dairesinin iPhone'daki görünümü ve menü dışına taşan yerine dokunma
 - Oturum kapandı kartındaki ve Ayarlar'daki Apple düğmesi (taklitçide bu kartta deneme hesabı düğmesi var)
 
 ### Taklitçide yapılamıyor
-- **"Konumumu kullan":** Taklitçide Google'ın konum doğruluğu izni gerekiyor, bu izin bilerek verilmedi. iPhone'da denenecek.
+- **"Konumumu kullan" ile gerçek konum:** Taklitçide Google'ın konum doğruluğu izni gerekiyor, bu izin bilerek verilmedi. Veteriner listesinde Android'in test sağlayıcısı kullanılıyor: sıralama gerçek, konum sahte. Gerçek konum iPhone'da denenecek.
 - **Otomatik semt yazısı:** Taklitçide adres servisi çalışmıyor, semt elle yazılıyor.
+
+### Yönetim panelinde sınanmayanlar
+- Yalnızca Chrome motorunda denendi, Safari ve Firefox'ta denenmedi
+- Yönetici komutunun gizli şifre sorusu terminal taklidiyle denendi, gerçek terminalde denenmedi
+- Gerçek HTTPS ve önündeki sunucu arkasında çerez ve adres davranışı (gerçek sunucuya geçince)
+- İki yöneticinin aynı anda çalışması
 
 ### Henüz yazılmadı
 - Hatırlatma bildiriminin zamanında düşmesi, "Yapıldı" ve "1 saat sonra" düğmeleri, uygulama kapalıyken davranış (elle denendi, otomatik testi yok)

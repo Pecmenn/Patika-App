@@ -16,7 +16,7 @@ import { TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { colors, fonts } from '@/constants/theme';
 import { ApiError } from '@/lib/api';
-import { signInAsVet } from '@/lib/auth';
+import { ACCOUNT_SUSPENDED_MESSAGE, signInAsVet } from '@/lib/auth';
 import { isValidEmail } from '@/lib/clinics';
 
 const MIN_PASSWORD = 8;
@@ -31,6 +31,9 @@ function authError(error: unknown) {
     }
     if (error.code === 'rate_limited') {
       return 'Çok fazla deneme yapıldı. Bir dakika sonra tekrar dene.';
+    }
+    if (error.code === 'account_suspended') {
+      return ACCOUNT_SUSPENDED_MESSAGE;
     }
   }
   return 'Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.';

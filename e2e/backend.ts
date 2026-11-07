@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
@@ -31,6 +32,32 @@ export async function query(sql: string, values: unknown[] = []) {
     return rows;
   } finally {
     await connection.end();
+  }
+}
+
+// Yönetim panelinin ucunu gerçek yoldan çağırır. Geçici yönetici ve oturum açılır, iş bitince silinir.
+// Şifre özeti geçersizdir: bu yöneticiyle giriş yapılamaz.
+export async function callPanel(method: string, path: string) {
+  const id = randomUUID();
+  const token = randomBytes(32).toString('base64url');
+  await query('INSERT INTO admins (id, email, password_hash) VALUES (?, ?, ?)', [
+    id,
+    `e2e-${id}@example.com`,
+    'gecersiz',
+  ]);
+  await query('INSERT INTO admin_sessions (token_hash, admin_id, expires_at) VALUES (?, ?, ?)', [
+    createHash('sha256').update(token).digest('hex'),
+    id,
+    new Date(Date.now() + 60_000),
+  ]);
+  try {
+    const response = await fetch(`${API_URL}/admin/api${path}`, {
+      method,
+      headers: { cookie: `patika_admin=${token}` },
+    });
+    return response.status;
+  } finally {
+    await query('DELETE FROM admins WHERE id = ?', [id]);
   }
 }
 

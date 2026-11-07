@@ -24,6 +24,7 @@ export type LostReport = {
   lastSeenAt: Date;
   startedAt: Date;
   foundAt: Date | null;
+  removedAt: Date | null;
 };
 
 export type Sighting = {
@@ -62,6 +63,7 @@ type ReportRow = {
   last_seen_at: string;
   started_at: string;
   found_at: string | null;
+  removed_at: string | null;
 };
 
 type SightingRow = {
@@ -94,6 +96,7 @@ function toReport(row: ReportRow): LostReport {
     lastSeenAt: new Date(row.last_seen_at),
     startedAt: new Date(row.started_at),
     foundAt: row.found_at ? new Date(row.found_at) : null,
+    removedAt: row.removed_at ? new Date(row.removed_at) : null,
   };
 }
 
@@ -296,6 +299,16 @@ export function watchLiveEvents(token: string) {
       } else if (event.type === 'appointment') {
         handleAppointmentEvent(event).catch((error) => {
           console.warn('Randevu bildirimi gösterilemedi', error);
+        });
+      } else if (event.type === 'lost_removed') {
+        reportChanges.notify();
+        sightingChanges.notify();
+        showInstantNotification(
+          'İlanın kaldırıldı',
+          `${event.pet_name} ilanı Patika yönetimi tarafından kaldırıldı.`,
+          `/lost/${event.report_id}`,
+        ).catch((error) => {
+          console.warn('İlan bildirimi gösterilemedi', error);
         });
       }
     },

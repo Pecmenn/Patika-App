@@ -40,6 +40,9 @@ async function finishSignIn(session: Session) {
   await saveSession(session);
 }
 
+// Yöneticinin kapattığı hesap giriş yapmak isteyince gösterilir.
+export const ACCOUNT_SUSPENDED_MESSAGE = 'Bu hesap Patika yönetimi tarafından kapatıldı.';
+
 // Kullanıcı Apple penceresini kapatırsa hata sayılmaz, sessizce döner.
 export async function signInWithApple() {
   let credential: AppleAuthentication.AppleAuthenticationCredential;

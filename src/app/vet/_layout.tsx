@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from 'expo-router';
 import { CalendarCheckIcon } from 'phosphor-react-native/src/icons/CalendarCheck';
+import { GearSixIcon } from 'phosphor-react-native/src/icons/GearSix';
 import { StorefrontIcon } from 'phosphor-react-native/src/icons/Storefront';
 import { useEffect } from 'react';
 
@@ -38,6 +39,15 @@ export default function VetLayout() {
           title: 'İşletme',
           tabBarIcon: ({ focused }) => (
             <StorefrontIcon size={24} weight={focused ? 'fill' : 'regular'} color={tabIconColor(focused)} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Ayarlar',
+          tabBarIcon: ({ focused }) => (
+            <GearSixIcon size={24} weight={focused ? 'fill' : 'regular'} color={tabIconColor(focused)} />
           ),
         }}
       />

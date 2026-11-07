@@ -196,8 +196,8 @@ test('görev eklenir, Bugün listesinde "Yapıldı" işaretlenir', async () => {
 
 test('Hayvanlar sekmesi açılır, ikinci hayvan eklenir', async () => {
   await phone.tap('Hayvanlar');
-  // "Şanslı" ve "Hayvan ekle" Bugün ekranında da var: geçiş bitmeden dokunulursa eski konuma denk gelir.
-  await phone.seeLabel('Ayarlar');
+  // "Şanslı" Bugün ekranında da var, "Hayvan ekle" yazısı yalnızca burada: geçiş bitmeden dokunulursa eski konuma denk gelir.
+  await phone.see('Hayvan ekle');
   await phone.wait(500);
   await phone.see('Şanslı');
   await phone.tapLabel('Hayvan ekle');
@@ -211,7 +211,7 @@ test('Hayvanlar sekmesi açılır, ikinci hayvan eklenir', async () => {
 });
 
 test('giriş yapılmadan önce girilen kayıtlar girişte sunucuya eksiksiz gider', async () => {
-  await phone.tapLabel('Ayarlar');
+  await phone.tap('Ayarlar');
   await phone.see('Giriş yapılmadı');
   await snap('ayarlar-girissiz');
   await phone.tap('Deneme hesabıyla gir');
@@ -251,7 +251,7 @@ test('silinen hayvan sunucuya "silindi" olarak gider', async () => {
     `SELECT id FROM user_items WHERE owner_id = ? AND collection = 'pets' AND JSON_EXTRACT(data, '$.name') = 'Boncuk'`,
     [owner],
   );
-  await phone.tapLabel('Geri');
+  await phone.tap('Hayvanlar');
   await phone.see('Boncuk');
   await phone.tap('Boncuk');
   await phone.tapLabel('Hayvanı düzenle');

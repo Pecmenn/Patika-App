@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
-import { GearSixIcon } from 'phosphor-react-native/src/icons/GearSix';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppointmentStatusPill } from '@/components/appointment-status';
 import { Button } from '@/components/button';
 import { EmptyCard } from '@/components/empty-card';
-import { GlassButton } from '@/components/glass-button';
 import { SegmentedControl } from '@/components/segmented-control';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listClinicAppointments, subscribeToAppointments, type Appointment } from '@/data/appointments';
@@ -100,14 +98,9 @@ export default function VetAppointmentsScreen() {
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Randevular
-        </Text>
-        <GlassButton label="Ayarlar" onPress={() => router.push('/settings')}>
-          <GearSixIcon size={20} weight="bold" color={colors.ink} />
-        </GlassButton>
-      </View>
+      <Text accessibilityRole="header" style={styles.title}>
+        Randevular
+      </Text>
 
       {panel?.hasFailed && (
         <Notice body="İnternet bağlantını kontrol edip tekrar dene." title="Sunucuya ulaşılamadı" />
@@ -154,11 +147,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   title: {
     fontFamily: fonts.displaySemi,

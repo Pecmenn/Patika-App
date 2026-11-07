@@ -2,7 +2,8 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
-import { signInWithApple } from '@/lib/auth';
+import { ApiError } from '@/lib/api';
+import { ACCOUNT_SUSPENDED_MESSAGE, signInWithApple } from '@/lib/auth';
 
 const HEIGHT = 56;
 
@@ -19,7 +20,12 @@ export function AppleSignInButton() {
       await signInWithApple();
     } catch (error) {
       console.warn('Apple ile giriş başarısız', error);
-      Alert.alert('Giriş yapılamadı', 'Lütfen bağlantını kontrol edip tekrar dene.', [{ text: 'Tamam' }]);
+      const isSuspended = error instanceof ApiError && error.code === 'account_suspended';
+      Alert.alert(
+        'Giriş yapılamadı',
+        isSuspended ? ACCOUNT_SUSPENDED_MESSAGE : 'Lütfen bağlantını kontrol edip tekrar dene.',
+        [{ text: 'Tamam' }],
+      );
     } finally {
       setIsSigningIn(false);
     }

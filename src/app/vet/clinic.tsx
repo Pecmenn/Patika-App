@@ -1,12 +1,10 @@
 import { router } from 'expo-router';
-import { GearSixIcon } from 'phosphor-react-native/src/icons/GearSix';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ClinicDetails } from '@/components/clinic-details';
 import { EmptyCard } from '@/components/empty-card';
-import { GlassButton } from '@/components/glass-button';
 import { colors, fonts, tabBarClearance } from '@/constants/theme';
 import { fetchOwnClinic, type ClinicApproval } from '@/data/own-clinic';
 import { useFocusData } from '@/hooks/use-focus-data';
@@ -40,14 +38,9 @@ export default function VetClinicScreen() {
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>
-          İşletme
-        </Text>
-        <GlassButton label="Ayarlar" onPress={() => router.push('/settings')}>
-          <GearSixIcon size={20} weight="bold" color={colors.ink} />
-        </GlassButton>
-      </View>
+      <Text accessibilityRole="header" style={styles.title}>
+        İşletme
+      </Text>
 
       {data?.hasFailed && (
         <EmptyCard body="İnternet bağlantını kontrol edip tekrar dene." title="Sunucuya ulaşılamadı" />
@@ -90,11 +83,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   title: {
     fontFamily: fonts.displaySemi,
