@@ -1,7 +1,10 @@
-import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { useImperativeHandle, useRef, useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
+
+export type TextFieldHandle = { focus: () => void };
 
 type TextFieldProps = {
   label: string;
@@ -9,11 +12,17 @@ type TextFieldProps = {
   placeholder?: string;
   maxLength?: number;
   autoCapitalize?: 'words' | 'characters' | 'sentences' | 'none';
+  // Not gibi serbest metinlerde yazım düzeltmesi yardımcı olur, ad ve numarada yanıltır.
+  autoCorrect?: boolean;
   keyboardType?: 'default' | 'decimal-pad' | 'email-address' | 'phone-pad' | 'url';
   multiline?: boolean;
   secureTextEntry?: boolean;
-  textContentType?: 'emailAddress' | 'password' | 'newPassword' | 'telephoneNumber';
+  textContentType?: 'emailAddress' | 'password' | 'newPassword' | 'telephoneNumber' | 'name';
+  // Klavyedeki düğme: "next" sonraki alana geçer, "done" ya da "send" formu bitirir.
+  returnKeyType?: 'done' | 'next' | 'send';
+  onSubmitEditing?: () => void;
   onChangeText: (text: string) => void;
+  ref?: Ref<TextFieldHandle>;
 };
 
 export function TextField({
@@ -22,14 +31,20 @@ export function TextField({
   placeholder,
   maxLength,
   autoCapitalize = 'words',
+  autoCorrect = false,
   keyboardType = 'default',
   multiline = false,
   secureTextEntry = false,
   textContentType,
+  returnKeyType = 'done',
+  onSubmitEditing,
   onChangeText,
+  ref,
 }: TextFieldProps) {
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
 
   return (
     <Pressable
@@ -42,19 +57,22 @@ export function TextField({
           ref={inputRef}
           accessibilityLabel={label}
           autoCapitalize={autoCapitalize}
-          autoCorrect={false}
+          autoCorrect={autoCorrect}
           keyboardType={keyboardType}
           maxLength={maxLength}
           multiline={multiline}
           onBlur={() => setIsFocused(false)}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
+          onSubmitEditing={onSubmitEditing}
           placeholder={placeholder}
           placeholderTextColor={colors.ink3}
-          returnKeyType="done"
+          returnKeyType={returnKeyType}
           secureTextEntry={secureTextEntry}
           selectionColor={colors.ink}
           style={styles.input}
+          // Sonraki alana geçerken klavye kapanıp açılmasın.
+          submitBehavior={!multiline && returnKeyType === 'next' ? 'submit' : undefined}
           textContentType={textContentType}
           value={value}
         />
@@ -73,17 +91,18 @@ type PressableFieldProps = {
 
 export function PressableField({ label, value, placeholder, icon, onPress }: PressableFieldProps) {
   return (
-    <Pressable
+    <Tappable
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value ?? placeholder}`}
       onPress={onPress}
+      pressedScale={0.98}
       style={styles.field}>
       <View style={styles.content}>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, !value && styles.placeholder]}>{value ?? placeholder}</Text>
       </View>
       {icon}
-    </Pressable>
+    </Tappable>
   );
 }
 

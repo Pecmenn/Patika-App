@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { cardShadow } from '@/constants/theme';
 
 type GlassButtonProps = {
@@ -11,13 +12,14 @@ type GlassButtonProps = {
 
 export function GlassButton({ label, onPress, children }: GlassButtonProps) {
   return (
-    <Pressable
+    <Tappable
       accessibilityLabel={label}
       accessibilityRole="button"
       onPress={onPress}
+      pressedScale={0.92}
       style={styles.button}>
       {children}
-    </Pressable>
+    </Tappable>
   );
 }
 

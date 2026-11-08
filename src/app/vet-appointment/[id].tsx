@@ -2,16 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
 import { useCallback, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppointmentStatusPill } from '@/components/appointment-status';
@@ -19,6 +10,8 @@ import { Button } from '@/components/button';
 import { EmptyCard } from '@/components/empty-card';
 import { TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
+import { Tappable } from '@/components/tappable';
 import { SPECIES } from '@/constants/species';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import {
@@ -27,7 +20,7 @@ import {
   subscribeToAppointments,
 } from '@/data/appointments';
 import type { Species } from '@/data/pets';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { ApiError } from '@/lib/api';
 import { formatAppointmentWhen } from '@/lib/clinics';
 
@@ -57,13 +50,14 @@ export default function VetAppointmentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const load = useCallback(async () => {
     try {
-      return await fetchClinicAppointment(id);
+      return { appointment: await fetchClinicAppointment(id) };
     } catch (error) {
       console.warn('Randevu okunamadı', error);
-      return null;
+      return { appointment: null };
     }
   }, [id]);
-  const appointment = useFocusData(load, subscribeToAppointments);
+  const { data, refresh } = useFocusResource(load, subscribeToAppointments);
+  const appointment = data?.appointment ?? null;
   const [note, setNote] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
@@ -109,8 +103,14 @@ export default function VetAppointmentScreen() {
           <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
         </GlassButton>
 
-        {appointment === null ? null : !appointment ? (
-          <EmptyCard body="İnternet bağlantını kontrol edip tekrar dene." title="Randevu açılamadı" />
+        {!data ? (
+          <LoadingState />
+        ) : !appointment ? (
+          <EmptyCard
+            action={{ label: 'Tekrar dene', onPress: refresh }}
+            body="İnternet bağlantını kontrol edip tekrar dene."
+            title="Randevu açılamadı"
+          />
         ) : (
           <>
             <Text accessibilityRole="header" style={styles.title}>
@@ -132,7 +132,7 @@ export default function VetAppointmentScreen() {
 
             <View style={styles.card}>
               <Row label="Sahip" value={appointment.ownerName} />
-              <Pressable
+              <Tappable
                 accessibilityLabel={`${appointment.ownerName} ara`}
                 accessibilityRole="button"
                 onPress={() =>
@@ -143,7 +143,7 @@ export default function VetAppointmentScreen() {
                 style={styles.call}>
                 <PhoneIcon size={18} weight="bold" color={colors.ink} />
                 <Text style={styles.callLabel}>{appointment.ownerPhone}</Text>
-              </Pressable>
+              </Tappable>
             </View>
 
             {canRespond && (

@@ -4,7 +4,8 @@ export const colors = {
   card: '#FFFFFF',
   ink: '#1D2452',
   ink2: '#4A5079',
-  ink3: '#6E7296',
+  // Kâğıt zeminde de okunabilirlik eşiğini geçsin diye tasarımdaki #6E7296'dan bir ton koyu (4.8:1).
+  ink3: '#64688D',
   line: '#E4E3F0',
   ball: '#D9F26B',
   paw: '#F7BACB',
@@ -15,6 +16,8 @@ export const colors = {
   alert: '#FF4F1A',
   alertSoft: '#FFE3D8',
   alertText: '#B8330A',
+  // Geri alınamayan işler (silme). Kayıp turuncusundan ayrı tutulur, turuncu yalnızca kayıp modunun.
+  danger: '#B42318',
 } as const;
 
 // Bu adlar src/app/_layout.tsx içinde yüklenen yazı tipleriyle aynı olmalı.

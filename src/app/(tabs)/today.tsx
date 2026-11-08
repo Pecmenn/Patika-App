@@ -1,14 +1,18 @@
 import { router } from 'expo-router';
 import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddTile } from '@/components/add-tile';
 import { AppointmentNoticeCard } from '@/components/appointment-notice-card';
+import { Skeleton } from '@/components/loading-state';
 import { NextVisitCard } from '@/components/next-visit-card';
 import { PetAvatar } from '@/components/pet-avatar';
 import { PetMessagesCard } from '@/components/pet-messages-card';
 import { ReminderPermissionCard } from '@/components/reminder-permission-card';
 import { SessionEndedCard } from '@/components/session-ended-card';
+import { Tappable } from '@/components/tappable';
 import { TodayTasks } from '@/components/today-tasks';
 import { UpNextCard } from '@/components/up-next-card';
 import { WeightCard } from '@/components/weight-card';
@@ -82,6 +86,12 @@ export default function TodayScreen() {
   const latestWeight = sortByDate(weights).at(-1);
   const weightPet = latestWeight ? pets?.find((pet) => pet.id === latestWeight.petId) : undefined;
 
+  // Tek hayvan varsa form doğrudan onun için açılır, birden fazlaysa form önce hangisi için olduğunu sorar.
+  function openAddForm(pathname: '/add-weight' | '/add-visit') {
+    const onlyPet = pets?.length === 1 ? pets[0] : undefined;
+    router.push(onlyPet ? { pathname, params: { petId: onlyPet.id } } : { pathname });
+  }
+
   return (
     <ScrollView
       contentContainerStyle={[
@@ -102,11 +112,12 @@ export default function TodayScreen() {
         showsHorizontalScrollIndicator={false}
         style={styles.chipsRow}>
         {pets?.map((pet) => (
-          <Pressable
+          <Tappable
             key={pet.id}
             accessibilityLabel={`${pet.name} kayıtları`}
             accessibilityRole="button"
             onPress={() => router.push({ pathname: '/pet/[id]', params: { id: pet.id } })}
+            hitSlop={2}
             style={styles.chip}>
             <PetAvatar
               photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
@@ -114,15 +125,16 @@ export default function TodayScreen() {
               species={pet.species}
             />
             <Text style={styles.chipLabel}>{pet.name}</Text>
-          </Pressable>
+          </Tappable>
         ))}
-        <Pressable
+        <Tappable
           accessibilityLabel="Hayvan ekle"
           accessibilityRole="button"
           onPress={() => router.push('/add-pet')}
+          hitSlop={2}
           style={styles.addChip}>
           <PlusIcon size={17} weight="bold" color={colors.ink} />
-        </Pressable>
+        </Tappable>
       </ScrollView>
 
       {isSessionRejected && (
@@ -132,27 +144,31 @@ export default function TodayScreen() {
       )}
 
       {notice && (
-        <View style={styles.message}>
+        <Animated.View entering={FadeIn.duration(220)} style={styles.message}>
           <AppointmentNoticeCard body={notice.body} title={notice.title} />
-        </View>
+        </Animated.View>
       )}
 
       {messageGroups.map(({ petId, items }) => {
         const pet = pets?.find((candidate) => candidate.id === petId);
         return (
           pet && (
-            <View key={petId} style={styles.message}>
+            <Animated.View key={petId} entering={FadeIn.duration(220)} style={styles.message}>
               <PetMessagesCard
                 count={items.length}
                 petName={pet.name}
                 onPress={() => router.push({ pathname: '/pet-messages/[id]', params: { id: petId } })}
               />
-            </View>
+            </Animated.View>
           )
         );
       })}
 
-      {upNext && upNextPet ? (
+      {!data ? (
+        <View style={styles.content}>
+          <Skeleton height={150} />
+        </View>
+      ) : upNext && upNextPet ? (
         <View style={styles.content}>
           <UpNextCard
             now={now}
@@ -188,9 +204,9 @@ export default function TodayScreen() {
         />
       )}
 
-      {(weightPet || (nextVisit && nextVisitPet)) && (
+      {pets && pets.length > 0 && (
         <View style={styles.tiles}>
-          {weightPet && (
+          {weightPet ? (
             <WeightCard
               entries={weights.filter((weight) => weight.petId === weightPet.id)}
               pet={weightPet}
@@ -199,8 +215,15 @@ export default function TodayScreen() {
                 router.push({ pathname: '/pet/[id]', params: { id: weightPet.id, tab: 'weight' } })
               }
             />
+          ) : (
+            <AddTile
+              actionLabel="Kilo ekle"
+              body="Henüz tartı yok"
+              label="Kilo"
+              onPress={() => openAddForm('/add-weight')}
+            />
           )}
-          {nextVisit && nextVisitPet && (
+          {nextVisit && nextVisitPet ? (
             <NextVisitCard
               pet={nextVisitPet}
               visit={nextVisit}
@@ -211,9 +234,14 @@ export default function TodayScreen() {
                 })
               }
             />
+          ) : (
+            <AddTile
+              actionLabel="Ziyaret ekle"
+              body="Planlı ziyaret yok"
+              label="Sonraki ziyaret"
+              onPress={() => openAddForm('/add-visit')}
+            />
           )}
-          {/* Tasarımda kartlar iki sütunlu: tek kart kalırsa da yarım genişlikte durur. */}
-          {!(weightPet && nextVisit && nextVisitPet) && <View style={styles.tileSpacer} />}
         </View>
       )}
     </ScrollView>
@@ -254,7 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    height: 40,
+    minHeight: 40,
     paddingLeft: 6,
     paddingRight: 14,
     borderRadius: 999,
@@ -287,9 +315,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 12,
-  },
-  tileSpacer: {
-    flex: 1,
   },
   emptyCard: {
     padding: 20,

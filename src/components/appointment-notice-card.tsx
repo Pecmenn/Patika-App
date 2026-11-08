@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { CalendarCheckIcon } from 'phosphor-react-native/src/icons/CalendarCheck';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 
 // Bekleyen randevu isteği ya da kliniğin olumsuz cevabı Bugün'de görünür. Onaylananlar ziyaret kartına düşer.
 export function AppointmentNoticeCard({ title, body }: { title: string; body: string }) {
   return (
-    <Pressable
+    <Tappable
       accessibilityRole="button"
       onPress={() => router.push('/appointments')}
       style={styles.card}>
@@ -18,7 +19,7 @@ export function AppointmentNoticeCard({ title, body }: { title: string; body: st
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.body}>{body}</Text>
       </View>
-    </Pressable>
+    </Tappable>
   );
 }
 

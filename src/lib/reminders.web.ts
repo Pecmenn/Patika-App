@@ -11,6 +11,18 @@ export async function getReminderPermission(): Promise<ReminderPermission> {
   return 'granted';
 }
 
+export async function getRemindersEnabled() {
+  return true;
+}
+
+export async function setRemindersEnabled(_isEnabled: boolean) {}
+
+export type ReminderState = { permission: ReminderPermission; isEnabled: boolean };
+
+export async function getReminderState(): Promise<ReminderState> {
+  return { permission: 'granted', isEnabled: true };
+}
+
 export async function requestReminderPermission(): Promise<ReminderPermission> {
   return 'granted';
 }

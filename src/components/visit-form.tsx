@@ -3,25 +3,19 @@ import { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
+import { PetPicker } from '@/components/pet-picker';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import { listPets } from '@/data/pets';
 import { addVisit, deleteVisit, updateVisit, type Visit } from '@/data/visits';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { atTime, formatLongDate, formatTime, fromDateKey, toDateKey, toTimeKey } from '@/lib/dates';
 import { refreshReminders } from '@/lib/reminders';
@@ -35,15 +29,19 @@ const calendarIcon = <CalendarBlankIcon size={20} weight="bold" color={colors.in
 const clockIcon = <ClockIcon size={20} weight="bold" color={colors.ink2} />;
 
 type VisitFormProps = {
-  petId: string;
+  // Verilmezse ve birden fazla hayvan varsa form önce hangisi için olduğunu sorar.
+  petId?: string;
   // Verilirse form bu ziyareti düzenler ve silme seçeneği görünür.
   visit?: Visit;
 };
 
-export function VisitForm({ petId, visit }: VisitFormProps) {
+export function VisitForm({ petId: givenPetId, visit }: VisitFormProps) {
   const insets = useSafeAreaInsets();
   const pets = useFocusData(listPets);
+  const [pickedPetId, setPickedPetId] = useState<string>();
+  const petId = givenPetId ?? pickedPetId ?? (pets?.length === 1 ? pets[0].id : undefined);
   const pet = pets?.find((candidate) => candidate.id === petId);
+  const showsPetPicker = givenPetId === undefined && pets !== null && pets.length > 1;
 
   const [reason, setReason] = useState(visit?.reason ?? '');
   const [date, setDate] = useState(() => (visit ? fromDateKey(visit.date) : new Date()));
@@ -52,6 +50,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
   const [note, setNote] = useState(visit?.note ?? '');
   const [openPicker, setOpenPicker] = useState<OpenPicker>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ reason, date, time, clinic, note });
 
   const trimmedReason = reason.trim();
   const canSave = pet !== undefined && trimmedReason.length > 0 && !isSaving;
@@ -59,8 +58,11 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
   const isUpcoming = isUpcomingVisit({ date: dateKey, time } as Visit);
 
   async function save() {
+    if (!pet) {
+      return;
+    }
     const fields = {
-      petId,
+      petId: pet.id,
       reason: trimmedReason,
       date: dateKey,
       time,
@@ -80,6 +82,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
       return;
     }
     await refreshReminders({ askPermission: isUpcoming });
+    allowLeave();
     router.back();
   }
 
@@ -93,6 +96,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
       return;
     }
     await refreshReminders();
+    allowLeave();
     router.back();
   }
 
@@ -111,7 +115,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -124,12 +128,20 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
         <Text accessibilityRole="header" style={styles.title}>
           {visit ? 'Ziyareti düzenle' : 'Ziyaret ekle'}
         </Text>
-        {pet && (
+        {pet ? (
           <Text style={styles.lede}>
             {visit
               ? `${pet.name} için bu kaydı düzelt.`
               : `${pet.name} için, geçmiş bir ziyareti ya da aldığın randevuyu yaz.`}
           </Text>
+        ) : (
+          showsPetPicker && <Text style={styles.lede}>Önce hangi hayvan için olduğunu seç.</Text>
+        )}
+        {showsPetPicker && (
+          <View style={styles.picker}>
+            <Text style={styles.label}>Kim için?</Text>
+            <PetPicker pets={pets} value={pet?.id} onChange={setPickedPetId} />
+          </View>
         )}
 
         <TextField
@@ -161,12 +173,13 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
           />
         </View>
         {time && (
-          <Pressable
+          <Tappable
             accessibilityRole="button"
             onPress={() => setTime(null)}
+            hitSlop={10}
             style={styles.shortcut}>
             <Text style={styles.shortcutLabel}>Saati kaldır</Text>
-          </Pressable>
+          </Tappable>
         )}
         {dateKey > toDateKey(new Date()) && (
           <Text style={styles.hint}>
@@ -203,7 +216,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
               disabled={isSaving}
               label="Ziyareti sil"
               size="small"
-              variant="text"
+              variant="danger"
               onPress={() => confirmRemove(visit)}
             />
           </View>
@@ -213,7 +226,7 @@ export function VisitForm({ petId, visit }: VisitFormProps) {
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button disabled={!canSave} label="Kaydet" onPress={save} />
+        <Button disabled={!canSave} label="Kaydet" loading={isSaving} onPress={save} />
       </View>
 
       {openPicker === 'date' && (
@@ -269,10 +282,18 @@ const styles = StyleSheet.create({
   field: {
     marginTop: 10,
   },
+  picker: {
+    marginTop: -4,
+    marginBottom: 18,
+  },
+  label: {
+    fontFamily: fonts.uiBold,
+    fontSize: 14,
+    color: colors.ink2,
+  },
   shortcut: {
     alignSelf: 'flex-start',
     marginTop: 8,
-    marginHorizontal: 4,
     paddingVertical: 4,
   },
   shortcutLabel: {
@@ -283,7 +304,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     marginTop: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     lineHeight: 19,
@@ -291,7 +311,6 @@ const styles = StyleSheet.create({
   },
   note: {
     marginTop: 12,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     color: colors.ink2,

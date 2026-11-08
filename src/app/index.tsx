@@ -1,4 +1,6 @@
 import { Redirect, router } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,8 +24,15 @@ export default function IndexScreen() {
   const pets = useFocusData(listPets);
   const session = useSession();
   const sync = useSyncStatus();
+  const isReady = pets !== null && session !== undefined;
 
-  if (pets === null || session === undefined) {
+  useEffect(() => {
+    if (isReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [isReady]);
+
+  if (!isReady) {
     return null;
   }
   if (session?.user.role === 'vet') {

@@ -23,7 +23,7 @@ export function PetAvatar({ size, species, photoUri }: PetAvatarProps) {
         { width: size, height: size, backgroundColor: info?.color ?? colors.line },
       ]}>
       {photoUri ? (
-        <Image source={{ uri: photoUri }} contentFit="cover" style={StyleSheet.absoluteFill} />
+        <Image source={{ uri: photoUri }} contentFit="cover" style={StyleSheet.absoluteFill} transition={150} />
       ) : (
         <Icon size={size * 0.5} weight="duotone" color={colors.ink} />
       )}

@@ -87,17 +87,22 @@ export const subscribeToAppointments = changes.subscribe;
 
 // Sahibin randevuları. Girişsiz ya da internetsizken boş döner, ekranı durdurmaz.
 export async function listMyAppointments(): Promise<Appointment[]> {
-  const session = await getSession();
-  if (!session || session.user.role === 'vet') {
-    return [];
-  }
   try {
-    const { appointments } = await apiRequest<{ appointments: AppointmentRow[] }>('/v1/appointments');
-    return appointments.map(toAppointment);
+    return await readMyAppointments();
   } catch (error) {
     console.warn('Randevular okunamadı', error);
     return [];
   }
+}
+
+// Randevularım ekranı için: hata gizlenmez, internet yokken "Henüz randevun yok" yazmasın.
+export async function readMyAppointments(): Promise<Appointment[]> {
+  const session = await getSession();
+  if (!session || session.user.role === 'vet') {
+    return [];
+  }
+  const { appointments } = await apiRequest<{ appointments: AppointmentRow[] }>('/v1/appointments');
+  return appointments.map(toAppointment);
 }
 
 export type NewAppointment = {

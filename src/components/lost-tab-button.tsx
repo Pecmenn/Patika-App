@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { SirenIcon } from 'phosphor-react-native/src/icons/Siren';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import type { LostReport } from '@/data/lost-reports';
 
@@ -16,17 +17,17 @@ function openLostMode(report?: LostReport) {
 // Alt menünün ortasındaki düğme. Sekme değil, her dokunuşta kayıp ekranını üstte açar.
 export function LostTabButton({ report }: { report?: LostReport }) {
   return (
-    <Pressable
+    <Tappable
       accessibilityRole="button"
       onPress={() => openLostMode(report)}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+      style={styles.button}>
       <View style={[styles.circle, report && styles.circleActive]}>
         <SirenIcon size={28} weight="fill" color={colors.ink} />
       </View>
-      <Text numberOfLines={1} style={styles.label}>
+      <Text allowFontScaling={false} numberOfLines={1} style={styles.label}>
         {report ? `${report.petName} kayıp` : 'Hayvanım kayıp'}
       </Text>
-    </Pressable>
+    </Tappable>
   );
 }
 
@@ -38,9 +39,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 8,
-  },
-  pressed: {
-    opacity: 0.8,
   },
   // Menünün üstüne taşar: dikkat çeksin diye diğer düğmelerden yukarıda ve büyük.
   circle: {

@@ -1,10 +1,11 @@
 import { NavigationArrowIcon } from 'phosphor-react-native/src/icons/NavigationArrow';
 import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
 import type { ReactNode } from 'react';
-import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ClinicMap } from '@/components/clinic-map';
 import { ClinicThumb } from '@/components/clinic-thumb';
+import { Tappable } from '@/components/tappable';
 import { SPECIES } from '@/constants/species';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import {
@@ -34,10 +35,10 @@ function directionsUrl({ name, latitude, longitude }: Clinic) {
 
 function ActionButton({ label, icon, onPress }: { label: string; icon: ReactNode; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.action}>
+    <Tappable accessibilityRole="button" onPress={onPress} style={styles.action}>
       {icon}
       <Text style={styles.actionLabel}>{label}</Text>
-    </Pressable>
+    </Tappable>
   );
 }
 
@@ -138,17 +139,22 @@ export function ClinicDetails({ clinic, distance = null }: ClinicDetailsProps) {
       )}
 
       {clinic.website && (
-        <Pressable accessibilityRole="link" onPress={() => open(clinic.website as string)} style={styles.link}>
+        <Tappable
+          accessibilityRole="link"
+          hitSlop={10}
+          onPress={() => open(clinic.website as string)}
+          style={styles.link}>
           <Text style={styles.linkLabel}>Web sitesi</Text>
-        </Pressable>
+        </Tappable>
       )}
       {clinic.instagram && (
-        <Pressable
+        <Tappable
           accessibilityRole="link"
           onPress={() => open(instagramUrl(clinic.instagram as string))}
+          hitSlop={10}
           style={styles.link}>
           <Text style={styles.linkLabel}>Instagram</Text>
-        </Pressable>
+        </Tappable>
       )}
     </View>
   );
@@ -229,7 +235,6 @@ const styles = StyleSheet.create({
   },
   address: {
     marginTop: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 15,
     lineHeight: 21,
@@ -237,7 +242,6 @@ const styles = StyleSheet.create({
   },
   area: {
     marginTop: 1,
-    marginHorizontal: 4,
     fontFamily: fonts.ui,
     fontSize: 14,
     color: colors.ink2,
@@ -245,7 +249,6 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 20,
     marginBottom: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 17,
     color: colors.ink,
@@ -292,7 +295,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   description: {
-    marginHorizontal: 4,
     fontFamily: fonts.ui,
     fontSize: 15,
     lineHeight: 22,
@@ -301,7 +303,6 @@ const styles = StyleSheet.create({
   link: {
     alignSelf: 'flex-start',
     marginTop: 10,
-    marginHorizontal: 4,
     paddingVertical: 4,
   },
   linkLabel: {

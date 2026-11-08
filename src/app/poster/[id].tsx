@@ -2,23 +2,19 @@ import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { AccessibilityInfo, Alert, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
 import { LostPoster, posterSize } from '@/components/lost-poster';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import { getLostDetails } from '@/data/lost-reports';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { API_URL } from '@/lib/api';
+import { selectionHaptic, successHaptic } from '@/lib/haptics';
 import { lostPageLink } from '@/lib/lost';
 import {
   POST_DESCRIPTION_CHARS,
@@ -48,7 +44,7 @@ export default function PosterScreen() {
   const window = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const load = useCallback(() => loadPoster(id), [id]);
-  const data = useFocusData(load);
+  const { data, refresh } = useFocusResource(load);
 
   const posterRef = useRef<PosterView>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -80,13 +76,21 @@ export default function PosterScreen() {
   );
 
   if (!data) {
-    return <View style={styles.screen} />;
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top + 2 }]}>
+        {navbar('İlan')}
+        <LoadingState label="İlan hazırlanıyor..." />
+      </View>
+    );
   }
   if (data.hasFailed || !data.publicCode) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top + 2 }]}>
         {navbar('İlan')}
         <Text style={styles.failed}>İlan açılamadı. İnternet bağlantını kontrol edip tekrar dene.</Text>
+        <View style={styles.retry}>
+          <Button label="Tekrar dene" size="small" variant="white" onPress={refresh} />
+        </View>
       </View>
     );
   }
@@ -116,6 +120,8 @@ export default function PosterScreen() {
 
   async function copyLink() {
     await Clipboard.setStringAsync(link);
+    successHaptic();
+    AccessibilityInfo.announceForAccessibility('Bağlantı kopyalandı');
     setIsCopied(true);
     clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setIsCopied(false), COPIED_MS);
@@ -154,16 +160,21 @@ export default function PosterScreen() {
         {POSTER_FORMAT_KEYS.map((key) => {
           const isSelected = key === format;
           return (
-            <Pressable
+            <Tappable
               key={key}
               accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected }}
-              onPress={() => setFormat(key)}
+              accessibilityState={{ checked: isSelected }}
+              onPress={() => {
+                if (!isSelected) {
+                  selectionHaptic();
+                }
+                setFormat(key);
+              }}
               style={[styles.format, isSelected && styles.formatSelected]}>
               <Text style={[styles.formatLabel, isSelected && styles.formatLabelSelected]}>
                 {POSTER_FORMATS[key].label}
               </Text>
-            </Pressable>
+            </Tappable>
           );
         })}
       </View>
@@ -172,11 +183,12 @@ export default function PosterScreen() {
         {isCutOff && (
           <Text style={styles.note}>Açıklama bu biçime sığmadı. A4 baskıda tamamı görünür.</Text>
         )}
-        {format !== 'a4' && (
-          <Text style={styles.note}>
-            Telefonda görenler QR kodunu okutamaz. Bağlantıyı da görselle birlikte gönder.
-          </Text>
-        )}
+        {/* Her biçimde bir not durur: biçim değişince düğmeler yerinden oynamasın. */}
+        <Text style={styles.note}>
+          {format === 'a4'
+            ? 'Yazdırıp as. Alttaki şeritleri kes, görenler bağlantıyı koparıp yanına alabilsin.'
+            : 'Telefonda görenler QR kodunu okutamaz. Bağlantıyı da görselle birlikte gönder.'}
+        </Text>
         <Button
           disabled={isSharing || (needsPhoto && !isPhotoReady)}
           label={isSharing ? 'Hazırlanıyor...' : 'Paylaş'}
@@ -211,6 +223,11 @@ const styles = StyleSheet.create({
   },
   navSpacer: {
     width: 44,
+  },
+  retry: {
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    marginHorizontal: SIDE_PADDING,
   },
   failed: {
     marginTop: 24,

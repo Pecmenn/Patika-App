@@ -1,18 +1,32 @@
 import { router } from 'expo-router';
 import { CalendarCheckIcon } from 'phosphor-react-native/src/icons/CalendarCheck';
 import { MapPinIcon } from 'phosphor-react-native/src/icons/MapPin';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ClinicThumb } from '@/components/clinic-thumb';
 import { EmptyCard } from '@/components/empty-card';
 import { GlassButton } from '@/components/glass-button';
+import { SkeletonList } from '@/components/loading-state';
+import { TabHeader } from '@/components/tab-header';
+import { Tappable } from '@/components/tappable';
+import { SPECIES, SPECIES_KEYS } from '@/constants/species';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { fetchClinics } from '@/data/clinics';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { useNearbyPoint } from '@/hooks/use-nearby-point';
-import { formatDistance, openStatus, sortClinics, type Clinic, type ClinicWithDistance } from '@/lib/clinics';
+import {
+  formatDistance,
+  openStatus,
+  SERVICE_OPTIONS,
+  sortClinics,
+  type Clinic,
+  type ClinicWithDistance,
+} from '@/lib/clinics';
+
+// Kartta en çok bu kadar etiket görünür, kalanı "+2" gibi sayıyla yazılır.
+const VISIBLE_TAGS = 2;
 
 async function loadClinics() {
   try {
@@ -25,14 +39,21 @@ async function loadClinics() {
 
 function ClinicCard({ clinic }: { clinic: ClinicWithDistance<Clinic> }) {
   const status = openStatus(clinic.hours);
+  // Hizmet seçmek isteğe bağlı, tür seçmek zorunlu: hizmet yoksa baktığı türler yazılır, düğme tek kalmaz.
+  const services = SERVICE_OPTIONS.filter((option) => clinic.services.includes(option.value));
+  const tags =
+    services.length > 0
+      ? services.map((service) => service.label)
+      : SPECIES_KEYS.filter((key) => clinic.species.includes(key)).map((key) => SPECIES[key].label);
+  const hiddenCount = tags.length - VISIBLE_TAGS;
   const openDetails = () => router.push({ pathname: '/clinic/[id]', params: { id: clinic.id } });
 
   return (
-    <Pressable
+    <Tappable
       accessibilityHint="Kliniğin bilgilerini açmak için dokun"
       accessibilityRole="button"
       onPress={openDetails}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+      style={styles.card}>
       <View style={styles.cardTop}>
         <ClinicThumb size={60} uri={clinic.photoUrl} />
         <View style={styles.cardCopy}>
@@ -48,20 +69,34 @@ function ClinicCard({ clinic }: { clinic: ClinicWithDistance<Clinic> }) {
           </Text>
         </View>
       </View>
-      <View style={styles.cardAction}>
+      <View style={styles.cardFoot}>
+        <View style={styles.services}>
+          {tags.slice(0, VISIBLE_TAGS).map((tag) => (
+            <View key={tag} style={styles.service}>
+              <Text numberOfLines={1} style={styles.serviceLabel}>
+                {tag}
+              </Text>
+            </View>
+          ))}
+          {hiddenCount > 0 && (
+            <View accessibilityLabel={`${hiddenCount} tane daha`} style={styles.service}>
+              <Text style={styles.serviceLabel}>+{hiddenCount}</Text>
+            </View>
+          )}
+        </View>
         <Button
           label="Randevu al"
           size="small"
           onPress={() => router.push({ pathname: '/book/[id]', params: { id: clinic.id } })}
         />
       </View>
-    </Pressable>
+    </Tappable>
   );
 }
 
 export default function VetsScreen() {
   const insets = useSafeAreaInsets();
-  const data = useFocusData(loadClinics);
+  const { data, refresh, isRefreshing } = useFocusResource(loadClinics);
   const { point, isGranted, askPermission } = useNearbyPoint();
   const clinics = sortClinics(data?.clinics ?? [], point);
 
@@ -71,16 +106,14 @@ export default function VetsScreen() {
         styles.scroll,
         { paddingTop: insets.top + 8, paddingBottom: tabBarClearance(insets.bottom) },
       ]}
+      refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} tintColor={colors.ink} />}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Veterinerler
-        </Text>
+      <TabHeader title="Veterinerler">
         <GlassButton label="Randevularım" onPress={() => router.push('/appointments')}>
           <CalendarCheckIcon size={20} weight="bold" color={colors.ink} />
         </GlassButton>
-      </View>
+      </TabHeader>
 
       {isGranted === false && clinics.length > 0 && (
         <View style={styles.location}>
@@ -89,15 +122,19 @@ export default function VetsScreen() {
             <Text style={styles.locationText}>
               En yakın klinikleri görmek için konumunu kullan. Konumun telefondan çıkmaz.
             </Text>
-            <Pressable accessibilityRole="button" onPress={askPermission} style={styles.locationAction}>
+            <Tappable accessibilityRole="button" onPress={askPermission} hitSlop={10} style={styles.locationAction}>
               <Text style={styles.locationActionLabel}>Konumumu kullan</Text>
-            </Pressable>
+            </Tappable>
           </View>
         </View>
       )}
 
       {data?.hasFailed && (
-        <EmptyCard body="İnternet bağlantını kontrol edip tekrar dene." title="Sunucuya ulaşılamadı" />
+        <EmptyCard
+          action={{ label: 'Tekrar dene', onPress: refresh }}
+          body="İnternet bağlantını kontrol edip tekrar dene."
+          title="Sunucuya ulaşılamadı"
+        />
       )}
       {data && !data.hasFailed && clinics.length === 0 && (
         <EmptyCard
@@ -106,6 +143,7 @@ export default function VetsScreen() {
         />
       )}
 
+      {!data && <SkeletonList count={3} height={150} />}
       <View style={styles.list}>
         {clinics.map((clinic) => (
           <ClinicCard key={clinic.id} clinic={clinic} />
@@ -122,18 +160,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 25,
-    lineHeight: 29,
-    letterSpacing: -0.6,
-    color: colors.ink,
   },
   location: {
     flexDirection: 'row',
@@ -175,9 +201,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     boxShadow: cardShadow,
   },
-  pressed: {
-    opacity: 0.7,
-  },
   cardTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -208,7 +231,27 @@ const styles = StyleSheet.create({
     fontFamily: fonts.uiBold,
     color: colors.ink,
   },
-  cardAction: {
-    alignSelf: 'flex-end',
+  cardFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  services: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    minWidth: 0,
+  },
+  service: {
+    flexShrink: 1,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: colors.skySoft,
+  },
+  serviceLabel: {
+    fontFamily: fonts.uiBold,
+    fontSize: 13,
+    color: colors.ink,
   },
 });

@@ -2,17 +2,19 @@ import * as Clipboard from 'expo-clipboard';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
 import { QrCode } from '@/components/qr-code';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { ensurePublicCode } from '@/data/lost-reports';
 import { listPets } from '@/data/pets';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { API_URL } from '@/lib/api';
+import { successHaptic } from '@/lib/haptics';
 import { lostPageLink, shortLink } from '@/lib/lost';
 import { qrSheetHtml } from '@/lib/poster';
 import { printQrSheet } from '@/lib/share-poster';
@@ -43,7 +45,14 @@ export default function PetQrScreen() {
   useEffect(() => () => clearTimeout(copiedTimer.current), []);
 
   if (!data) {
-    return <View style={styles.screen} />;
+    return (
+      <View style={[styles.screen, styles.scroll, { paddingTop: insets.top + 2 }]}>
+        <GlassButton label="Geri" onPress={() => router.back()}>
+          <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
+        </GlassButton>
+        <LoadingState label="QR kodu hazırlanıyor..." />
+      </View>
+    );
   }
   if (!data.pet) {
     return <Redirect href="/today" />;
@@ -62,6 +71,8 @@ export default function PetQrScreen() {
 
   async function copyLink(text: string) {
     await Clipboard.setStringAsync(text);
+    successHaptic();
+    AccessibilityInfo.announceForAccessibility('Bağlantı kopyalandı');
     setIsCopied(true);
     clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setIsCopied(false), COPIED_MS);
@@ -174,7 +185,6 @@ const styles = StyleSheet.create({
   },
   note: {
     marginTop: 12,
-    marginHorizontal: 4,
     fontFamily: fonts.ui,
     fontSize: 13.5,
     lineHeight: 19,

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
-import { TextField } from '@/components/form-fields';
+import { TextField, type TextFieldHandle } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { colors, fonts } from '@/constants/theme';
 import { ApiError } from '@/lib/api';
@@ -45,6 +45,7 @@ export default function VetAuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isBusy, setIsBusy] = useState(false);
+  const passwordField = useRef<TextFieldHandle>(null);
 
   const canSubmit =
     isValidEmail(email) && password.length >= (isNewAccount ? MIN_PASSWORD : 1) && !isBusy;
@@ -89,20 +90,29 @@ export default function VetAuthScreen() {
             keyboardType="email-address"
             label="E-posta"
             maxLength={320}
+            returnKeyType="next"
             textContentType="emailAddress"
             value={email}
             onChangeText={setEmail}
+            onSubmitEditing={() => passwordField.current?.focus()}
           />
           <TextField
             autoCapitalize="none"
             label="Şifre"
             maxLength={200}
             secureTextEntry
+            ref={passwordField}
+            returnKeyType="done"
             textContentType={isNewAccount ? 'newPassword' : 'password'}
             value={password}
             onChangeText={setPassword}
+            onSubmitEditing={() => canSubmit && submit()}
           />
         </View>
+        {/* Şifreye geçildiğinde e-posta hâlâ geçersizse düğmenin neden kapalı olduğunu söyler. */}
+        {password.length > 0 && !isValidEmail(email) && (
+          <Text style={styles.hint}>E-posta adresini kontrol et. Örneğin klinik@ornek.com</Text>
+        )}
         {isNewAccount && <Text style={styles.hint}>Şifre en az {MIN_PASSWORD} karakter olmalı.</Text>}
 
         <View style={styles.switch}>
@@ -119,6 +129,7 @@ export default function VetAuthScreen() {
         <Button
           disabled={!canSubmit}
           label={isNewAccount ? 'Hesap aç' : 'Giriş yap'}
+          loading={isBusy}
           onPress={submit}
         />
       </View>
@@ -156,7 +167,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     marginTop: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     color: colors.ink2,

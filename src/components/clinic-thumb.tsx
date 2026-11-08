@@ -9,7 +9,7 @@ export function ClinicThumb({ uri, size }: { uri: string | null; size: number })
   return (
     <View style={[styles.thumb, { width: size, height: size, borderRadius: size * 0.26 }]}>
       {uri ? (
-        <Image contentFit="cover" source={{ uri }} style={StyleSheet.absoluteFill} />
+        <Image contentFit="cover" source={{ uri }} style={StyleSheet.absoluteFill} transition={150} />
       ) : (
         <StorefrontIcon size={size * 0.45} weight="duotone" color={colors.ink} />
       )}

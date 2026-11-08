@@ -4,17 +4,19 @@ import { Button } from '@/components/button';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { useFocusData } from '@/hooks/use-focus-data';
 import {
-  getReminderPermission,
+  getReminderState,
   requestReminderPermission,
   subscribeToReminderPermission,
   syncReminders,
 } from '@/lib/reminders';
 
 // İzin verilmemişse hatırlatmaların gelmeyeceğini söyler ve açmanın yolunu gösterir.
+// Kullanıcı hatırlatmaları Ayarlar'dan kendisi kapattıysa kart çıkmaz.
 export function ReminderPermissionCard() {
-  const permission = useFocusData(getReminderPermission, subscribeToReminderPermission);
+  const state = useFocusData(getReminderState, subscribeToReminderPermission);
+  const permission = state?.permission;
 
-  if (permission === null || permission === 'granted') {
+  if (!state || !state.isEnabled || permission === 'granted') {
     return null;
   }
 

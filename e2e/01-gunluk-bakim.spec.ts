@@ -10,6 +10,8 @@ test.describe.configure({ mode: 'serial' });
 
 const DELETE_BUTTON = /^S[İIiı][Ll]$/;
 const CANCEL_BUTTON = /^V[Aa][Zz][Gg].*/;
+const DISCARD_BUTTON = /^(Kaydetmeden çık|KAYDETMEDEN ÇIK)$/;
+const KEEP_EDITING_BUTTON = /^(Düzenlemeye dön|DÜZENLEMEYE DÖN)$/;
 
 let device: AndroidDevice;
 let phone: Phone;
@@ -96,7 +98,7 @@ test('aşı önerisine dokununca ad dolar', async () => {
 });
 
 test('aşı düzenlenir', async () => {
-  await phone.tap('Karma aşı');
+  await phone.tapButtonWith('Karma aşı');
   await phone.see('Aşıyı düzenle');
   await phone.fill('Aşı adı', 'DHPP');
   await phone.hideKeyboard();
@@ -125,7 +127,7 @@ test('tedavi silinir: onay istenir, vazgeçilebilir', async () => {
   await phone.tap('Kaydet');
   await phone.see('Dış parazit');
 
-  await phone.tap('Dış parazit');
+  await phone.tapButtonWith('Dış parazit');
   await phone.see('Tedaviyi düzenle');
   await phone.scrollTo('Kaydı sil');
   await phone.tap('Kaydı sil');
@@ -194,6 +196,23 @@ test('görev eklenir, Bugün listesinde "Yapıldı" işaretlenir', async () => {
   // İşaretin kaydolduğu, giriş senaryosunda sunucudan doğrulanır.
 });
 
+test('yarım form sorulmadan kaybolmaz: düzenlemeye dönülür ya da kaydetmeden çıkılır', async () => {
+  await phone.tap('Görev ekle');
+  await phone.fill('Görev adı', 'Yarım görev');
+  await phone.hideKeyboard();
+  await phone.tapLabel('Kapat');
+  await phone.see('Değişiklikler kaydedilmedi');
+  await phone.tap(KEEP_EDITING_BUTTON);
+  await phone.see('Yarım görev');
+  // Android'in geri tuşu da aynı soruyu sorar.
+  await phone.back();
+  await phone.see('Değişiklikler kaydedilmedi');
+  await phone.tap(DISCARD_BUTTON);
+  await phone.gone('Görev adı');
+  expect(await phone.has('Yarım görev', 800), 'kaydedilmeyen görev listede yok').toBe(false);
+  await phone.see('Tiroid hapı');
+});
+
 test('Hayvanlar sekmesi açılır, ikinci hayvan eklenir', async () => {
   await phone.tap('Hayvanlar');
   // "Şanslı" Bugün ekranında da var, "Hayvan ekle" yazısı yalnızca burada: geçiş bitmeden dokunulursa eski konuma denk gelir.
@@ -243,6 +262,30 @@ test('giriş yapılmadan önce girilen kayıtlar girişte sunucuya eksiksiz gide
   const [weight] = await query(`SELECT data FROM user_items WHERE owner_id = ? AND collection = 'weights'`, [owner]);
   expect(JSON.stringify(weight.data)).toContain('18.4');
   await snap('ayarlar-girisli');
+});
+
+// Telefonda kurulu, zamanı gelmemiş Patika bildirimleri. Alarm dökümündeki geçmiş kayıtlar sayılmaz:
+// onlar "type=RTC_WAKEUP tag=..." diye başlıyor, bekleyenler yalnızca "tag=..." diye.
+async function pendingReminderAlarms() {
+  const dump = (await phone.device.shell('dumpsys alarm')).toString();
+  return dump
+    .split('\n')
+    .filter((line) => /^\s+tag=\*walarm\*:expo\.modules\.notifications\.NOTIFICATION_EVENT\s*$/.test(line)).length;
+}
+
+test("hatırlatmalar Ayarlar'dan kapatılınca kurulu bildirimler silinir, açılınca geri gelir", async () => {
+  const isOn = async () => (await phone.device.info({ desc: 'Hatırlatmalar' })).checked;
+  await phone.seeLabel('Hatırlatmalar');
+  expect(await isOn(), 'varsayılan açık').toBe(true);
+  await expect.poll(pendingReminderAlarms, { timeout: 15_000 }).toBeGreaterThan(0);
+
+  await phone.tapLabel('Hatırlatmalar');
+  await expect.poll(isOn).toBe(false);
+  await expect.poll(pendingReminderAlarms, { timeout: 15_000 }).toBe(0);
+
+  await phone.tapLabel('Hatırlatmalar');
+  await expect.poll(isOn).toBe(true);
+  await expect.poll(pendingReminderAlarms, { timeout: 15_000 }).toBeGreaterThan(0);
 });
 
 test('silinen hayvan sunucuya "silindi" olarak gider', async () => {

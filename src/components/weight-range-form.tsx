@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -9,6 +9,7 @@ import { TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { colors, fonts } from '@/constants/theme';
 import { setWeightRange, type WeightRange } from '@/data/weights';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { kgToInput, parseKg } from '@/lib/weights';
 
 type WeightRangeFormProps = {
@@ -22,6 +23,7 @@ export function WeightRangeForm({ petId, petName, range }: WeightRangeFormProps)
   const [minText, setMinText] = useState(range ? kgToInput(range.min) : '');
   const [maxText, setMaxText] = useState(range ? kgToInput(range.max) : '');
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ minText, maxText });
 
   const min = parseKg(minText);
   const max = parseKg(maxText);
@@ -37,12 +39,13 @@ export function WeightRangeForm({ petId, petName, range }: WeightRangeFormProps)
       Alert.alert('Kaydedilemedi', 'Bilgiler kaydedilirken bir sorun oldu. Lütfen tekrar dene.', [{ text: 'Tamam' }]);
       return;
     }
+    allowLeave();
     router.back();
   }
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -98,6 +101,7 @@ export function WeightRangeForm({ petId, petName, range }: WeightRangeFormProps)
         <Button
           disabled={!isValid || isSaving}
           label="Kaydet"
+          loading={isSaving}
           onPress={() => {
             if (isValid) {
               apply({ min, max });
@@ -139,7 +143,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     marginTop: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     lineHeight: 19,

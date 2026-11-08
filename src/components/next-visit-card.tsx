@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import type { Pet } from '@/data/pets';
 import type { Visit } from '@/data/visits';
@@ -17,11 +18,11 @@ export function NextVisitCard({ visit, pet, onPress }: NextVisitCardProps) {
   const clinic = visit.clinic ? `. ${visit.clinic}` : '';
 
   return (
-    <Pressable
+    <Tappable
       accessibilityHint="Ziyaretleri açmak için dokun"
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+      style={styles.card}>
       <Text style={styles.label}>Sonraki ziyaret</Text>
       <Text style={styles.date}>
         {formatShortWeekday(date)} {date.getDate()}
@@ -32,7 +33,7 @@ export function NextVisitCard({ visit, pet, onPress }: NextVisitCardProps) {
         {clock}
         {clinic}
       </Text>
-    </Pressable>
+    </Tappable>
   );
 }
 
@@ -45,9 +46,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: colors.card,
     boxShadow: cardShadow,
-  },
-  pressed: {
-    opacity: 0.7,
   },
   label: {
     fontFamily: fonts.uiBold,

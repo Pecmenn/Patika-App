@@ -2,10 +2,11 @@ import { router } from 'expo-router';
 import { TrendDownIcon } from 'phosphor-react-native/src/icons/TrendDown';
 import { TrendUpIcon } from 'phosphor-react-native/src/icons/TrendUp';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyCard } from '@/components/empty-card';
 import { SegmentedControl } from '@/components/segmented-control';
+import { Tappable } from '@/components/tappable';
 import { WeightChart } from '@/components/weight-chart';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import type { WeightEntry, WeightRange } from '@/data/weights';
@@ -39,16 +40,17 @@ export function WeightSection({ petId, entries, range, now }: WeightSectionProps
   const visible = sortByDate(filterByPeriod(entries, period, now));
 
   const rangeAction = (
-    <Pressable
+    <Tappable
       accessibilityRole="button"
       onPress={() => router.push({ pathname: '/weight-range', params: { petId } })}
+      hitSlop={10}
       style={styles.rangeAction}>
       <Text style={styles.rangeActionLabel}>
         {range
           ? `Sağlıklı aralık: ${formatKg(range.min)} - ${formatKg(range.max)} kg`
           : 'Sağlıklı aralık ekle'}
       </Text>
-    </Pressable>
+    </Tappable>
   );
 
   if (!latest) {
@@ -67,7 +69,7 @@ export function WeightSection({ petId, entries, range, now }: WeightSectionProps
     <>
       <View style={styles.head}>
         <Text style={styles.headLabel}>Son tartı: {formatShortDate(fromDateKey(latest.date))}</Text>
-        <Text accessibilityRole="header" style={styles.value}>
+        <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} style={styles.value}>
           {formatKg(latest.kg)}
           <Text style={styles.unit}> kg</Text>
         </Text>
@@ -101,16 +103,12 @@ export function WeightSection({ petId, entries, range, now }: WeightSectionProps
       <Text style={styles.sectionTitle}>Kayıtlar</Text>
       <View style={styles.list}>
         {rows.map((row, index) => (
-          <Pressable
+          <Tappable
             key={row.id}
             accessibilityHint="Düzenlemek için dokun"
             accessibilityRole="button"
             onPress={() => router.push({ pathname: '/edit-weight', params: { id: row.id } })}
-            style={({ pressed }) => [
-              styles.row,
-              index < rows.length - 1 && styles.rowDivider,
-              pressed && styles.pressed,
-            ]}>
+            style={[styles.row, index < rows.length - 1 && styles.rowDivider]}>
             <View style={styles.rowCopy}>
               <Text style={styles.rowValue}>{formatKg(row.kg)} kg</Text>
               <Text style={styles.rowDetail}>
@@ -123,7 +121,7 @@ export function WeightSection({ petId, entries, range, now }: WeightSectionProps
                 <Text style={styles.deltaLabel}>{formatDelta(row.delta)}</Text>
               </View>
             )}
-          </Pressable>
+          </Tappable>
         ))}
       </View>
     </>
@@ -133,7 +131,6 @@ export function WeightSection({ petId, entries, range, now }: WeightSectionProps
 const styles = StyleSheet.create({
   head: {
     marginTop: 18,
-    marginHorizontal: 4,
   },
   headLabel: {
     fontFamily: fonts.uiSemi,
@@ -188,7 +185,6 @@ const styles = StyleSheet.create({
   rangeAction: {
     alignSelf: 'flex-start',
     marginTop: 10,
-    marginHorizontal: 4,
     paddingVertical: 4,
   },
   rangeActionLabel: {
@@ -200,7 +196,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginTop: 18,
     marginBottom: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 19,
     color: colors.ink,
@@ -222,9 +217,6 @@ const styles = StyleSheet.create({
   rowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
-  },
-  pressed: {
-    opacity: 0.6,
   },
   rowCopy: {
     flex: 1,

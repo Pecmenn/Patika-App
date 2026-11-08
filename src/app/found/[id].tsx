@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { LoadingState } from '@/components/loading-state';
 import { PetAvatar } from '@/components/pet-avatar';
 import { colors, fonts } from '@/constants/theme';
 import { getLostDetails } from '@/data/lost-reports';
@@ -20,7 +21,7 @@ async function loadFoundScreen(id: string) {
     return { ...details, pet: pets.find((pet) => pet.id === details.report.petId) ?? null };
   } catch (error) {
     console.warn('Sonuç okunamadı', error);
-    return null;
+    return { report: null, pet: null, sightings: [] };
   }
 }
 
@@ -43,6 +44,15 @@ export default function FoundScreen() {
   const pet = data?.pet;
   const duration =
     report?.foundAt && report ? durationLabel(report.startedAt, report.foundAt) : null;
+
+  // Veri gelmeden "Kayıp modu kapandı" yazıp sonra adı göstermesin.
+  if (!data) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
+        <LoadingState />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>

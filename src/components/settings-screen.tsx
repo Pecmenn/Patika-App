@@ -1,17 +1,34 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
+import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+import { SignOutIcon } from 'phosphor-react-native/src/icons/SignOut';
+import { TrashIcon } from 'phosphor-react-native/src/icons/Trash';
+import { useState, type ReactNode } from 'react';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { SignInButton } from '@/components/sign-in-button';
+import { TabHeader } from '@/components/tab-header';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { readActiveReports, type LostReport } from '@/data/lost-reports';
 import { clearLocalData, flushBeforeSignOut, type SyncStatus } from '@/data/sync';
+import { useFocusData } from '@/hooks/use-focus-data';
 import { useSession } from '@/hooks/use-session';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { ApiError } from '@/lib/api';
 import { deleteAccount, signOut } from '@/lib/auth';
+import { selectionHaptic } from '@/lib/haptics';
+import {
+  getReminderState,
+  requestReminderPermission,
+  setRemindersEnabled,
+  subscribeToReminderPermission,
+  syncReminders,
+  type ReminderState,
+} from '@/lib/reminders';
 
 const PROVIDER_LABELS = {
   apple: 'Apple ile giriş',
@@ -121,11 +138,118 @@ function backupLabel({ isSyncing, pendingCount, hasError }: SyncStatus) {
   return hasError ? 'Sunucuya ulaşılamadı, sonra yeniden denenecek' : 'Kayıtların sunucuda';
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+const APP_VERSION = Constants.expoConfig?.version ?? '';
+const SWITCH_OFF = '#D6D5E8';
+
+// Düğme yalnızca uygulamanın ayarı açık ve telefon izin vermişken açık görünür.
+function isReminderOn({ isEnabled, permission }: ReminderState) {
+  return isEnabled && permission === 'granted';
+}
+
+// Kapatınca kurulu bütün hatırlatmalar silinir. Açarken izin yoksa sorulur, reddedilmişse
+// yalnızca telefon ayarlarından açılabildiği için oraya yönlendirilir.
+async function toggleReminders(state: ReminderState, turnOn: boolean) {
+  selectionHaptic();
+  try {
+    await setRemindersEnabled(turnOn);
+    if (!turnOn) {
+      return;
+    }
+    if (state.permission === 'undetermined') {
+      await requestReminderPermission();
+      await syncReminders();
+    } else if (state.permission === 'denied') {
+      Alert.alert(
+        'Bildirimler kapalı',
+        "Hatırlatma gelmesi için telefon ayarlarından Patika'nın bildirimlerini aç.",
+        [
+          { text: 'Vazgeç', style: 'cancel' },
+          { text: 'Ayarları aç', onPress: () => Linking.openSettings() },
+        ],
+      );
+    }
+  } catch (error) {
+    console.warn('Hatırlatma ayarı değiştirilemedi', error);
+    Alert.alert('Değiştirilemedi', 'Lütfen tekrar dene.', [{ text: 'Tamam' }]);
+  }
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <View style={styles.row}>
+    <>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.card}>{children}</View>
+    </>
+  );
+}
+
+function InfoRow({ label, value, isFirst }: { label: string; value: string; isFirst?: boolean }) {
+  return (
+    <View style={[styles.infoRow, !isFirst && styles.divider]}>
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue}>{value}</Text>
+    </View>
+  );
+}
+
+type ActionRowProps = {
+  icon: ReactNode;
+  label: string;
+  detail?: string;
+  isDanger?: boolean;
+  isFirst?: boolean;
+  isBusy?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+};
+
+// Dokunulunca bir iş yapan liste satırı. Meşgulken dönen işaret gösterir ve basılamaz.
+function ActionRow({ icon, label, detail, isDanger, isFirst, isBusy, disabled, onPress }: ActionRowProps) {
+  return (
+    <Tappable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || isBusy, busy: isBusy }}
+      dimWhenDisabled={!isBusy}
+      disabled={disabled || isBusy}
+      onPress={onPress}
+      pressedScale={0.99}
+      style={[styles.actionRow, !isFirst && styles.divider]}>
+      <View style={[styles.rowIcon, isDanger && styles.rowIconDanger]}>{icon}</View>
+      <View style={styles.actionCopy}>
+        <Text style={[styles.actionLabel, isDanger && styles.actionLabelDanger]}>{label}</Text>
+        {detail ? <Text style={styles.actionDetail}>{detail}</Text> : null}
+      </View>
+      {isBusy ? (
+        <ActivityIndicator color={isDanger ? colors.danger : colors.ink} />
+      ) : (
+        <CaretRightIcon size={16} weight="bold" color={colors.ink3} />
+      )}
+    </Tappable>
+  );
+}
+
+type SwitchRowProps = {
+  icon: ReactNode;
+  label: string;
+  value: boolean;
+  isFirst?: boolean;
+  onChange: (value: boolean) => void;
+};
+
+// Açma kapama düğmeli satır. Satırın kendisine değil, düğmeye dokunulur.
+function SwitchRow({ icon, label, value, isFirst, onChange }: SwitchRowProps) {
+  return (
+    <View style={[styles.actionRow, !isFirst && styles.divider]}>
+      <View style={styles.rowIcon}>{icon}</View>
+      <Text style={[styles.actionCopy, styles.actionLabel]}>{label}</Text>
+      <Switch
+        accessibilityLabel={label}
+        ios_backgroundColor={SWITCH_OFF}
+        thumbColor={colors.card}
+        trackColor={{ false: SWITCH_OFF, true: colors.ink }}
+        value={value}
+        onValueChange={onChange}
+      />
     </View>
   );
 }
@@ -140,6 +264,18 @@ export function SettingsScreen() {
   const isVet = session?.user.role === 'vet';
   const providerLabel = PROVIDER_LABELS[session?.user.provider ?? 'development'];
   const [isBusy, setIsBusy] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const reminders = useFocusData(getReminderState, subscribeToReminderPermission);
+
+  // Çıkıştan önce son eşitleme beklenir, internetsizken uzun sürebilir: düğme kilitlenir, tekrar basılamaz.
+  async function startLeaving() {
+    setIsLeaving(true);
+    try {
+      await (isVet ? confirmLeaveAsVet() : confirmLeave());
+    } finally {
+      setIsLeaving(false);
+    }
+  }
 
   async function removeAccount() {
     setIsBusy(true);
@@ -205,40 +341,15 @@ export function SettingsScreen() {
       ]}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Ayarlar
-      </Text>
+      <TabHeader title="Ayarlar" />
 
-      <Text style={styles.sectionTitle}>Hesap</Text>
-      <View style={styles.card}>
-        <Row label="Giriş yöntemi" value={session ? providerLabel : 'Giriş yapılmadı'} />
-        {fullName ? <Row label="Ad" value={fullName} /> : null}
-        {email ? <Row label="E-posta" value={email} /> : null}
-        {session && !isVet ? <Row label="Yedekleme" value={backupLabel(sync)} /> : null}
-      </View>
-
-      {session && (
-        <>
-          <View style={styles.action}>
-            <Button
-              label="Çıkış yap"
-              size="small"
-              variant="text"
-              disabled={isBusy}
-              onPress={isVet ? confirmLeaveAsVet : confirmLeave}
-            />
-          </View>
-          <View style={styles.action}>
-            <Button
-              label={isBusy ? 'Lütfen bekle...' : 'Hesabı sil'}
-              size="small"
-              variant="text"
-              disabled={isBusy}
-              onPress={confirmDelete}
-            />
-          </View>
-        </>
-      )}
+      <Section title="Hesap">
+        <InfoRow isFirst label="Giriş yöntemi" value={session ? providerLabel : 'Giriş yapılmadı'} />
+        {fullName ? <InfoRow label="Ad" value={fullName} /> : null}
+        {email ? <InfoRow label="E-posta" value={email} /> : null}
+        {session && !isVet ? <InfoRow label="Yedekleme" value={backupLabel(sync)} /> : null}
+        {session === null ? <InfoRow label="Yedekleme" value="Kayıtların yalnızca bu telefonda" /> : null}
+      </Section>
 
       {session === null && (
         <View style={styles.signIn}>
@@ -250,6 +361,45 @@ export function SettingsScreen() {
             onPress={() => router.push('/vet-auth')}
           />
         </View>
+      )}
+
+      {!isVet && reminders && (
+        <Section title="Bildirimler">
+          <SwitchRow
+            isFirst
+            icon={<BellIcon size={18} weight="bold" color={colors.ink} />}
+            label="Hatırlatmalar"
+            value={isReminderOn(reminders)}
+            onChange={(turnOn) => toggleReminders(reminders, turnOn)}
+          />
+        </Section>
+      )}
+
+      <Section title="Hakkında">
+        <InfoRow isFirst label="Uygulama" value="Patika" />
+        {APP_VERSION ? <InfoRow label="Sürüm" value={APP_VERSION} /> : null}
+      </Section>
+
+      {session && (
+        <Section title="Oturum">
+          <ActionRow
+            isFirst
+            disabled={isBusy}
+            icon={<SignOutIcon size={18} weight="bold" color={colors.ink} />}
+            isBusy={isLeaving}
+            label="Çıkış yap"
+            onPress={startLeaving}
+          />
+          <ActionRow
+            isDanger
+            detail={isVet ? 'Kliniğin ve randevuların silinir.' : 'Tüm hayvanların ve kayıtların silinir.'}
+            disabled={isLeaving}
+            icon={<TrashIcon size={18} weight="bold" color={colors.danger} />}
+            isBusy={isBusy}
+            label="Hesabı sil"
+            onPress={confirmDelete}
+          />
+        </Section>
       )}
     </ScrollView>
   );
@@ -263,30 +413,26 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
   },
-  title: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 25,
-    lineHeight: 29,
-    letterSpacing: -0.6,
-    color: colors.ink,
-  },
   sectionTitle: {
-    marginTop: 20,
+    marginTop: 22,
     marginBottom: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 19,
     color: colors.ink,
   },
   card: {
-    gap: 12,
-    padding: 16,
+    paddingHorizontal: 16,
     borderRadius: 22,
     backgroundColor: colors.card,
     boxShadow: cardShadow,
   },
-  row: {
+  divider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  infoRow: {
     gap: 1,
+    paddingVertical: 13,
   },
   rowLabel: {
     fontFamily: fonts.uiBold,
@@ -298,9 +444,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink,
   },
-  action: {
-    alignSelf: 'center',
-    marginTop: 12,
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 12,
+  },
+  rowIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.paper,
+  },
+  rowIconDanger: {
+    backgroundColor: '#FDECEA',
+  },
+  actionCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  actionLabel: {
+    fontFamily: fonts.uiBold,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  actionLabelDanger: {
+    color: colors.danger,
+  },
+  actionDetail: {
+    marginTop: 2,
+    fontFamily: fonts.ui,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: colors.ink2,
   },
   signIn: {
     marginTop: 12,

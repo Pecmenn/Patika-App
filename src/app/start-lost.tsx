@@ -6,17 +6,7 @@ import { QrCodeIcon } from 'phosphor-react-native/src/icons/QrCode';
 import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState, type ReactNode } from 'react';
-import {
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DatePickerSheet } from '@/components/date-picker-sheet';
@@ -25,13 +15,16 @@ import { GlassButton } from '@/components/glass-button';
 import { HoldButton } from '@/components/hold-button';
 import { LastSeenMap } from '@/components/last-seen-map';
 import { PetAvatar } from '@/components/pet-avatar';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { startLostReport } from '@/data/lost-reports';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { useSession } from '@/hooks/use-session';
 import { formatTime, toTimeKey } from '@/lib/dates';
+import { selectionHaptic, successHaptic } from '@/lib/haptics';
 import { lastSeenDate, type Point } from '@/lib/lost';
 import { refreshReminders } from '@/lib/reminders';
 
@@ -61,6 +54,7 @@ export default function StartLostScreen() {
   const [description, setDescription] = useState('');
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const allowLeave = useDiscardGuard({ place, area, lastSeen, description });
 
   const petId = chosenPetId ?? pets?.[0]?.id ?? null;
   const pet = pets?.find((candidate) => candidate.id === petId);
@@ -101,6 +95,8 @@ export default function StartLostScreen() {
       refreshReminders({ askPermission: true }).catch((error) => {
         console.warn('Bildirim izni istenemedi', error);
       });
+      successHaptic();
+      allowLeave();
       router.replace({ pathname: '/lost/[id]', params: { id } });
     } catch (error) {
       console.warn('Kayıp modu başlatılamadı', error);
@@ -120,7 +116,7 @@ export default function StartLostScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, 16) }]}
@@ -139,11 +135,16 @@ export default function StartLostScreen() {
           {pets?.map((candidate) => {
             const isSelected = candidate.id === petId;
             return (
-              <Pressable
+              <Tappable
                 key={candidate.id}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                onPress={() => setChosenPetId(candidate.id)}
+                accessibilityState={{ checked: isSelected }}
+                onPress={() => {
+                  if (!isSelected) {
+                    selectionHaptic();
+                  }
+                  setChosenPetId(candidate.id);
+                }}
                 style={[styles.pet, isSelected && styles.petSelected]}>
                 <PetAvatar
                   photoUri={candidate.photo ? resolvePetPhotoUri(candidate.photo) : null}
@@ -154,7 +155,7 @@ export default function StartLostScreen() {
                   {candidate.name}
                 </Text>
                 {isSelected && <CheckCircleIcon size={22} weight="fill" color={colors.ink} />}
-              </Pressable>
+              </Tappable>
             );
           })}
         </View>
@@ -260,7 +261,6 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 16,
     marginBottom: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiBold,
     fontSize: 14,
     color: colors.ink2,
@@ -294,7 +294,6 @@ const styles = StyleSheet.create({
   },
   note: {
     marginTop: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13,
     color: colors.ink2,

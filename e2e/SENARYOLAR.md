@@ -20,6 +20,12 @@
 ### Günlük bakım (taklitçi)
 Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, sonraki tarih, düzenleme), tedavi (not, silme onayı, vazgeçme), ziyaret, kilo (geçersiz değer, ekleme), görev ve "Yapıldı", Hayvanlar, ikinci hayvan, hayvan silme. Girişte kayıtların hesaba aktarılıp sunucuya eksiksiz gitmesi, silinenin sunucuda "silindi" olması.
 
+### Arayüz hissi (taklitçi)
+Yarım formu kapatırken soru (düzenlemeye dön, kaydetmeden çık, Android geri tuşu), değişiklik yapılmış ama gönderilmemiş kayıp ve klinik formunda soru, sunucu kapalıyken "Sunucuya ulaşılamadı" ve sunucu gelince "Tekrar dene" ile listenin açılması.
+
+### Boş ekranlar ve hizalama (taklitçi, piksel karşılaştırmasıyla)
+Bugün'de kilo ve ziyaret yokken boş kartlar, tek tartıda çizgisiz kilo kartı, Hayvanlar listesinde yaş, son kilo ve sıradaki iş, hayvan sayfasındaki bilgi kutuları, gruplu Ayarlar (girişli ve girişsiz), klinik kartındaki hizmetler, ilan biçimi değişince düğmelerin yerinde kalması. Ayarlar'daki hatırlatma düğmesi: kapatınca telefonda kurulu bildirim alarmlarının silinmesi, açınca geri gelmesi. "Sıradaki" iş, "kaç gün kaldı" yazısı ve son kilo `npm test` içinde de sınanıyor.
+
 ### Alt menü (taklitçi)
 Kayıp düğmesinin başka sekmeden açılması, dairenin menü dışına taşan yerine dokunma, kapatınca sekmenin değişmemesi, Android geri tuşunun Ayarlar'dan Bugün'e dönmesi, açık ilanda düğmenin hayvanın adını gösterip ilanı açması, veteriner menüsünde kayıp düğmesinin olmaması.
 
@@ -62,6 +68,7 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Hesap silmede Apple izni iptali (henüz yazılmadı, Apple geliştirici üyeliği gerekiyor)
 - Veteriner ekranlarının ve randevu formunun iPhone'daki görünümü, klavyeyle davranışı
 - Alt menüdeki kayıp dairesinin iPhone'daki görünümü ve menü dışına taşan yerine dokunma
+- Titreşimlerin hissi, iPhone'da kaydırarak geri dönerken yarım form sorusu, en büyük yazı ayarında ekranlar
 - Oturum kapandı kartındaki ve Ayarlar'daki Apple düğmesi (taklitçide bu kartta deneme hesabı düğmesi var)
 
 ### Taklitçide yapılamıyor
@@ -90,7 +97,9 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Çalışma saatini saat seçiciyle değiştirme, "İlk günün saatlerini uygula", klinik fotoğrafı seçme ve yükleme
 - Randevu bildiriminin ekranda görünmesi ve dokununca doğru ekranın açılması
 - Veteriner uygulama açıkken istek gelince listenin değişmesi (sahip tarafında var)
+- Animasyonlar (testlerde Android'in animasyon hızı 0, Reanimated bu yüzden atlıyor), aşağı çekerek yenileme hareketi, yükleniyor ve iskelet görünümünün kendisi
 - Piksel karşılığı olmayan ekranlar: kayıp başlatma, bulundu, tedavi ve ziyaret listeleri ve formları, görev listesi, kilo grafiği
+- Bugün'deki boş kilo ve ziyaret kartından açılan formun, birden fazla hayvan varken "Kim için?" diye sorması. İzin reddedilmişken hatırlatma düğmesinin telefon ayarlarına yönlendirmesi
 
 ## Bilinen ve kabul edilen sınırlar
 - Telefonun saati **geride** ise yapılan düzenleme sunucudaki daha "yeni" kaydı ezemez ve sessizce yedeklenmez (son değişiklik kazanır kuralı). Saat **ileride** ise sunucu sınırlıyor.

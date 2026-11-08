@@ -32,10 +32,14 @@ export default function RootLayout() {
   });
   const ready = fontsLoaded || fontError !== null;
 
+  // Açılış ekranını ilk ekran kapatır (index.tsx), arada boş sayfa görünmesin.
+  // Uygulama başka bir adresle açılırsa diye en geç 1,5 saniyede kendisi kapanır.
   useEffect(() => {
-    if (ready) {
-      SplashScreen.hideAsync();
+    if (!ready) {
+      return;
     }
+    const timer = setTimeout(() => SplashScreen.hideAsync(), 1500);
+    return () => clearTimeout(timer);
   }, [ready]);
 
   // Bildirimler önceden kuruluyor, uygulama her açıldığında süreleri uzuyor.

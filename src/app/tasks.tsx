@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     marginBottom: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 19,
     color: colors.ink,

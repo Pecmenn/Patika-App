@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
@@ -16,6 +17,8 @@ const TASK_CATEGORY = 'task_reminder';
 const TASK_DONE_ACTION = 'task_done';
 const TASK_SNOOZE_ACTION = 'task_snooze';
 const SNOOZE_MS = 60 * 60 * 1000;
+// Telefonun ayarı, hesaba bağlı değil: çıkış yapınca silinmez.
+const ENABLED_KEY = 'patika.reminders.enabled.v1';
 
 export type ReminderPermission = 'granted' | 'denied' | 'undetermined';
 
@@ -81,6 +84,24 @@ export async function getReminderPermission(): Promise<ReminderPermission> {
   return toReminderPermission(await Notifications.getPermissionsAsync());
 }
 
+// Ayarlar'daki düğme. Kapalıyken hiçbir hatırlatma kurulmaz, izin de sorulmaz. Varsayılan açık.
+export async function getRemindersEnabled() {
+  return (await AsyncStorage.getItem(ENABLED_KEY)) !== 'false';
+}
+
+export async function setRemindersEnabled(isEnabled: boolean) {
+  await AsyncStorage.setItem(ENABLED_KEY, String(isEnabled));
+  permissionChanges.notify();
+  await syncReminders();
+}
+
+export type ReminderState = { permission: ReminderPermission; isEnabled: boolean };
+
+export async function getReminderState(): Promise<ReminderState> {
+  const [permission, isEnabled] = await Promise.all([getReminderPermission(), getRemindersEnabled()]);
+  return { permission, isEnabled };
+}
+
 export async function requestReminderPermission(): Promise<ReminderPermission> {
   await ensureChannel();
   const permission = toReminderPermission(await Notifications.requestPermissionsAsync());
@@ -90,6 +111,10 @@ export async function requestReminderPermission(): Promise<ReminderPermission> {
 
 // Planı her seferinde baştan kurar: böylece değişen ve yapılan kayıtların eski bildirimi kalmaz.
 async function rebuildReminders() {
+  if (!(await getRemindersEnabled())) {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    return;
+  }
   if ((await getReminderPermission()) !== 'granted') {
     return;
   }
@@ -135,7 +160,7 @@ export function syncReminders() {
 // Kayıt değişti. Hatırlatma kurulamazsa kayıt yine geçerli, kullanıcıyı durdurmuyoruz.
 export async function refreshReminders({ askPermission = false } = {}) {
   try {
-    if (askPermission) {
+    if (askPermission && (await getRemindersEnabled())) {
       await requestReminderPermission();
     }
     await syncReminders();

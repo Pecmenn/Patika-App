@@ -1,32 +1,26 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ChoiceChips } from '@/components/choice-chips';
 import { ClinicThumb } from '@/components/clinic-thumb';
 import { EmptyCard } from '@/components/empty-card';
-import { TextField } from '@/components/form-fields';
+import { TextField, type TextFieldHandle } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
-import { PetAvatar } from '@/components/pet-avatar';
+import { PetPicker } from '@/components/pet-picker';
 import { SignInButton } from '@/components/sign-in-button';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { listMyAppointments, requestAppointment } from '@/data/appointments';
 import { fetchClinic, fetchFreeTimes } from '@/data/clinics';
-import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import { listPets } from '@/data/pets';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { useFocusData } from '@/hooks/use-focus-data';
+import { selectionHaptic } from '@/lib/haptics';
 import { useSession } from '@/hooks/use-session';
 import { ApiError } from '@/lib/api';
 import { bookingDays, formatAppointmentWhen, isValidPhone } from '@/lib/clinics';
@@ -78,8 +72,10 @@ export default function BookScreen() {
   const [typedPhone, setTypedPhone] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const phoneField = useRef<TextFieldHandle>(null);
   const [loadedTimes, setLoadedTimes] = useState<{ key: string; times: string[] | null } | null>(null);
   const [reloadCount, setReloadCount] = useState(0);
+  const allowLeave = useDiscardGuard({ pickedPetId, reason, pickedDate, picked, typedName, typedPhone, note });
 
   const days = clinic ? bookingDays(clinic.hours) : [];
   const date = pickedDate ?? days.find((day) => !day.isClosed)?.date ?? null;
@@ -152,6 +148,7 @@ export default function BookScreen() {
     }
     // Onaylanan randevu hatırlatılacak, cevap da bildirimle gelecek.
     await refreshReminders({ askPermission: true });
+    allowLeave();
     router.replace('/appointments');
   }
 
@@ -207,28 +204,7 @@ export default function BookScreen() {
             {pets?.length === 0 && (
               <Text style={styles.hint}>Randevu için önce Hayvanlar ekranından hayvan ekle.</Text>
             )}
-            <View style={styles.pets}>
-              {pets?.map((candidate) => {
-                const isSelected = candidate.id === pet?.id;
-                return (
-                  <Pressable
-                    key={candidate.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    onPress={() => setPickedPetId(candidate.id)}
-                    style={[styles.pet, isSelected && styles.petSelected]}>
-                    <PetAvatar
-                      photoUri={candidate.photo ? resolvePetPhotoUri(candidate.photo) : null}
-                      size={28}
-                      species={candidate.species}
-                    />
-                    <Text style={[styles.petName, isSelected && styles.petNameSelected]}>
-                      {candidate.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            {pets && <PetPicker pets={pets} value={pet?.id} onChange={setPickedPetId} />}
 
             <Text style={styles.section}>Neden?</Text>
             <ChoiceChips options={REASONS} value={reason} onChange={setReason} />
@@ -242,17 +218,22 @@ export default function BookScreen() {
               {days.map((day) => {
                 const isSelected = day.date === date;
                 return (
-                  <Pressable
+                  <Tappable
                     key={day.date}
                     accessibilityLabel={`${day.dayOfMonth} ${day.month} ${day.weekday}${day.isClosed ? ', kapalı' : ''}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: day.isClosed, selected: isSelected }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ disabled: day.isClosed, checked: isSelected }}
                     disabled={day.isClosed}
-                    onPress={() => setPickedDate(day.date)}
+                    onPress={() => {
+                      if (!isSelected) {
+                        selectionHaptic();
+                      }
+                      setPickedDate(day.date);
+                    }}
                     style={[styles.day, isSelected && styles.daySelected, day.isClosed && styles.dayClosed]}>
                     <Text style={[styles.dayName, isSelected && styles.dayTextSelected]}>{day.weekday}</Text>
                     <Text style={[styles.dayNumber, isSelected && styles.dayTextSelected]}>{day.dayOfMonth}</Text>
-                  </Pressable>
+                  </Tappable>
                 );
               })}
             </ScrollView>
@@ -266,14 +247,22 @@ export default function BookScreen() {
               {times.map((candidate) => {
                 const isSelected = candidate === time;
                 return (
-                  <Pressable
+                  <Tappable
                     key={candidate}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    onPress={() => date && setPicked({ date, time: candidate })}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: isSelected }}
+                    onPress={() => {
+                      if (!date) {
+                        return;
+                      }
+                      if (!isSelected) {
+                        selectionHaptic();
+                      }
+                      setPicked({ date, time: candidate });
+                    }}
                     style={[styles.time, isSelected && styles.timeSelected]}>
                     <Text style={styles.timeLabel}>{formatTime(candidate)}</Text>
-                  </Pressable>
+                  </Tappable>
                 );
               })}
             </View>
@@ -283,8 +272,11 @@ export default function BookScreen() {
               <TextField
                 label="Adın soyadın"
                 maxLength={100}
+                returnKeyType="next"
+                textContentType="name"
                 value={ownerName}
                 onChangeText={setTypedName}
+                onSubmitEditing={() => phoneField.current?.focus()}
               />
               <TextField
                 autoCapitalize="none"
@@ -295,7 +287,12 @@ export default function BookScreen() {
                 textContentType="telephoneNumber"
                 value={ownerPhone}
                 onChangeText={setTypedPhone}
+                ref={phoneField}
               />
+              {/* Düğme kapalıyken nedenini söyler: yazmaya başlar başlamaz uyarmasın diye biraz bekler. */}
+              {ownerPhone.replace(/\D/g, '').length >= 7 && !isValidPhone(ownerPhone) && (
+                <Text style={styles.hint}>Numarayı kontrol et. Örneğin 0532 555 00 11</Text>
+              )}
               <TextField
                 autoCapitalize="sentences"
                 label="Not (isteğe bağlı)"
@@ -320,6 +317,7 @@ export default function BookScreen() {
         <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <Button
             disabled={!canSend}
+            loading={isSending}
             label={date && time ? `${formatAppointmentWhen(date, time)} için istek gönder` : 'Gün ve saat seç'}
             onPress={send}
           />
@@ -376,48 +374,16 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 20,
-    marginHorizontal: 4,
     fontFamily: fonts.uiBold,
     fontSize: 15,
     color: colors.ink2,
   },
   hint: {
     marginTop: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 14,
     lineHeight: 20,
     color: colors.ink2,
-  },
-  pets: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-  },
-  pet: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    height: 42,
-    paddingLeft: 6,
-    paddingRight: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-  },
-  petSelected: {
-    borderColor: colors.paw,
-    backgroundColor: colors.paw,
-  },
-  petName: {
-    fontFamily: fonts.uiBold,
-    fontSize: 15,
-    color: colors.ink,
-  },
-  petNameSelected: {
-    fontFamily: fonts.uiHeavy,
   },
   daysRow: {
     marginTop: 10,
@@ -431,8 +397,8 @@ const styles = StyleSheet.create({
   day: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 54,
-    height: 68,
+    minWidth: 54,
+    minHeight: 68,
     borderRadius: 18,
     backgroundColor: colors.card,
     boxShadow: cardShadow,
@@ -441,7 +407,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink,
   },
   dayClosed: {
-    opacity: 0.4,
     boxShadow: 'none',
   },
   dayName: {
@@ -468,7 +433,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '31.5%',
-    height: 46,
+    minHeight: 46,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: 'transparent',
@@ -492,7 +457,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 14,
-    marginHorizontal: 4,
   },
   privacyText: {
     flex: 1,

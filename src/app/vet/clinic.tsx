@@ -1,13 +1,15 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { ClinicDetails } from '@/components/clinic-details';
 import { EmptyCard } from '@/components/empty-card';
+import { SkeletonList } from '@/components/loading-state';
+import { TabHeader } from '@/components/tab-header';
 import { colors, fonts, tabBarClearance } from '@/constants/theme';
 import { fetchOwnClinic, type ClinicApproval } from '@/data/own-clinic';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 
 const APPROVAL_TEXT: Record<ClinicApproval, { title: string; body: string }> = {
   pending: { title: 'Onay bekliyor', body: 'Onaylanınca sahipler seni böyle görecek.' },
@@ -26,7 +28,7 @@ async function loadClinic() {
 
 export default function VetClinicScreen() {
   const insets = useSafeAreaInsets();
-  const data = useFocusData(loadClinic);
+  const { data, refresh, isRefreshing } = useFocusResource(loadClinic);
   const clinic = data?.clinic;
   const approval = clinic ? APPROVAL_TEXT[clinic.approval] : null;
 
@@ -36,14 +38,18 @@ export default function VetClinicScreen() {
         styles.scroll,
         { paddingTop: insets.top + 8, paddingBottom: tabBarClearance(insets.bottom) },
       ]}
+      refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} tintColor={colors.ink} />}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <Text accessibilityRole="header" style={styles.title}>
-        İşletme
-      </Text>
+      <TabHeader title="İşletme" />
 
+      {!data && <SkeletonList count={2} height={140} />}
       {data?.hasFailed && (
-        <EmptyCard body="İnternet bağlantını kontrol edip tekrar dene." title="Sunucuya ulaşılamadı" />
+        <EmptyCard
+          action={{ label: 'Tekrar dene', onPress: refresh }}
+          body="İnternet bağlantını kontrol edip tekrar dene."
+          title="Sunucuya ulaşılamadı"
+        />
       )}
       {data && !data.hasFailed && !clinic && (
         <EmptyCard
@@ -83,13 +89,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-  },
-  title: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 25,
-    lineHeight: 29,
-    letterSpacing: -0.6,
-    color: colors.ink,
   },
   approval: {
     marginTop: 14,

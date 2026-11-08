@@ -38,7 +38,7 @@ export function UpNextCard({ pet, record, now, onDone }: UpNextCardProps) {
       <View style={styles.main}>
         <Text style={styles.name}>{record.name}</Text>
         <View style={styles.count}>
-          <Text style={styles.countValue}>{Math.abs(days)}</Text>
+          <Text maxFontSizeMultiplier={1.2} style={styles.countValue}>{Math.abs(days)}</Text>
           <Text style={styles.countLabel}>{dueCountLabel(days)}</Text>
         </View>
       </View>

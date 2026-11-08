@@ -1,6 +1,6 @@
 # Patika Proje Planı
 
-Son güncelleme: 7 Kasım 2026
+Son güncelleme: 8 Kasım 2026
 
 Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan, zamanı gelince hatırlatan ve hayvan kaybolduğunda ilan ile QR sayfası sunan bir telefon uygulaması. Hedef, portfolyodaki tasarımı App Store'da yayınlanan gerçek bir ürüne dönüştürmek.
 
@@ -34,6 +34,9 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | İlan yokken QR okutulursa | Sayfa "kayıp bildirilmemiş, haber ver" der, form açık. Haber sahibine Bugün'de kart olarak düşer, kayıp modu başlarsa ilana eklenir. Bulunan hayvanda form bağlantının arkasında | Kesin |
 | İlan paylaşımı | Story ve gönderi resim, A4 tek sayfalık PDF. Telefonun kendi paylaşım menüsü ve "Bağlantıyı kopyala". Tasarımdaki uygulama düğmeleri yok | Kesin |
 | Alt menü | Sahipte Bugün, Hayvanlar, Hayvanım kayıp, Veterinerler, Ayarlar. Veterinerde Randevular, İşletme, Ayarlar. Kayıp düğmesi ortada, turuncu ve menünün üstüne taşar. Sekme değildir: her sekmeden kayıp ekranını açar, açık ilan varsa hayvanın adını gösterip ilanı açar (7 Kasım 2026, kullanıcı isteği) | Kesin |
+| Arayüz cilası | App Store'dan önce arayüz dünya standardına çıkarılıyor (8 Kasım 2026, kullanıcı isteği). Sıra: his ve tepki, erişilebilirlik, sonra görsel kalite. Dokunulan her şey aynı biçimde tepki verir, önemli anlarda titreşim olur, telefondaki "hareketi azalt" ayarına uyulur. Yarım form sorulmadan kaybolmaz. Sunucu bekleyen ekranlarda yükleniyor görünümü, "Tekrar dene" ve aşağı çekerek yenileme var. İkincil gri yazı #64688D (tasarımdaki #6E7296 kâğıt zeminde okunabilirlik eşiğinin altındaydı). Silme düğmeleri kırmızı #B42318, çünkü turuncu yalnızca kayıp modunun. Her ekranda tek sol çizgi: bölüm başlıkları, açıklamalar ve yazı bağlantıları kartların kenarıyla hizalı. Sekme başlıkları her sekmede aynı yükseklikte | Kesin |
+| Hatırlatma düğmesi | Ayarlar'daki Bildirimler kutusunda "Hatırlatmalar" açma kapama düğmesi, alt yazısız (8 Kasım 2026, kullanıcı isteği). Kapatınca kurulu bütün hatırlatmalar silinir, yenisi kurulmaz, kayıt eklerken izin sorulmaz, Bugün'deki izin kartı çıkmaz. Açarken izin sorulur, reddedilmişse telefon ayarlarına yönlendirilir. Telefonun ayarıdır, hesaba bağlı değil, çıkışta silinmez. Varsayılan açık. Kayıp ihbarı bildirimleri bu düğmeye bağlı değil | Kesin |
+| Boş görünen ekranlar | Yalnızca uygulamada zaten olan bilgiyle doldurulur (8 Kasım 2026, kullanıcı kararı). Bugün'de kilo ya da ziyaret yoksa yerinde kesik kenarlı "Kilo ekle" ve "Ziyaret ekle" kartı durur; birden fazla hayvan varsa form önce "Kim için?" diye sorar. Hayvanlar listesinde ve hayvanın sayfasında yaş, son kilo ve sıradaki aşı ya da ziyaret görünür. Ayarlar gruplu liste: Hesap, Bildirimler, Hakkında (sürüm), Oturum. Klinik kartında en çok iki hizmet (hizmet seçilmemişse baktığı türler) ve "Randevu al" aynı sırada | Kesin |
 | Basılı tutma düğmesi | 1 saniyede dolar, "Şimdi bırak" yazar, iş parmak kalkınca başlar. Doluyken parmak düğmeden kayarsa da başlar | Kesin |
 | Başka hesapla giriş | Telefondaki kayıtlar başka hesaba aitse sorulur: bu hesaba aktar, sil ya da vazgeç. Sorulmadan hiçbir şey silinmez | Kesin |
 | İlan fotoğrafı | Sunucu GPS ve diğer üst verileri siler. İlan görselinde fotoğraf kırpılmaz, kenarda zemin rengi kalır | Kesin |
@@ -133,6 +136,7 @@ Sahibin alt menüsünde Bugün, Hayvanlar, ortada Hayvanım kayıp, Veterinerler
 - [ ] TestFlight'tan önce kayıp sayfasına bot koruması ekle: şu anki ihbar sınırını kötü niyetli biri doldurursa gerçek ihbarlar da engellenir
 - [ ] Bulunan ilanların ihbarlarını ve tam konumunu (iletişim bilgisi içeriyor) belli bir süre sonra otomatik sil, süreyi gizlilik metnine yaz. Kayıp sayfasına aydınlatma metni bağlantısı koy
 - [ ] Gerçek sunucu öncesi güvenlik: girişli uçlara kullanıcı başına kota ve dakikalık sınır, canlı bağlantı sayısına sınır, Apple girişinde tek kullanımlık değer (nonce), `TRUST_PROXY` için güvenilen sunucu sayısı, kapıyı yalnızca önündeki sunucuya açmak. Panel için: HTTPS arkasında `TRUST_PROXY=true` olmadan çerez `Secure` almaz, önündeki sunucu `Host` başlığını korumalı, e-posta kilidi gerçek yöneticiyi de dışarıda tutabilir (iki aşamalı giriş gelince gevşetilecek)
+- [ ] Açılış ekranı hâlâ Expo şablonunun mavisi (#208AEF) ve simgesi: görsel kalite paketinde Patika renkleriyle değiştirilecek, uygulama ikonu da kendi derlememizle gelecek
 - [ ] Gerçek sunucuya geçmeden önce panel deneme hesabını kaldır: `npm run admin -- remove yonetici@patika.test`, `panel-hesabi.txt` dosyasını sil. Gerçek hesabı kullanıcı kendi şifresiyle açsın
 - [ ] Üst veri silinince fotoğraf yönü değişiyor mu gerçek telefon fotoğrafıyla dene (yön bilgisi de üst veride duruyor, kırpma aracı genelde görüntüyü zaten döndürüyor)
 - [ ] Mağaza sürümünde konum izni metnini Türkçe göster ve kullanılmayan "her zaman" izin metinlerini kaldır
@@ -182,6 +186,8 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Veteriner listesi ve yakınlık sıralaması | 4 | Bitti |
 | Randevu sistemi (istek, onay, ziyarete düşme, iptal) | 8 | Kodlandı, taklitçide geçti, iPhone'da randevu henüz gönderilmedi (0 puan, geçince 8) |
 | Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş, ayarlar ve hesap silme düğmesi iPhone'da denendi (7 puan). Apple izni iptali üyelik bekliyor (1 puan) |
+| Arayüz cilası: his, tepki ve erişilebilirlik | 6 | Kodlandı, taklitçide geçti. Titreşim ve iPhone hissi sondaki testte (0 puan, geçince 6) |
+| Arayüz cilası: görsel kalite (boş ekranlar, fotoğrafsız hâl, veteriner listesi, ilan, ayarlar, açılış ekranı) | 4 | Başladı: hizalama, boş ekranlar (Bugün, Hayvanlar, hayvan sayfası), Ayarlar, veteriner listesi ve ilandaki düğme kayması kodlandı. Kalan: açılış ekranı, fotoğrafsız hâl, ilan görseli. iPhone testinden önce puan almaz (0 puan) |
 | Kendi backend'imiz ve verilerin sunucuya taşınması | 12 | Bitti |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Bitti |
@@ -191,7 +197,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Kendi derlememiz, uygulama ikonu, TestFlight testleri | 7 | Başlamadı |
 | App Store başvurusu ve inceleme düzeltmeleri | 6 | Başlamadı |
 
-**Toplam: 134 puanın 99'u, yaklaşık %74.** Sondaki iPhone testi geçince 109 puan, yaklaşık %81. Kalan 35 puan: veteriner girişi ve fotoğraf (2), randevu (8), Apple izni iptali (1), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6). Yeni içerik eklenirse toplam büyür, yüzde düşebilir: biten bir iş kaybolmuş olmaz.
+**Toplam: 144 puanın 99'u, yaklaşık %69.** Arayüz cilası plana 10 puanla girdi, oran bu yüzden %74'ten indi. Sondaki iPhone testi geçince 115 puan, yaklaşık %80. Kalan 45 puan: veteriner girişi ve fotoğraf (2), randevu (8), arayüz cilasının iPhone testi (6), görsel kalite (4), Apple izni iptali (1), backend'i internete açma (6), marka ve metinler (5), kendi derleme ve TestFlight (7), App Store (6). Yeni içerik eklenirse toplam büyür, yüzde düşebilir: biten bir iş kaybolmuş olmaz.
 
 ## Test ve derleme
 
@@ -199,6 +205,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - **Sonda yapılacak iPhone testi:** Kullanıcı işler bitince Mac'te test ettirecek. Sunucu şimdilik bu bilgisayarda: Mac aynı ağda değilse önce backend'in internete açılması gerekir. Sanal iPhone'da kamera yok, Apple ile giriş için sanal telefonda Apple hesabı açılmalı. Denenecekler:
   - Randevu: sahip istek gönderir ve Randevularım'da "Onay bekliyor" görür. Veteriner yeniden giriş yapar, Bekleyen'den onaylar. Sahip "Onaylandı" görür, ziyaret "Patika randevusu" etiketiyle düşer. İptal edince ziyaret kalkar
   - Veteriner: klinik fotoğrafı yükleme, veteriner hesabını silme
+  - His: titreşimler (çip ve sekme seçimi, "Yapıldı", basılı tutma dolunca, kayıp başlatma, bulundu, bağlantı kopyalandı), basınca küçülme, iPhone'da kaydırarak geri dönerken de yarım form sorusu, sekme göstergesinin kayması, en büyük yazı ayarında ekranlar
   - Görünüş: alt menüdeki kayıp dairesi ve menünün üstüne taşan yerine dokunma, Apple Haritalar, saat seçici, klavyenin form alanlarını kapatmaması, bildirimin ekranda görünmesi, randevu ekranındaki gün ve saat seçimi
   - Panel kararları: kapatılan hesapla Apple girişinde "Bu hesap kapatıldı" uyarısı (taklitçide yalnızca veteriner girişi denendi)
 - **Backend'i başlatma:** `Patika-Backend` klasöründe `docker compose up -d --build`. Telefon aynı ağda olmalı, uygulama sunucunun adresini kodu sunan bilgisayardan öğrenir (4000 numaralı kapı). Taklitçi için `adb reverse tcp:4000 tcp:4000`.
@@ -253,11 +260,19 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Alt menüde `left` ve `right` işe yaramıyor, kenar boşluğu `marginHorizontal` ile veriliyor.
 - Alt menüde düğme menünün dışına taşacaksa o sekmenin `tabBarItemStyle` değerinde `overflow: 'visible'` gerekir, ortak ayar kırpıyor. Taşan yere Android'de de dokunulabiliyor (taklitçide denendi).
 - Metro uzun süre açık kalınca belleği dolup kapanıyor (16 saat sonra 4 GB, `heap out of memory`). Uygulama açılmıyorsa önce buna bak, `npx expo start` ile yeniden başlat.
+- Reanimated, Android'de animasyon hızı 0 olunca (testler böyle ayarlıyor) bunu "hareketi azalt" sayıp animasyonları atlıyor: piksel testleri kararlı kalır. İşlevi olan süreli hareketler (basılı tutma çubuğu) bu yüzden `ReduceMotion.Never` ile yazılır, yoksa çubuk anında dolar.
+- Yarım form koruması (`useDiscardGuard`): form kaydettikten ya da sildikten sonra kendini kapatmadan önce `allowLeave()` çağırmalı, yoksa kendi kapanışında da soru çıkar.
+- Ortak `Tappable` kapalı düğmeyi kendisi soluklaştırır. Kapalı değil yalnızca dokunulamaz bir satırsa (konumsuz ihbar) `dimWhenDisabled={false}` verilir.
 - Windows'ta Android C++ derlemesi yol sınırına takılıyor: `C:\pa` gibi kısa klasör ve `-DCMAKE_OBJECT_PATH_MAX=240` birlikte gerekiyor. Android projesi kaynak klasörde üretilmez, `expo prebuild` orada `package.json` dosyasını da değiştiriyor.
 - Soğuk açılan taklitçide `adb emu geo fix` konum üretmez, çünkü GPS isteyen yoktur. Uygulama da Google'ın Konum Doğruluğu izin penceresine düşer. O izin verilmez, testte `cmd location providers` ile test sağlayıcısı kullanılır (`e2e/04-veteriner.spec.ts`).
 - Windows'ta girdi okuyan bir komut işini bitirse de kapanmayabilir: `stdin.pause()` yetmiyor, sonda `stdin.destroy()` gerekiyor.
 - "X görünmez" testinde X'in gerçekten yazıldığını da denetle. Yanlış adrese kayıt gönderen test, ortada kayıt olmadığı için boşuna geçiyordu.
 - Uygulama arka plandan dönünce ekran yenilensin diye tarih hesapları veriyle birlikte okunan `now` değerini kullanıyor. React Compiler hesabı önbelleğe aldığı için bileşen içindeki `new Date()` eski kalabiliyor.
+- Taklitçi donabiliyor: test tek satır yazmadan saatlerce bekler, `adb shell echo` bile yanıt vermez. Taklitçiyi kapatıp `-no-snapshot-load` ile aç, `adb reverse` komutlarını yeniden çalıştır.
+- Alt menü sekmelerine yazıyla değil etiketle dokun (`tapLabel('Bugün')`): "Bugün" gibi yazılar kartlarda da geçiyor, yazıyla arayınca ilk eşleşen karta dokunuluyordu.
+- Aynı yazı ekranda iki kez varsa dokunulabilir kartın etiketiyle dokun (`tapButtonWith`): kartın etiketi içindeki yazıların birleşimi ("Karma aşı, Yapıldı, ..."). Playwright'ın `hasDescendant` araması bu uygulamada sürücü bağlantısını koparıyor.
+- Telefonda kurulu bekleyen bildirimler `dumpsys alarm` içinde yalnızca `tag=*walarm*:expo.modules.notifications` ile başlayan satırlar. `type=RTC_WAKEUP tag=` ile başlayanlar geçmiş kayıt.
+- Mantık testleri `src/lib` içinde simge (phosphor) içe aktaran bir dosyayı yükleyemiyor (`.tsx` uzantısı). Test edilecek hesaplar ayrı, simgesiz dosyada durmalı (`pet-facts.ts` gibi).
 
 ## Pazar bilgisi (5 Kasım 2026'da kontrol edildi)
 

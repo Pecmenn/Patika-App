@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DatePickerSheet } from '@/components/date-picker-sheet';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { DAY_NAMES, type DayHours } from '@/lib/clinics';
 import { atTime, formatTime, toDateKey, toTimeKey } from '@/lib/dates';
@@ -69,9 +70,9 @@ export function HoursEditor({ hours, onChange }: HoursEditorProps) {
           </View>
         );
       })}
-      <Pressable accessibilityRole="button" onPress={applyFirstToAll} style={styles.shortcut}>
+      <Tappable accessibilityRole="button" onPress={applyFirstToAll} hitSlop={10} style={styles.shortcut}>
         <Text style={styles.shortcutLabel}>İlk günün saatlerini açık günlere uygula</Text>
-      </Pressable>
+      </Tappable>
 
       {picking && pickingDay && (
         <DatePickerSheet
@@ -90,9 +91,9 @@ export function HoursEditor({ hours, onChange }: HoursEditorProps) {
 
 function TimeButton({ label, time, onPress }: { label: string; time: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityLabel={label} accessibilityRole="button" onPress={onPress} style={styles.time}>
+    <Tappable accessibilityLabel={label} accessibilityRole="button" onPress={onPress} hitSlop={4} style={styles.time}>
       <Text style={styles.timeLabel}>{formatTime(time)}</Text>
-    </Pressable>
+    </Tappable>
   );
 }
 

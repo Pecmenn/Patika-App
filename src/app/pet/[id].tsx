@@ -26,7 +26,10 @@ import { listVisits } from '@/data/visits';
 import { listWeightRanges, listWeights } from '@/data/weights';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { splitRecords } from '@/lib/health-records';
-import { petSummary } from '@/lib/pets';
+import { formatShortDate, fromDateKey } from '@/lib/dates';
+import { latestWeightFor, nextUpFor, nextUpWhen } from '@/lib/pet-facts';
+import { petAge, petBreedLabel } from '@/lib/pets';
+import { formatKg } from '@/lib/weights';
 import { splitVisits } from '@/lib/visits';
 
 type RecordTab = 'vaccines' | 'treatments' | 'visits' | 'weight';
@@ -69,6 +72,19 @@ async function loadRecord() {
   return { pets, records, visits, weights, weightRanges, now: new Date() };
 }
 
+// Başlığın altındaki küçük bilgi kutusu. Değer yoksa soluk "Henüz yok" yazar, kutu yerinde kalır.
+function FactBox({ label, value, detail }: { label: string; value: string | null; detail?: string }) {
+  return (
+    <View style={styles.factBox}>
+      <Text style={styles.factLabel}>{label}</Text>
+      <Text numberOfLines={2} style={value ? styles.factValue : styles.factEmpty}>
+        {value ?? 'Henüz yok'}
+      </Text>
+      {value && detail ? <Text style={styles.factDetail}>{detail}</Text> : null}
+    </View>
+  );
+}
+
 function openEditRecord(id: string) {
   router.push({ pathname: '/edit-record', params: { id } });
 }
@@ -100,6 +116,9 @@ export default function PetRecordScreen() {
     records.filter((record) => record.petId === pet.id && record.kind === kind),
     now,
   );
+  const age = petAge(pet);
+  const latestWeight = latestWeightFor(pet.id, weights);
+  const nextUp = nextUpFor(pet.id, records, visits, now);
   const { upcoming, past } = splitVisits(
     visits.filter((visit) => visit.petId === pet.id),
     now,
@@ -150,8 +169,22 @@ export default function PetRecordScreen() {
             <Text accessibilityRole="header" style={styles.name}>
               {pet.name}
             </Text>
-            <Text style={styles.summary}>{petSummary(pet)}</Text>
+            <Text style={styles.summary}>{petBreedLabel(pet)}</Text>
           </View>
+        </View>
+
+        <View style={styles.facts}>
+          {age && <FactBox label="Yaş" value={age} />}
+          <FactBox
+            detail={latestWeight && formatShortDate(fromDateKey(latestWeight.date))}
+            label="Son kilo"
+            value={latestWeight ? `${formatKg(latestWeight.kg)} kg` : null}
+          />
+          <FactBox
+            detail={nextUp ? nextUpWhen(nextUp.date, now) : undefined}
+            label="Sıradaki"
+            value={nextUp?.title ?? null}
+          />
         </View>
 
         <View style={styles.tabs}>
@@ -302,6 +335,44 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.ink2,
   },
+  facts: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  factBox: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+  },
+  factLabel: {
+    fontFamily: fonts.uiBold,
+    fontSize: 12.5,
+    color: colors.ink3,
+  },
+  factValue: {
+    marginTop: 2,
+    fontFamily: fonts.uiHeavy,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.ink,
+  },
+  factEmpty: {
+    marginTop: 2,
+    fontFamily: fonts.uiSemi,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.ink3,
+  },
+  factDetail: {
+    marginTop: 1,
+    fontFamily: fonts.uiSemi,
+    fontSize: 12.5,
+    color: colors.ink2,
+  },
   tabs: {
     marginTop: 16,
   },
@@ -315,13 +386,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 19,
     color: colors.ink,
   },
   sectionCount: {
-    marginHorizontal: 4,
     fontFamily: fonts.ui,
     fontSize: 14,
     color: colors.ink3,

@@ -2,16 +2,7 @@ import { router } from 'expo-router';
 import { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -19,6 +10,7 @@ import { ChoiceChips } from '@/components/choice-chips';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import {
   addHealthRecord,
@@ -28,6 +20,7 @@ import {
   type RecordKind,
 } from '@/data/health-records';
 import { listPets, type Species } from '@/data/pets';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { addMonths, addYears, formatLongDate, fromDateKey, toDateKey } from '@/lib/dates';
 import { refreshReminders } from '@/lib/reminders';
@@ -94,6 +87,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
   const [note, setNote] = useState(record?.note ?? '');
   const [openPicker, setOpenPicker] = useState<OpenPicker>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ name, givenDate, nextDueDate, batch, note });
 
   const copy = COPY[kind];
   const trimmedName = name.trim();
@@ -132,6 +126,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
       return;
     }
     await refreshReminders({ askPermission: nextDueDate !== null });
+    allowLeave();
     router.back();
   }
 
@@ -145,6 +140,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
       return;
     }
     await refreshReminders();
+    allowLeave();
     router.back();
   }
 
@@ -161,7 +157,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -211,14 +207,15 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
             onPress={() => setOpenPicker('next')}
           />
         </View>
-        <Pressable
+        <Tappable
           accessibilityRole="button"
           onPress={() => setNextDueDate(nextDueDate ? null : suggestedNext)}
+          hitSlop={10}
           style={styles.shortcut}>
           <Text style={styles.shortcutLabel}>
             {nextDueDate ? 'Sonraki tarihi kaldır' : copy.nextShortcut}
           </Text>
-        </Pressable>
+        </Tappable>
         {nextDueDate && (
           <Text style={styles.reminderNote}>
             Bu tarihten 7 gün önce ve son gün sabah 09.00&apos;da sana hatırlatırız.
@@ -252,7 +249,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
               disabled={isSaving}
               label="Kaydı sil"
               size="small"
-              variant="text"
+              variant="danger"
               onPress={() => confirmRemove(record)}
             />
           </View>
@@ -262,7 +259,7 @@ export function RecordForm({ petId, kind, record, initialName }: RecordFormProps
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button disabled={!canSave} label="Kaydet" onPress={save} />
+        <Button disabled={!canSave} label="Kaydet" loading={isSaving} onPress={save} />
       </View>
 
       {openPicker === 'given' && (
@@ -322,7 +319,6 @@ const styles = StyleSheet.create({
   shortcut: {
     alignSelf: 'flex-start',
     marginTop: 8,
-    marginHorizontal: 4,
     paddingVertical: 4,
   },
   shortcutLabel: {
@@ -333,7 +329,6 @@ const styles = StyleSheet.create({
   },
   reminderNote: {
     marginTop: 4,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     lineHeight: 19,
@@ -341,7 +336,6 @@ const styles = StyleSheet.create({
   },
   note: {
     marginTop: 12,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     color: colors.ink2,

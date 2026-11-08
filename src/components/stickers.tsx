@@ -2,10 +2,11 @@ import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import { CalendarCheckIcon } from 'phosphor-react-native/src/icons/CalendarCheck';
 import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Button } from '@/components/button';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import type { HealthRecord } from '@/data/health-records';
 import type { Visit } from '@/data/visits';
@@ -43,17 +44,17 @@ type StickerBodyProps = {
 // Kartın yazılı kısmı düzenlemeyi açar. Bütün kart değil, çünkü yanındaki "Yapıldı" düğmesi ayrı kalmalı.
 function StickerBody({ name, onEdit, children }: StickerBodyProps) {
   return (
-    <Pressable
+    <Tappable
       accessibilityHint="Düzenlemek için dokun"
       accessibilityRole="button"
       onPress={onEdit}
-      style={({ pressed }) => [styles.body, pressed && styles.bodyPressed]}>
+      style={styles.body}>
       <View style={styles.nameRow}>
         <Text style={styles.name}>{name}</Text>
         <CaretRightIcon size={14} weight="bold" color={colors.ink2} />
       </View>
       {children}
-    </Pressable>
+    </Tappable>
   );
 }
 
@@ -212,9 +213,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minWidth: 0,
-  },
-  bodyPressed: {
-    opacity: 0.6,
   },
   nameRow: {
     flexDirection: 'row',

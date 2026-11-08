@@ -1,4 +1,4 @@
-import type { AndroidDevice } from 'playwright';
+import type { AndroidDevice, AndroidSelector } from 'playwright';
 import { PNG } from 'pngjs';
 
 import { APP_URL } from './config';
@@ -15,7 +15,7 @@ const REFRESH_BANNER = { x: 8, y: 86, rgb: [37, 132, 232] };
 const REFRESH_BANNER_TIMEOUT_MS = 30_000;
 
 type Region = { x: number; y: number; width: number; height: number };
-type Selector = { text?: string | RegExp; desc?: string | RegExp };
+type Selector = AndroidSelector;
 
 const replacer = (_key: string, value: unknown) => (value instanceof RegExp ? String(value) : value);
 
@@ -124,14 +124,44 @@ export class Phone {
     return this.find({ text }, timeout).then(() => true, () => false);
   }
 
+  // Alt menüdeki sekmeler etiketleriyle aranır: aynı yazı ("Bugün" gibi) kartlarda da geçebilir.
+  async hasLabel(desc: string | RegExp, timeout = 1200) {
+    return this.find({ desc }, timeout).then(() => true, () => false);
+  }
+
   async tap(text: string | RegExp) {
     await this.find({ text }, 25_000);
-    await this.device.tap({ text });
+    await this.tapFresh({ text });
+  }
+
+  // Aynı yazı ekranda birden çok yerde olabilir (hayvan sayfasındaki "Sıradaki" kutusu kaydın adını tekrarlar).
+  // Dokunulabilir kartın etiketi içindeki yazıların birleşimidir ("Karma aşı, Yapıldı, ..."): ona dokunulur.
+  // Sürücünün "içinde şu yazı geçen" araması (hasDescendant) bu ekranda bağlantıyı koparıyordu.
+  async tapButtonWith(text: string) {
+    const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await this.tapLabel(new RegExp(`^${escaped}, .*`));
   }
 
   async tapLabel(desc: string | RegExp) {
     await this.find({ desc }, 25_000);
-    await this.device.tap({ desc });
+    await this.tapFresh({ desc });
+  }
+
+  // Ekran tam dokunma anında yeniden çizilirse sürücünün bulduğu öğe "eskir" ve dokunuş hiç yapılmaz.
+  // Öğe yeniden bulunup bir kez daha denenir. Başka hata olduğu gibi yükselir.
+  private async tapFresh(selector: Selector) {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await this.device.tap(selector);
+        return;
+      } catch (error) {
+        if (attempt >= 2 || !String(error).includes('StaleObjectException')) {
+          throw error;
+        }
+        await this.wait(POLL_MS);
+        await this.find(selector, 5_000);
+      }
+    }
   }
 
   async fill(label: string, value: string) {

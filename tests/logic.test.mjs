@@ -247,6 +247,44 @@ test('izin kartı: yaklaşan ziyaret de sayılır', () => {
   assert.equal(hasUpcomingReminder([], [], [visit({ date: '2026-10-01' })], now), false);
 });
 
+const petsLib = await import('@/lib/pet-facts');
+
+test('sıradaki: aşı ve ziyaretin en erkeni, eski doz ve geçmiş ziyaret sayılmaz', () => {
+  const now = at('2026-11-05T08:00');
+  const eski = record({ id: 'e', kind: 'vaccine', name: 'Kuduz', givenDate: '2025-11-01', nextDueDate: '2026-11-01' });
+  const yeni = record({ id: 'y', kind: 'vaccine', name: 'Kuduz', givenDate: '2026-11-02', nextDueDate: '2027-11-02' });
+  const karma = record({ id: 'k', kind: 'vaccine', name: 'Karma', givenDate: '2026-01-10', nextDueDate: '2027-01-10' });
+  const gecmis = visit({ id: 'g', date: '2026-10-01' });
+  const yakin = visit({ id: 'v', reason: 'Diş kontrolü', date: '2026-11-20' });
+  assert.deepEqual(petsLib.nextUpFor('p1', [eski, yeni, karma], [gecmis, yakin], now), {
+    title: 'Diş kontrolü',
+    date: '2026-11-20',
+  });
+  assert.deepEqual(petsLib.nextUpFor('p1', [eski, yeni, karma], [gecmis], now), { title: 'Karma', date: '2027-01-10' });
+  assert.equal(petsLib.nextUpFor('p2', [karma], [yakin], now), null, 'başka hayvanın kaydı sayılmaz');
+  const geciken = record({ id: 'x', name: 'İç parazit', givenDate: '2026-08-01', nextDueDate: '2026-11-01' });
+  assert.equal(petsLib.nextUpFor('p1', [geciken, karma], [], now).title, 'İç parazit', 'geciken en üstte');
+});
+
+test('sıradaki: zaman yazısı', () => {
+  const now = at('2026-11-05T08:00');
+  assert.equal(petsLib.nextUpWhen('2026-11-01', now), '4 gün gecikti');
+  assert.equal(petsLib.nextUpWhen('2026-11-05', now), 'Bugün');
+  assert.equal(petsLib.nextUpWhen('2026-11-06', now), 'Yarın');
+  assert.equal(petsLib.nextUpWhen('2026-12-05', now), '30 gün sonra');
+  assert.equal(petsLib.nextUpWhen('2027-01-10', now), '10 Oca 2027');
+});
+
+test('son kilo: hayvanın en son tartısı', () => {
+  const kayitlar = [
+    { id: 'a', petId: 'p1', kg: 18, date: '2026-10-01', note: null },
+    { id: 'b', petId: 'p1', kg: 18.4, date: '2026-11-01', note: null },
+    { id: 'c', petId: 'p2', kg: 4, date: '2026-11-04', note: null },
+  ];
+  assert.equal(petsLib.latestWeightFor('p1', kayitlar).kg, 18.4);
+  assert.equal(petsLib.latestWeightFor('p3', kayitlar), undefined);
+});
+
 const w = await import('@/lib/weights');
 const entry = (date, kg, id = date) => ({ id, petId: 'p1', kg, date, note: null });
 

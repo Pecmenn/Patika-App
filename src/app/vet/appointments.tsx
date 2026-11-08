@@ -1,17 +1,20 @@
 import { router } from 'expo-router';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppointmentStatusPill } from '@/components/appointment-status';
 import { Button } from '@/components/button';
 import { EmptyCard } from '@/components/empty-card';
+import { SkeletonList } from '@/components/loading-state';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TabHeader } from '@/components/tab-header';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts, tabBarClearance } from '@/constants/theme';
 import { listClinicAppointments, subscribeToAppointments, type Appointment } from '@/data/appointments';
 import { fetchOwnClinic } from '@/data/own-clinic';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { formatAppointmentWhen } from '@/lib/clinics';
 
 type Section = 'pending' | 'upcoming' | 'past';
@@ -58,12 +61,12 @@ function Notice({ title, body, action }: { title: string; body: string; action?:
 
 function AppointmentRow({ appointment }: { appointment: Appointment }) {
   return (
-    <Pressable
+    <Tappable
       accessibilityRole="button"
       onPress={() =>
         router.push({ pathname: '/vet-appointment/[id]', params: { id: appointment.id } })
       }
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      style={styles.row}>
       <View style={styles.rowCopy}>
         <Text style={styles.when}>{formatAppointmentWhen(appointment.date, appointment.time)}</Text>
         <Text style={styles.pet}>
@@ -73,13 +76,13 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
         <AppointmentStatusPill status={appointment.status} />
       </View>
       <CaretRightIcon size={16} weight="bold" color={colors.ink3} />
-    </Pressable>
+    </Tappable>
   );
 }
 
 export default function VetAppointmentsScreen() {
   const insets = useSafeAreaInsets();
-  const panel = useFocusData(loadPanel, subscribeToAppointments);
+  const { data: panel, refresh, isRefreshing } = useFocusResource(loadPanel, subscribeToAppointments);
   const [section, setSection] = useState<Section>('pending');
   const clinic = panel?.clinic;
 
@@ -96,14 +99,17 @@ export default function VetAppointmentsScreen() {
         styles.scroll,
         { paddingTop: insets.top + 8, paddingBottom: tabBarClearance(insets.bottom) },
       ]}
+      refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} tintColor={colors.ink} />}
       showsVerticalScrollIndicator={false}
       style={styles.screen}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Randevular
-      </Text>
+      <TabHeader title="Randevular" />
 
       {panel?.hasFailed && (
-        <Notice body="İnternet bağlantını kontrol edip tekrar dene." title="Sunucuya ulaşılamadı" />
+        <Notice
+          action={{ label: 'Tekrar dene', onPress: refresh }}
+          body="İnternet bağlantını kontrol edip tekrar dene."
+          title="Sunucuya ulaşılamadı"
+        />
       )}
       {panel && !panel.hasFailed && !clinic && (
         <Notice
@@ -130,6 +136,7 @@ export default function VetAppointmentsScreen() {
         <SegmentedControl options={SECTIONS} value={section} onChange={setSection} />
       </View>
 
+      {!panel && <SkeletonList count={3} height={110} />}
       {panel && !panel.hasFailed && items.length === 0 && <EmptyCard {...EMPTY_TEXT[section]} />}
       <View style={styles.list}>
         {items.map((appointment) => (
@@ -147,13 +154,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 20,
-  },
-  title: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 25,
-    lineHeight: 29,
-    letterSpacing: -0.6,
-    color: colors.ink,
   },
   notice: {
     marginTop: 14,
@@ -191,9 +191,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: colors.card,
     boxShadow: cardShadow,
-  },
-  pressed: {
-    opacity: 0.7,
   },
   rowCopy: {
     flex: 1,

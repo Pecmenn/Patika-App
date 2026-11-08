@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { EmptyCard } from '@/components/empty-card';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
 import { SightingRow } from '@/components/sighting-row';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { deletePetMessages, listPetMessages, subscribeToSightings } from '@/data/lost-reports';
@@ -34,7 +35,14 @@ export default function PetMessagesScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!data) {
-    return <View style={styles.screen} />;
+    return (
+      <View style={[styles.screen, styles.scroll, { paddingTop: insets.top + 2 }]}>
+        <GlassButton label="Geri" onPress={goBack}>
+          <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
+        </GlassButton>
+        <LoadingState />
+      </View>
+    );
   }
   const pet = data.pets.find((candidate) => candidate.id === id);
   const messages = data.messages.filter((message) => message.petId === id);
@@ -99,7 +107,7 @@ export default function PetMessagesScreen() {
             disabled={isDeleting}
             label={isDeleting ? 'Siliniyor...' : 'Haberleri sil'}
             size="small"
-            variant="text"
+            variant="danger"
             onPress={confirmRemove}
           />
         </View>

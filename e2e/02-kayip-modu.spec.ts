@@ -38,6 +38,7 @@ const CANCEL_BUTTON = /^V[Aa][Zz][Gg].*/;
 const FOUND_BUTTON = 'EVET, BULUNDU';
 const DELETE_ACCOUNT_BUTTON = /^HESABI S[İI]L$/;
 const OK_BUTTON = /^(TAMAM|Tamam)$/;
+const DISCARD_BUTTON = /^(Kaydetmeden çık|KAYDETMEDEN ÇIK)$/;
 const SESSION_CARD = 'Oturumun kapandı';
 // Mesaj birden çok satır: Android eşleştirmesi "." ile satır sonunu geçemiyor.
 const LOST_WARNING = /[\s\S]*Silinecek için açık kayıp ilanın var[\s\S]*/;
@@ -67,8 +68,8 @@ async function focus() {
 
 async function goToToday() {
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    if (await phone.has('Bugün', 800)) {
-      await phone.tap('Bugün');
+    if (await phone.hasLabel('Bugün', 800)) {
+      await phone.tapLabel('Bugün');
       return;
     }
     if (!(await focus()).includes('host.exp.exponent')) {
@@ -587,6 +588,9 @@ test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarı
     await phone.tap(/^(TAMAM|Tamam)$/);
     await phone.scrollToTop();
     await phone.tapLabel('Kapat');
+    // Yer ve semt yazıldı ama ilan başlamadı: kapatırken sorulur.
+    await phone.see('Değişiklikler kaydedilmedi');
+    await phone.tap(DISCARD_BUTTON);
 
     await phone.tap('Ayarlar');
     await phone.see(/.*değişiklik internet bekliyor|Sunucuya ulaşılamadı.*/);
@@ -595,6 +599,15 @@ test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarı
       [owner],
     );
     expect(before).toHaveLength(0);
+
+    // Sunucuya ulaşılamayan ekran "Tekrar dene" ile yenilenir, sunucu gelince liste açılır.
+    await phone.tap('Veterinerler');
+    await phone.see('Sunucuya ulaşılamadı', 40_000);
+    compose('start', 'api');
+    await waitForApi();
+    await phone.tap('Tekrar dene');
+    await phone.gone('Sunucuya ulaşılamadı', 30_000);
+    await phone.tap('Ayarlar');
   } finally {
     compose('start', 'api');
     await waitForApi();
@@ -613,7 +626,7 @@ test('sunucu kapalıyken: kayıtlar çalışır, kayıp modu anlaşılır uyarı
 });
 
 test('sunucu yeniden başlayınca canlı bağlantı geri gelir', async () => {
-  await phone.tap('Bugün');
+  await phone.tapLabel('Bugün');
   await phone.see('Hayvanım kayıp');
   await sendSighting(CODE, { message: 'Bağlantı testi' });
   await phone.see('Şanslı için haber var', 45_000);
@@ -625,7 +638,7 @@ test('oturum geçersiz olursa Bugün ekranında uyarı çıkar, telefondaki kay�
   await query('DELETE FROM sessions WHERE user_id = ?', [owner]);
   await phone.backgroundAndReturn();
   await phone.see('Giriş yapılmadı', 40_000);
-  await phone.tap('Bugün');
+  await phone.tapLabel('Bugün');
   await phone.see(SESSION_CARD);
   await phone.see('Şanslı');
   await phone.wait(600);
@@ -641,7 +654,7 @@ test('başka hesapla girişte sorulur: vazgeçilir, kayıt silinmez; aktarılır
   await phone.see('Giriş yapılmadı');
 
   // Bu kez Bugün ekranındaki karttan: giriş yapılınca kart kaybolur.
-  await phone.tap('Bugün');
+  await phone.tapLabel('Bugün');
   await phone.see(SESSION_CARD);
   await phone.tap('Deneme hesabıyla gir');
   await phone.tap(/^(Bu hesaba aktar|BU HESABA AKTAR)$/);

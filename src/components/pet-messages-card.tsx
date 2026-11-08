@@ -1,6 +1,7 @@
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 
 type PetMessagesCardProps = {
@@ -12,7 +13,7 @@ type PetMessagesCardProps = {
 // Kayıp modu kapalıyken biri künyedeki QR'ı okutup yazdığında Bugün'de görünür.
 export function PetMessagesCard({ petName, count, onPress }: PetMessagesCardProps) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.card}>
+    <Tappable accessibilityRole="button" onPress={onPress} style={styles.card}>
       <View style={styles.icon}>
         <EyeIcon size={20} weight="bold" color={colors.card} />
       </View>
@@ -22,7 +23,7 @@ export function PetMessagesCard({ petName, count, onPress }: PetMessagesCardProp
           {count > 1 ? `${count} mesaj geldi.` : 'Biri QR kodunu okutup yazdı.'} Görmek için dokun.
         </Text>
       </View>
-    </Pressable>
+    </Tappable>
   );
 }
 

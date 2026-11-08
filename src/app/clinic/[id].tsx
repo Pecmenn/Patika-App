@@ -8,9 +8,10 @@ import { Button } from '@/components/button';
 import { ClinicDetails } from '@/components/clinic-details';
 import { EmptyCard } from '@/components/empty-card';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
 import { colors } from '@/constants/theme';
 import { fetchClinic } from '@/data/clinics';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { useNearbyPoint } from '@/hooks/use-nearby-point';
 import { distanceKm } from '@/lib/clinics';
 
@@ -25,7 +26,7 @@ export default function ClinicScreen() {
       return { clinic: null };
     }
   }, [id]);
-  const data = useFocusData(load);
+  const { data, refresh } = useFocusResource(load);
   const { point } = useNearbyPoint();
   const clinic = data?.clinic;
 
@@ -35,8 +36,10 @@ export default function ClinicScreen() {
         <GlassButton label="Geri" onPress={() => router.back()}>
           <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
         </GlassButton>
+        {!data && <LoadingState />}
         {data && !clinic && (
           <EmptyCard
+            action={{ label: 'Tekrar dene', onPress: refresh }}
             body="Klinik artık listede olmayabilir ya da internet bağlantısı kopmuş olabilir."
             title="Klinik açılamadı"
           />

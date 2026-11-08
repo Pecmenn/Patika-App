@@ -1,7 +1,8 @@
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, StyleSheet, Text, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import type { Sighting } from '@/data/lost-reports';
 import { timeAgoLabel } from '@/lib/lost';
@@ -28,9 +29,10 @@ export function SightingRow({ sighting, now }: { sighting: Sighting; now: Date }
       <View style={styles.icon}>
         <EyeIcon size={20} weight="bold" color={colors.alertText} />
       </View>
-      <Pressable
+      <Tappable
         accessibilityHint={hasLocation ? 'Haritada açmak için dokun' : undefined}
         accessibilityRole={hasLocation ? 'button' : 'text'}
+        dimWhenDisabled={false}
         disabled={!hasLocation}
         onPress={() => {
           if (lat !== null && lng !== null) {
@@ -45,15 +47,16 @@ export function SightingRow({ sighting, now }: { sighting: Sighting; now: Date }
         </Text>
         {message && <Text style={styles.message}>{message}</Text>}
         {contact && !phone && <Text style={styles.contact}>İletişim: {contact}</Text>}
-      </Pressable>
+      </Tappable>
       {phone && (
-        <Pressable
+        <Tappable
           accessibilityLabel={`${contact} numarasını ara`}
           accessibilityRole="button"
           onPress={() => Linking.openURL(`tel:${phone}`)}
+          hitSlop={3}
           style={styles.call}>
           <PhoneIcon size={18} weight="bold" color={colors.ink} />
-        </Pressable>
+        </Tappable>
       )}
     </View>
   );

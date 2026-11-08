@@ -1,12 +1,15 @@
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, LayoutAnimationConfig, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { GlassButton } from '@/components/glass-button';
+import { LoadingState } from '@/components/loading-state';
 import { LostMap } from '@/components/lost-map';
 import { SightingRow } from '@/components/sighting-row';
 import { colors, fonts } from '@/constants/theme';
@@ -17,8 +20,9 @@ import {
   subscribeToSightings,
   type LostReport,
 } from '@/data/lost-reports';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { formatTime, toTimeKey } from '@/lib/dates';
+import { successHaptic } from '@/lib/haptics';
 
 const MAP_HEIGHT = 196;
 
@@ -39,7 +43,7 @@ export default function LostScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const load = useCallback(() => loadLostScreen(id), [id]);
-  const data = useFocusData(load, subscribeToSightings);
+  const { data, refresh } = useFocusResource(load, subscribeToSightings);
   const [isClosing, setIsClosing] = useState(false);
 
   function goBack() {
@@ -54,6 +58,7 @@ export default function LostScreen() {
     setIsClosing(true);
     try {
       await markFound(report);
+      successHaptic();
       router.replace({ pathname: '/found/[id]', params: { id: report.id } });
     } catch (error) {
       console.warn('Kayıp modu kapatılamadı', error);
@@ -70,7 +75,14 @@ export default function LostScreen() {
   }
 
   if (!data) {
-    return <View style={styles.screen} />;
+    return (
+      <View style={[styles.screen, styles.failed, { paddingTop: insets.top + 2 }]}>
+        <GlassButton label="Geri" onPress={goBack}>
+          <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
+        </GlassButton>
+        <LoadingState label="İlan açılıyor..." />
+      </View>
+    );
   }
   if (data.hasFailed) {
     return (
@@ -83,6 +95,9 @@ export default function LostScreen() {
           İnternet bağlantını kontrol et. Bağlantı gelince uygulamaya geri dönmen yeterli, ihbarlar
           kaybolmaz.
         </Text>
+        <View style={styles.retry}>
+          <Button label="Tekrar dene" size="small" variant="white" onPress={refresh} />
+        </View>
       </View>
     );
   }
@@ -126,7 +141,7 @@ export default function LostScreen() {
         <View style={styles.hero}>
           <View style={styles.polaroid}>
             {report.photoUrl ? (
-              <Image accessibilityIgnoresInvertColors source={{ uri: report.photoUrl }} style={styles.photo} />
+              <Image accessibilityIgnoresInvertColors contentFit="cover" source={{ uri: report.photoUrl }} style={styles.photo} transition={150} />
             ) : (
               <View style={[styles.photo, styles.noPhoto]}>
                 <PawPrintIcon size={36} weight="fill" color={colors.ink} />
@@ -175,11 +190,18 @@ export default function LostScreen() {
               İlanı paylaş. Biri kayıp sayfasından konum ya da mesaj gönderince burada görünür.
             </Text>
           )}
-          {sightings.map((sighting, index) => (
-            <View key={sighting.id} style={index > 0 && styles.sightingDivider}>
-              <SightingRow now={now} sighting={sighting} />
-            </View>
-          ))}
+          {/* Ekran açılırken var olan ihbarlar olduğu gibi durur, sonradan gelen yukarıdan süzülür. */}
+          <LayoutAnimationConfig skipEntering>
+            {sightings.map((sighting, index) => (
+              <Animated.View
+                key={sighting.id}
+                entering={FadeInDown.duration(260)}
+                layout={LinearTransition.duration(220)}
+                style={index > 0 && styles.sightingDivider}>
+                <SightingRow now={now} sighting={sighting} />
+              </Animated.View>
+            ))}
+          </LayoutAnimationConfig>
         </View>
       </ScrollView>
 
@@ -214,6 +236,10 @@ const styles = StyleSheet.create({
   },
   failed: {
     paddingHorizontal: 20,
+  },
+  retry: {
+    alignSelf: 'flex-start',
+    marginTop: 18,
   },
   removed: {
     paddingHorizontal: 20,

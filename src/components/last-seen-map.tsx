@@ -2,9 +2,10 @@ import * as Location from 'expo-location';
 import { CrosshairIcon } from 'phosphor-react-native/src/icons/Crosshair';
 import { MapPinIcon } from 'phosphor-react-native/src/icons/MapPin';
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import MapView, { type Region } from 'react-native-maps';
 
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { areaFromAddress, isSameSpot, type Point } from '@/lib/lost';
 
@@ -160,10 +161,10 @@ export function LastSeenMap({ onMove, onArea, initialPoint }: LastSeenMapProps) 
       <View pointerEvents="none" style={styles.pin}>
         <MapPinIcon size={34} weight="fill" color={colors.alert} />
       </View>
-      <Pressable accessibilityRole="button" onPress={useMyLocation} style={styles.locate}>
+      <Tappable accessibilityRole="button" onPress={useMyLocation} hitSlop={6} style={styles.locate}>
         <CrosshairIcon size={16} weight="bold" color={colors.card} />
         <Text style={styles.locateLabel}>Konumumu kullan</Text>
-      </Pressable>
+      </Tappable>
       {!hasPicked && (
         <View pointerEvents="none" style={styles.hint}>
           <Text style={styles.hintText}>Haritayı kaydırıp yeri işaretle</Text>

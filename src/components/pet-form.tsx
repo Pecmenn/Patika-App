@@ -7,16 +7,7 @@ import { MinusIcon } from 'phosphor-react-native/src/icons/Minus';
 import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -24,15 +15,20 @@ import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { FieldRow, PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { PetAvatar } from '@/components/pet-avatar';
+import { Tappable } from '@/components/tappable';
 import { SPECIES, SPECIES_KEYS } from '@/constants/species';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import { deletePetPhoto, resolvePetPhotoUri, storePetPhoto } from '@/data/pet-photo-storage';
 import { addPet, listPets, updatePet, type Pet, type Species } from '@/data/pets';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { formatLongDate, fromDateKey, toDateKey, yearsAgo, yearsSince } from '@/lib/dates';
 import { countPetData, removalWarning, removePet } from '@/lib/pet-removal';
+import { selectionHaptic } from '@/lib/haptics';
 import { refreshReminders } from '@/lib/reminders';
 
 const MAX_AGE = 30;
+// Yaş düğmeleri 40 nokta: dokunma alanı 44'e tamamlanır.
+const STEPPER_HIT_SLOP = 2;
 
 function closeScreen() {
   if (router.canGoBack()) {
@@ -66,6 +62,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
   const [approximateAge, setApproximateAge] = useState(savedApproximateAge ?? 1);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ name, species, breed, pickedPhotoUri, birthDate, usesApproximateAge, approximateAge });
 
   const trimmedName = name.trim();
   const canSave = trimmedName.length > 0 && species !== null && !isSaving;
@@ -130,6 +127,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
     if (pet) {
       await refreshReminders();
     }
+    allowLeave();
     closeScreen();
   }
 
@@ -145,6 +143,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
     await refreshReminders();
 
     // Hiç hayvan kalmadıysa uygulama Karşılama ekranına döner.
+    allowLeave();
     const remaining = await listPets();
     if (remaining.length > 0) {
       router.dismissTo('/pets');
@@ -169,7 +168,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -190,7 +189,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
                 : 'Önce temel bilgiler. Aşılar ve ziyaretler sonra gelir.'}
             </Text>
           </View>
-          <Pressable
+          <Tappable
             accessibilityLabel={photoUri ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle'}
             accessibilityRole="button"
             onPress={pickPhoto}>
@@ -198,7 +197,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
             <View style={styles.photoBadge}>
               <CameraIcon size={16} weight="bold" color={colors.card} />
             </View>
-          </Pressable>
+          </Tappable>
         </View>
 
         <TextField label="Ad" maxLength={30} value={name} onChangeText={setName} />
@@ -209,17 +208,23 @@ export function PetForm({ pet }: { pet?: Pet }) {
             const { Icon, label } = SPECIES[key];
             const isSelected = species === key;
             return (
-              <Pressable
+              <Tappable
                 key={key}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                onPress={() => setSpecies(key)}
+                accessibilityState={{ checked: isSelected }}
+                onPress={() => {
+                  if (!isSelected) {
+                    selectionHaptic();
+                  }
+                  setSpecies(key);
+                }}
+                pressedScale={0.95}
                 style={[styles.speciesOption, isSelected && styles.speciesSelected]}>
                 <Icon size={32} weight="duotone" color={isSelected ? colors.ball : colors.ink} />
                 <Text style={[styles.speciesLabel, isSelected && styles.speciesLabelSelected]}>
                   {label}
                 </Text>
-              </Pressable>
+              </Tappable>
             );
           })}
         </View>
@@ -236,25 +241,32 @@ export function PetForm({ pet }: { pet?: Pet }) {
           {usesApproximateAge ? (
             <FieldRow label="Yaklaşık yaş" value={ageLabel(approximateAge)}>
               <View style={styles.stepper}>
-                <Pressable
+                <Tappable
                   accessibilityLabel="Yaşı azalt"
                   accessibilityRole="button"
                   disabled={approximateAge === 0}
-                  onPress={() => setApproximateAge((age) => age - 1)}
-                  style={[styles.stepperButton, approximateAge === 0 && styles.stepperDisabled]}>
+                  hitSlop={STEPPER_HIT_SLOP}
+                  onPress={() => {
+                    selectionHaptic();
+                    setApproximateAge((age) => age - 1);
+                  }}
+                  pressedScale={0.9}
+                  style={styles.stepperButton}>
                   <MinusIcon size={18} weight="bold" color={colors.ink} />
-                </Pressable>
-                <Pressable
+                </Tappable>
+                <Tappable
                   accessibilityLabel="Yaşı artır"
                   accessibilityRole="button"
                   disabled={approximateAge === MAX_AGE}
-                  onPress={() => setApproximateAge((age) => age + 1)}
-                  style={[
-                    styles.stepperButton,
-                    approximateAge === MAX_AGE && styles.stepperDisabled,
-                  ]}>
+                  hitSlop={STEPPER_HIT_SLOP}
+                  onPress={() => {
+                    selectionHaptic();
+                    setApproximateAge((age) => age + 1);
+                  }}
+                  pressedScale={0.9}
+                  style={styles.stepperButton}>
                   <PlusIcon size={18} weight="bold" color={colors.ink} />
-                </Pressable>
+                </Tappable>
               </View>
             </FieldRow>
           ) : (
@@ -268,7 +280,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
           )}
         </View>
 
-        <Pressable
+        <Tappable
           accessibilityRole="button"
           onPress={() => setUsesApproximateAge((value) => !value)}
           style={styles.hint}>
@@ -278,7 +290,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
               ? 'Doğum tarihini biliyor musun? Tarih seç.'
               : 'Sahiplendin ve emin değil misin? Yaklaşık yaş seç.'}
           </Text>
-        </Pressable>
+        </Tappable>
 
         {pet && (
           <View style={styles.removeAction}>
@@ -286,7 +298,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
               disabled={isSaving}
               label="Hayvanı sil"
               size="small"
-              variant="text"
+              variant="danger"
               onPress={() => confirmRemove(pet)}
             />
           </View>
@@ -294,7 +306,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button disabled={!canSave} label="Kaydet" onPress={save} />
+        <Button disabled={!canSave} label="Kaydet" loading={isSaving} onPress={save} />
       </View>
 
       {isDatePickerOpen && (
@@ -362,7 +374,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     marginTop: 16,
     marginBottom: 8,
-    marginHorizontal: 4,
     fontFamily: fonts.uiBold,
     fontSize: 14,
     color: colors.ink2,
@@ -377,7 +388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    height: 82,
+    minHeight: 82,
     borderRadius: 18,
     backgroundColor: colors.card,
     boxShadow: cardShadow,
@@ -408,14 +419,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.paper,
   },
-  stepperDisabled: {
-    opacity: 0.35,
-  },
   hint: {
     flexDirection: 'row',
     gap: 6,
     marginTop: 10,
-    marginHorizontal: 4,
   },
   hintText: {
     flex: 1,

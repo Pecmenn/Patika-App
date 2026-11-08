@@ -13,6 +13,7 @@ export function useTabBarOptions() {
     tabBarActiveTintColor: colors.ink,
     tabBarInactiveTintColor: colors.ink3,
     tabBarItemStyle: styles.item,
+    tabBarAllowFontScaling: false,
     tabBarLabelStyle: styles.label,
     tabBarStyle: [styles.bar, { bottom: tabBarBottom(insets.bottom) }],
   };

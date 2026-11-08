@@ -2,21 +2,23 @@ import { router } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
 import { useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppointmentStatusPill } from '@/components/appointment-status';
 import { Button } from '@/components/button';
 import { EmptyCard } from '@/components/empty-card';
 import { GlassButton } from '@/components/glass-button';
+import { SkeletonList } from '@/components/loading-state';
+import { Tappable } from '@/components/tappable';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import {
   cancelMyAppointment,
-  listMyAppointments,
+  readMyAppointments,
   subscribeToAppointments,
   type Appointment,
 } from '@/data/appointments';
-import { useFocusData } from '@/hooks/use-focus-data';
+import { useFocusResource } from '@/hooks/use-focus-data';
 import { formatAppointmentWhen } from '@/lib/clinics';
 
 function resultNote({ status, cancelledBy, vetNote }: Appointment) {
@@ -66,7 +68,7 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
       {canCancel && (
         <View style={styles.actions}>
           {phone && (
-            <Pressable
+            <Tappable
               accessibilityLabel={`${appointment.clinicName} ara`}
               accessibilityRole="button"
               onPress={() =>
@@ -77,7 +79,7 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
               style={styles.call}>
               <PhoneIcon size={16} weight="bold" color={colors.ink} />
               <Text style={styles.callLabel}>Ara</Text>
-            </Pressable>
+            </Tappable>
           )}
           <Button disabled={isCancelling} label="İptal et" size="small" variant="text" onPress={confirmCancel} />
         </View>
@@ -86,9 +88,19 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
   );
 }
 
+async function loadMine() {
+  try {
+    return { appointments: await readMyAppointments(), hasFailed: false };
+  } catch (error) {
+    console.warn('Randevular okunamadı', error);
+    return { appointments: [] as Appointment[], hasFailed: true };
+  }
+}
+
 export default function AppointmentsScreen() {
   const insets = useSafeAreaInsets();
-  const appointments = useFocusData(listMyAppointments, subscribeToAppointments);
+  const { data, refresh, isRefreshing } = useFocusResource(loadMine, subscribeToAppointments);
+  const appointments = data?.appointments;
   const open = (appointments ?? [])
     .filter(({ status }) => status === 'pending' || status === 'confirmed')
     .reverse();
@@ -98,6 +110,7 @@ export default function AppointmentsScreen() {
     <View style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, 16) }]}
+        refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} tintColor={colors.ink} />}
         showsVerticalScrollIndicator={false}>
         <GlassButton label="Geri" onPress={() => router.back()}>
           <CaretLeftIcon size={20} weight="bold" color={colors.ink} />
@@ -106,7 +119,15 @@ export default function AppointmentsScreen() {
           Randevularım
         </Text>
 
-        {appointments?.length === 0 && (
+        {data?.hasFailed && (
+          <EmptyCard
+            action={{ label: 'Tekrar dene', onPress: refresh }}
+            body="Randevuların sunucuda duruyor. İnternet bağlantını kontrol edip tekrar dene."
+            title="Randevular okunamadı"
+          />
+        )}
+        {!data && <SkeletonList count={2} height={120} />}
+        {data && !data.hasFailed && data.appointments.length === 0 && (
           <EmptyCard
             body="Veterinerler ekranından bir klinik seçip randevu isteyebilirsin."
             title="Henüz randevun yok"
@@ -147,7 +168,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 22,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 17,
     color: colors.ink,

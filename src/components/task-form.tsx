@@ -3,16 +3,7 @@ import { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -20,9 +11,11 @@ import { ChoiceChips } from '@/components/choice-chips';
 import { DatePickerSheet } from '@/components/date-picker-sheet';
 import { PressableField, TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import { listPets } from '@/data/pets';
 import { addTask, deleteTask, updateTask, type Task, type TaskRepeat } from '@/data/tasks';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { atTime, formatLongDate, formatTime, fromDateKey, toDateKey, toTimeKey } from '@/lib/dates';
 import { refreshReminders } from '@/lib/reminders';
@@ -53,6 +46,7 @@ export function TaskForm({ task }: { task?: Task }) {
   const [note, setNote] = useState(task?.note ?? '');
   const [openPicker, setOpenPicker] = useState<OpenPicker>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ name, chosenPetId, time, repeat, startDate, endDate, note });
 
   const petId = chosenPetId ?? pets?.[0]?.id ?? null;
   const pet = pets?.find((candidate) => candidate.id === petId);
@@ -97,6 +91,7 @@ export function TaskForm({ task }: { task?: Task }) {
       return;
     }
     await refreshReminders({ askPermission: true });
+    allowLeave();
     router.back();
   }
 
@@ -110,6 +105,7 @@ export function TaskForm({ task }: { task?: Task }) {
       return;
     }
     await refreshReminders();
+    allowLeave();
     router.back();
   }
 
@@ -126,7 +122,7 @@ export function TaskForm({ task }: { task?: Task }) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.screen, { paddingTop: insets.top + 2 }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -198,12 +194,13 @@ export function TaskForm({ task }: { task?: Task }) {
               />
             </View>
             {endDate && (
-              <Pressable
+              <Tappable
                 accessibilityRole="button"
                 onPress={() => setEndDate(null)}
+                hitSlop={10}
                 style={styles.shortcut}>
                 <Text style={styles.shortcutLabel}>Bitiş tarihini kaldır</Text>
-              </Pressable>
+              </Tappable>
             )}
           </>
         )}
@@ -230,7 +227,7 @@ export function TaskForm({ task }: { task?: Task }) {
               disabled={isSaving}
               label="Görevi sil"
               size="small"
-              variant="text"
+              variant="danger"
               onPress={() => confirmRemove(task)}
             />
           </View>
@@ -238,7 +235,7 @@ export function TaskForm({ task }: { task?: Task }) {
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button disabled={!canSave} label="Kaydet" onPress={save} />
+        <Button disabled={!canSave} label="Kaydet" loading={isSaving} onPress={save} />
       </View>
 
       {openPicker === 'time' && (
@@ -308,7 +305,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   groupLabel: {
-    marginHorizontal: 4,
     fontFamily: fonts.uiBold,
     fontSize: 13.5,
     color: colors.ink2,
@@ -319,7 +315,6 @@ const styles = StyleSheet.create({
   shortcut: {
     alignSelf: 'flex-start',
     marginTop: 8,
-    marginHorizontal: 4,
     paddingVertical: 4,
   },
   shortcutLabel: {
@@ -330,7 +325,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     marginTop: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiSemi,
     fontSize: 13.5,
     lineHeight: 19,

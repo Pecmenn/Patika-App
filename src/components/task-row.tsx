@@ -1,10 +1,20 @@
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { PetAvatar } from '@/components/pet-avatar';
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
 import { resolvePetPhotoUri } from '@/data/pet-photo-storage';
 import type { Pet } from '@/data/pets';
+import { selectionHaptic, successHaptic } from '@/lib/haptics';
 
 type TaskRowProps = {
   name: string;
@@ -26,6 +36,19 @@ export function TaskRow({
   onToggle,
   onPress,
 }: TaskRowProps) {
+  const scale = useSharedValue(1);
+  const wasDone = useRef(isDone);
+
+  // "Yapıldı" denince yuvarlak bir kez zıplar. Açılışta zaten yapılmış olan görev zıplamaz.
+  useEffect(() => {
+    if (isDone && !wasDone.current) {
+      scale.value = withSequence(withTiming(1.25, { duration: 110 }), withSpring(1, { damping: 9 }));
+    }
+    wasDone.current = isDone;
+  }, [isDone, scale]);
+
+  const checkStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
   return (
     <View style={[styles.row, showDivider && styles.divider]}>
       {onToggle && (
@@ -34,16 +57,25 @@ export function TaskRow({
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isDone }}
           hitSlop={10}
-          onPress={onToggle}
-          style={[styles.check, isDone && styles.checkDone]}>
-          {isDone && <CheckIcon size={14} weight="bold" color={colors.ink} />}
+          onPress={() => {
+            if (isDone) {
+              selectionHaptic();
+            } else {
+              successHaptic();
+            }
+            onToggle();
+          }}>
+          <Animated.View style={[styles.check, isDone && styles.checkDone, checkStyle]}>
+            {isDone && <CheckIcon size={14} weight="bold" color={colors.ink} />}
+          </Animated.View>
         </Pressable>
       )}
-      <Pressable
+      <Tappable
         accessibilityHint="Düzenlemek için dokun"
         accessibilityRole="button"
         onPress={onPress}
-        style={({ pressed }) => [styles.body, pressed && styles.pressed]}>
+        pressedScale={0.98}
+        style={styles.body}>
         <View style={styles.copy}>
           <Text style={[styles.name, isDone && styles.nameDone]}>{name}</Text>
           <Text style={styles.detail}>{detail}</Text>
@@ -53,7 +85,7 @@ export function TaskRow({
           size={30}
           species={pet.species}
         />
-      </Pressable>
+      </Tappable>
     </View>
   );
 }
@@ -69,6 +101,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
+  // Çerçeve beyaz kartta en az 3:1 seçilsin diye ikincil yazı rengiyle çizilir.
   check: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,7 +109,7 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: '#C9C8DD',
+    borderColor: colors.ink3,
   },
   checkDone: {
     borderColor: colors.ball,
@@ -88,9 +121,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     minWidth: 0,
-  },
-  pressed: {
-    opacity: 0.6,
   },
   copy: {
     flex: 1,

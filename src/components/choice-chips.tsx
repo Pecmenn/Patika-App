@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { Tappable } from '@/components/tappable';
 import { colors, fonts } from '@/constants/theme';
+import { selectionHaptic } from '@/lib/haptics';
 
 type ChoiceChipsProps<T extends string> = {
   options: { value: T; label: string }[];
@@ -8,20 +10,32 @@ type ChoiceChipsProps<T extends string> = {
   onChange: (value: T) => void;
 };
 
+// Görünür boy 36, dokunma alanı 44: altta ve üstte 4'er nokta pay.
+const HIT_SLOP = { top: 4, bottom: 4 };
+
 export function ChoiceChips<T extends string>({ options, value, onChange }: ChoiceChipsProps<T>) {
   return (
-    <View style={styles.chips}>
+    <View accessibilityRole="radiogroup" style={styles.chips}>
       {options.map((option) => {
         const isSelected = option.value === value;
         return (
-          <Pressable
+          <Tappable
             key={option.value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isSelected }}
-            onPress={() => onChange(option.value)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: isSelected }}
+            hitSlop={HIT_SLOP}
+            onPress={() => {
+              if (!isSelected) {
+                selectionHaptic();
+              }
+              onChange(option.value);
+            }}
+            pressedScale={0.94}
             style={[styles.chip, isSelected && styles.chipSelected]}>
-            <Text style={[styles.label, isSelected && styles.labelSelected]}>{option.label}</Text>
-          </Pressable>
+            <Text maxFontSizeMultiplier={1.4} style={[styles.label, isSelected && styles.labelSelected]}>
+              {option.label}
+            </Text>
+          </Tappable>
         );
       })}
     </View>
@@ -41,20 +55,25 @@ export function MultiChoiceChips<T extends string>({ options, values, onChange }
       {options.map((option) => {
         const isSelected = values.includes(option.value);
         return (
-          <Pressable
+          <Tappable
             key={option.value}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: isSelected }}
-            onPress={() =>
+            hitSlop={HIT_SLOP}
+            onPress={() => {
+              selectionHaptic();
               onChange(
                 isSelected
                   ? values.filter((value) => value !== option.value)
                   : [...values, option.value],
-              )
-            }
+              );
+            }}
+            pressedScale={0.94}
             style={[styles.chip, isSelected && styles.chipSelected]}>
-            <Text style={[styles.label, isSelected && styles.labelSelected]}>{option.label}</Text>
-          </Pressable>
+            <Text maxFontSizeMultiplier={1.4} style={[styles.label, isSelected && styles.labelSelected]}>
+              {option.label}
+            </Text>
+          </Tappable>
         );
       })}
     </View>
@@ -70,7 +89,8 @@ const styles = StyleSheet.create({
   },
   chip: {
     justifyContent: 'center',
-    height: 36,
+    minHeight: 36,
+    paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,

@@ -17,6 +17,7 @@ const PASSWORD = 'deneme-sifre-1';
 const OK_BUTTON = /^(TAMAM|Tamam)$/;
 const CANCEL_BUTTON = /^V[Aa][Zz][Gg].*/;
 const SIGN_OUT_BUTTON = 'ÇIKIŞ YAP';
+const DISCARD_BUTTON = /^(Kaydetmeden çık|KAYDETMEDEN ÇIK)$/;
 const TUESDAY = /^[0-9]+ \S+ Sal$/;
 const WEEK = [
   { open: '09:00', close: '18:00' },
@@ -118,8 +119,8 @@ async function leaveDialer() {
 
 async function goToTab(tab: string) {
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    if (await phone.has(tab, 600)) {
-      await phone.tap(tab);
+    if (await phone.hasLabel(tab, 600)) {
+      await phone.tapLabel(tab);
       await phone.wait(500);
       return;
     }
@@ -149,6 +150,10 @@ async function ask(reason: string, time: string) {
   await phone.tapLabel(TUESDAY);
   await phone.scrollTo(time);
   await phone.tap(time);
+  // Gün değişince saatler yeniden yüklenir. Dokunuş henüz yenilenmemiş listeye denk geldiyse saat seçilmez, bir kez daha dokunulur.
+  if (!(await phone.has(/.*için istek gönder/, 3000))) {
+    await phone.tap(time);
+  }
 }
 
 test.beforeAll(async () => {
@@ -328,6 +333,9 @@ test('onaylanınca profil listede görünür, kimlik değişirse yeniden onay uy
   await phone.see('Yeniden onay gerekecek');
   await phone.tap(CANCEL_BUTTON);
   await phone.tapLabel('Kapat');
+  // Ad değiştirildi ama gönderilmedi: kapatırken sorulur.
+  await phone.see('Değişiklikler kaydedilmedi');
+  await phone.tap(DISCARD_BUTTON);
   await phone.see('Listede görünüyorsun');
   const [clinic] = await query('SELECT status, name FROM clinics WHERE id = ?', [clinicId]);
   expect(clinic).toEqual({ status: 'approved', name: CLINIC });
@@ -462,7 +470,8 @@ test('veteriner onaylayınca sahibin ekranı kendiliğinden değişir, ziyaretle
   await phone.see('Yaklaşanlar');
   await phone.see(CLINIC);
   await goToTab('Bugün');
-  await phone.see('Sonraki ziyaret', 20_000);
+  // "Sonraki ziyaret" boş kartta da yazıyor: ziyaretin kendisi aranır.
+  await phone.see(/^Mia için Aşı.*/, 20_000);
 });
 
 test('ikinci istekte telefon hazır gelir, reddedilince sahip Bugün ekranında görür', async () => {

@@ -3,15 +3,7 @@ import { router } from 'expo-router';
 import { CameraIcon } from 'phosphor-react-native/src/icons/Camera';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -21,6 +13,7 @@ import { TextField } from '@/components/form-fields';
 import { GlassButton } from '@/components/glass-button';
 import { HoursEditor } from '@/components/hours-editor';
 import { LastSeenMap } from '@/components/last-seen-map';
+import { Tappable } from '@/components/tappable';
 import { SPECIES, SPECIES_KEYS } from '@/constants/species';
 import { colors, fonts } from '@/constants/theme';
 import { saveOwnClinic, uploadOwnClinicPhoto, type ClinicFields, type OwnClinic } from '@/data/own-clinic';
@@ -36,6 +29,7 @@ import {
   type ClinicService,
   type DayHours,
 } from '@/lib/clinics';
+import { useDiscardGuard } from '@/hooks/use-discard-guard';
 import type { Point } from '@/lib/lost';
 
 const SPECIES_OPTIONS = SPECIES_KEYS.map((key) => ({ value: key, label: SPECIES[key].label }));
@@ -63,6 +57,7 @@ export function ClinicForm({ clinic }: { clinic: OwnClinic | null }) {
   const [instagram, setInstagram] = useState(clinic?.instagram ?? '');
   const [pickedPhotoUri, setPickedPhotoUri] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const allowLeave = useDiscardGuard({ name, vetName, licenseNo, phone, address, area, point, hours, slotMinutes, species, services, description, website, instagram, pickedPhotoUri });
 
   const missing = [
     !name.trim() && 'klinik adı',
@@ -121,6 +116,7 @@ export function ClinicForm({ clinic }: { clinic: OwnClinic | null }) {
         { text: 'Tamam' },
       ]);
     }
+    allowLeave();
     router.back();
   }
 
@@ -183,7 +179,7 @@ export function ClinicForm({ clinic }: { clinic: OwnClinic | null }) {
           Sahipler bu bilgileri görür. Oda sicil numarası yalnızca kontrol içindir, kimseye görünmez.
         </Text>
 
-        <Pressable
+        <Tappable
           accessibilityLabel="Klinik fotoğrafı seç"
           accessibilityRole="button"
           onPress={pickPhoto}
@@ -193,7 +189,7 @@ export function ClinicForm({ clinic }: { clinic: OwnClinic | null }) {
             <CameraIcon size={18} weight="bold" color={colors.ink} />
             <Text style={styles.photoLabel}>Fotoğraf seç (isteğe bağlı)</Text>
           </View>
-        </Pressable>
+        </Tappable>
 
         <View style={styles.fields}>
           <TextField label="Klinik adı" maxLength={80} value={name} onChangeText={setName} />
@@ -299,6 +295,7 @@ export function ClinicForm({ clinic }: { clinic: OwnClinic | null }) {
         <Button
           disabled={missing.length > 0 || isSaving}
           label={clinic ? 'Kaydet' : 'Onaya gönder'}
+          loading={isSaving}
           onPress={submit}
         />
       </View>
@@ -355,7 +352,6 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 22,
     marginBottom: 10,
-    marginHorizontal: 4,
     fontFamily: fonts.uiHeavy,
     fontSize: 17,
     color: colors.ink,

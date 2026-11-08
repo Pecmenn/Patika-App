@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
+import { Tappable } from '@/components/tappable';
 import { TaskRow } from '@/components/task-row';
 import { cardShadow, colors, fonts } from '@/constants/theme';
 import type { Pet } from '@/data/pets';
@@ -23,9 +24,9 @@ function detailFor({ task, date, isOverdue }: TodayTask, pet: Pet) {
 
 function TextAction({ label, href }: { label: string; href: '/add-task' | '/tasks' }) {
   return (
-    <Pressable accessibilityRole="button" onPress={() => router.push(href)} style={styles.action}>
+    <Tappable accessibilityRole="button" onPress={() => router.push(href)} style={styles.action}>
       <Text style={styles.actionLabel}>{label}</Text>
-    </Pressable>
+    </Tappable>
   );
 }
 
@@ -95,7 +96,6 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
     marginBottom: 10,
-    marginHorizontal: 4,
   },
   title: {
     fontFamily: fonts.uiHeavy,
@@ -118,7 +118,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
-    marginHorizontal: 4,
   },
   action: {
     paddingVertical: 8,
