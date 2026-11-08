@@ -113,6 +113,8 @@ test('tedavi eklenir, not kaydolur', async () => {
   await phone.tap('Tedavi ekle');
   await phone.fill('Tedavi adı', 'İç parazit');
   await phone.hideKeyboard();
+  // Sonraki tarih bir ay sonra: Bugün'deki "sırada" kartı bu tedaviyle görünür.
+  await phone.tap('Bir ay sonrasını seç');
   await phone.fill('Not (isteğe bağlı)', 'Yarım tablet, açık karnına');
   await phone.hideKeyboard();
   await phone.tap('Kaydet');
@@ -176,6 +178,10 @@ test('kilo eklenir, geçersiz değer kabul edilmez', async () => {
 test('hayvan kartları Bugün ekranında görünür', async () => {
   await phone.tapLabel('Geri');
   await phone.see('Hayvanım kayıp');
+  await phone.see('Şanslı için sırada');
+  await phone.see('30');
+  await phone.wait(600);
+  await snap('bugun-sirada');
   await phone.scrollTo('Görev ekle');
   await snap('bugun-kartlar');
 });

@@ -24,26 +24,28 @@ export function UpNextCard({ pet, record, now, onDone }: UpNextCardProps) {
 
   return (
     <View style={[styles.card, { backgroundColor: SPECIES[pet.species].color }]}>
-      <View style={styles.who}>
-        <View style={styles.avatarRing}>
-          <PetAvatar
-            photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
-            size={28}
-            species={pet.species}
-          />
-        </View>
-        <Text style={styles.whoLabel}>{pet.name} için sırada</Text>
-      </View>
-
+      {/* Solda kimin için, ne ve ne zaman alt alta; sağda sayaç. Sayacın alt satırı tarih satırıyla aynı
+          çizgide durur, kısa adda sol üstte boşluk kalmaz. */}
       <View style={styles.main}>
-        <Text style={styles.name}>{record.name}</Text>
+        <View style={styles.text}>
+          <View style={styles.who}>
+            <View style={styles.avatarRing}>
+              <PetAvatar
+                photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
+                size={28}
+                species={pet.species}
+              />
+            </View>
+            <Text style={styles.whoLabel}>{pet.name} için sırada</Text>
+          </View>
+          <Text style={styles.name}>{record.name}</Text>
+          <Text style={styles.sub}>Son tarih: {formatLongDate(fromDateKey(dueDate))}</Text>
+        </View>
         <View style={styles.count}>
           <Text maxFontSizeMultiplier={1.2} style={styles.countValue}>{Math.abs(days)}</Text>
           <Text style={styles.countLabel}>{dueCountLabel(days)}</Text>
         </View>
       </View>
-
-      <Text style={styles.sub}>Son tarih: {formatLongDate(fromDateKey(dueDate))}</Text>
 
       <View style={styles.actions}>
         <Button label="Yapıldı" size="small" onPress={onDone} />
@@ -59,10 +61,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 28,
   },
+  main: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 12,
+  },
+  text: {
+    flex: 1,
+  },
   who: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 10,
   },
   avatarRing: {
     borderRadius: 16,
@@ -75,21 +86,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
-  main: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 4,
-  },
   name: {
-    flex: 1,
     fontFamily: fonts.display,
     fontSize: 24,
     lineHeight: 26,
     letterSpacing: -0.6,
     color: colors.ink,
+    marginBottom: 4,
+  },
+  sub: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.ink2,
   },
   count: {
     alignItems: 'flex-end',
@@ -101,16 +110,14 @@ const styles = StyleSheet.create({
     letterSpacing: -3,
     color: colors.ink,
   },
+  // Tarih satırıyla aynı satır yüksekliği: ikisinin alt çizgisi aynı hizaya gelir.
+  // Rakamın altındaki boşluk kısılır, "gün kaldı" sayıya yapışık durur.
   countLabel: {
+    marginTop: -8,
     fontFamily: fonts.uiBold,
     fontSize: 14,
-    color: colors.ink,
-  },
-  sub: {
-    fontFamily: fonts.ui,
-    fontSize: 14,
     lineHeight: 20,
-    color: colors.ink2,
+    color: colors.ink,
   },
   actions: {
     flexDirection: 'row',

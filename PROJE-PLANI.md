@@ -1,6 +1,6 @@
 # Patika Proje Planı
 
-Son güncelleme: 8 Kasım 2026
+Son güncelleme: 9 Kasım 2026
 
 Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan, zamanı gelince hatırlatan ve hayvan kaybolduğunda ilan ile QR sayfası sunan bir telefon uygulaması. Hedef, portfolyodaki tasarımı App Store'da yayınlanan gerçek bir ürüne dönüştürmek.
 
@@ -187,7 +187,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 | Randevu sistemi (istek, onay, ziyarete düşme, iptal) | 8 | Kodlandı, taklitçide geçti, iPhone'da randevu henüz gönderilmedi (0 puan, geçince 8) |
 | Apple ile giriş, ayarlar ve hesap silme (hesap silme hariç 5 puan) | 8 | Giriş, ayarlar ve hesap silme düğmesi iPhone'da denendi (7 puan). Apple izni iptali üyelik bekliyor (1 puan) |
 | Arayüz cilası: his, tepki ve erişilebilirlik | 6 | Kodlandı, taklitçide geçti. Titreşim ve iPhone hissi sondaki testte (0 puan, geçince 6) |
-| Arayüz cilası: görsel kalite (boş ekranlar, fotoğrafsız hâl, veteriner listesi, ilan, ayarlar, açılış ekranı) | 4 | Başladı: hizalama, boş ekranlar (Bugün, Hayvanlar, hayvan sayfası), Ayarlar, veteriner listesi ve ilandaki düğme kayması kodlandı. Kalan: açılış ekranı, fotoğrafsız hâl, ilan görseli. iPhone testinden önce puan almaz (0 puan) |
+| Arayüz cilası: görsel kalite (boş ekranlar, fotoğrafsız hâl, veteriner listesi, ilan, ayarlar, açılış ekranı) | 4 | Başladı: hizalama, boş ekranlar (Bugün, Hayvanlar, hayvan sayfası), Ayarlar, veteriner listesi, ilandaki düğme kayması ve Bugün'deki "sırada" kartının hizası kodlandı. Kalan: açılış ekranı, fotoğrafsız hâl, ilan görseli. iPhone testinden önce puan almaz (0 puan) |
 | Kendi backend'imiz ve verilerin sunucuya taşınması | 12 | Bitti |
 | Kayıp modu (başlatma, arama, harita, ihbarlar, bulundu) | 15 | Bitti |
 | İlan, QR sayfası ve yazdırılabilir QR | 12 | Bitti |

@@ -24,7 +24,7 @@ Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, s
 Yarım formu kapatırken soru (düzenlemeye dön, kaydetmeden çık, Android geri tuşu), değişiklik yapılmış ama gönderilmemiş kayıp ve klinik formunda soru, sunucu kapalıyken "Sunucuya ulaşılamadı" ve sunucu gelince "Tekrar dene" ile listenin açılması.
 
 ### Boş ekranlar ve hizalama (taklitçi, piksel karşılaştırmasıyla)
-Bugün'de kilo ve ziyaret yokken boş kartlar, tek tartıda çizgisiz kilo kartı, Hayvanlar listesinde yaş, son kilo ve sıradaki iş, hayvan sayfasındaki bilgi kutuları, gruplu Ayarlar (girişli ve girişsiz), klinik kartındaki hizmetler, ilan biçimi değişince düğmelerin yerinde kalması. Ayarlar'daki hatırlatma düğmesi: kapatınca telefonda kurulu bildirim alarmlarının silinmesi, açınca geri gelmesi. "Sıradaki" iş, "kaç gün kaldı" yazısı ve son kilo `npm test` içinde de sınanıyor.
+Bugün'deki "sırada" kartı (kısa adda boşluk kalmaması, sayacın tarih satırıyla aynı hizada durması), Bugün'de kilo ve ziyaret yokken boş kartlar, tek tartıda çizgisiz kilo kartı, Hayvanlar listesinde yaş, son kilo ve sıradaki iş, hayvan sayfasındaki bilgi kutuları, gruplu Ayarlar (girişli ve girişsiz), klinik kartındaki hizmetler, ilan biçimi değişince düğmelerin yerinde kalması. Ayarlar'daki hatırlatma düğmesi: kapatınca telefonda kurulu bildirim alarmlarının silinmesi, açınca geri gelmesi. "Sıradaki" iş, "kaç gün kaldı" yazısı ve son kilo `npm test` içinde de sınanıyor.
 
 ### Alt menü (taklitçi)
 Kayıp düğmesinin başka sekmeden açılması, dairenin menü dışına taşan yerine dokunma, kapatınca sekmenin değişmemesi, Android geri tuşunun Ayarlar'dan Bugün'e dönmesi, açık ilanda düğmenin hayvanın adını gösterip ilanı açması, veteriner menüsünde kayıp düğmesinin olmaması.
