@@ -61,6 +61,7 @@ export default function FoundScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.frame}>
           <PetAvatar
+            name={pet?.name}
             photoUri={pet?.photo ? resolvePetPhotoUri(pet.photo) : null}
             size={150}
             species={pet?.species ?? null}

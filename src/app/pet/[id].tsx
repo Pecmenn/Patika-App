@@ -161,6 +161,7 @@ export default function PetRecordScreen() {
 
         <View style={styles.head}>
           <PetAvatar
+            name={pet.name}
             photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
             size={76}
             species={pet.species}

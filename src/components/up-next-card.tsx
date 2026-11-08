@@ -31,6 +31,7 @@ export function UpNextCard({ pet, record, now, onDone }: UpNextCardProps) {
           <View style={styles.who}>
             <View style={styles.avatarRing}>
               <PetAvatar
+                name={pet.name}
                 photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
                 size={28}
                 species={pet.species}

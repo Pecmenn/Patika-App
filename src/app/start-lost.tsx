@@ -147,6 +147,7 @@ export default function StartLostScreen() {
                 }}
                 style={[styles.pet, isSelected && styles.petSelected]}>
                 <PetAvatar
+                  name={candidate.name}
                   photoUri={candidate.photo ? resolvePetPhotoUri(candidate.photo) : null}
                   size={40}
                   species={candidate.species}

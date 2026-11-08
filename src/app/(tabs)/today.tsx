@@ -120,6 +120,7 @@ export default function TodayScreen() {
             hitSlop={2}
             style={styles.chip}>
             <PetAvatar
+              name={pet.name}
               photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
               size={28}
               species={pet.species}

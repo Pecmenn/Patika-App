@@ -81,6 +81,7 @@ export function TaskRow({
           <Text style={styles.detail}>{detail}</Text>
         </View>
         <PetAvatar
+          name={pet.name}
           photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
           size={30}
           species={pet.species}

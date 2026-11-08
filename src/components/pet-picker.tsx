@@ -32,6 +32,7 @@ export function PetPicker({ pets, value, onChange }: PetPickerProps) {
             }}
             style={[styles.pet, isSelected && styles.petSelected]}>
             <PetAvatar
+              name={candidate.name}
               photoUri={candidate.photo ? resolvePetPhotoUri(candidate.photo) : null}
               size={28}
               species={candidate.species}

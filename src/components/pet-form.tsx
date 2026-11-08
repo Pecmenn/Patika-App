@@ -193,7 +193,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
             accessibilityLabel={photoUri ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle'}
             accessibilityRole="button"
             onPress={pickPhoto}>
-            <PetAvatar photoUri={photoUri} size={92} species={species} />
+            <PetAvatar name={name} photoUri={photoUri} size={92} species={species} />
             <View style={styles.photoBadge}>
               <CameraIcon size={16} weight="bold" color={colors.card} />
             </View>

@@ -62,6 +62,7 @@ function PetCard({ pet, data }: { pet: Pet; data: Data }) {
       style={styles.card}>
       <View style={styles.top}>
         <PetAvatar
+          name={pet.name}
           photoUri={pet.photo ? resolvePetPhotoUri(pet.photo) : null}
           size={56}
           species={pet.species}

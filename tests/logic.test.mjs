@@ -704,3 +704,13 @@ test('Patika randevusundan gelen ziyaret ayırt edilir', () => {
   assert.equal(isAppointmentVisit({ id: 'appointment-abc' }), true);
   assert.equal(isAppointmentVisit({ id: 'abc' }), false);
 });
+
+test('fotoğrafsız avatar: adın baş harfi, Türkçe büyük harfle', () => {
+  assert.equal(petsLib.petInitial('şanslı'), 'Ş');
+  assert.equal(petsLib.petInitial('ince'), 'İ');
+  assert.equal(petsLib.petInitial('  boncuk'), 'B');
+  assert.equal(petsLib.petInitial('3 Tekir'), null);
+  assert.equal(petsLib.petInitial('🐶 Zeytin'), null);
+  assert.equal(petsLib.petInitial(''), null);
+  assert.equal(petsLib.petInitial(undefined), null);
+});

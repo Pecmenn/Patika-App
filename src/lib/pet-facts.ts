@@ -45,3 +45,10 @@ export function nextUpWhen(dateKey: string, now = new Date()) {
   }
   return formatShortDate(fromDateKey(dateKey));
 }
+
+// Fotoğrafsız avatarda görünen harf. Türkçe büyük harf kuralıyla ("i" → "İ"). Harfle başlamayan adda
+// (rakam, emoji) harf yok, avatar türün simgesini gösterir.
+export function petInitial(name: string | undefined): string | null {
+  const first = Array.from(name?.trim() ?? '')[0];
+  return first && /\p{L}/u.test(first) ? first.toLocaleUpperCase('tr-TR') : null;
+}
