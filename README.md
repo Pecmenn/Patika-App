@@ -22,7 +22,7 @@ npx expo start
 
 Ekrana gelen QR kodunu iPhone'da kamerayla, Android'de Expo Go ile okut.
 
-Uygulama sunucuyu kendisi bulur: kodu sunan bilgisayarın 4000 numaralı kapısına bağlanır. Bu yüzden sunucuyu ve `npx expo start` komutunu aynı bilgisayarda çalıştır. `.env` içindeki `EXPO_PUBLIC_API_URL` geliştirirken boş kalır.
+Uygulama sunucuyu kendisi bulur: kodu sunan bilgisayarın 4000 numaralı kapısına bağlanır. Bu yüzden sunucuyu ve `npx expo start` komutunu aynı bilgisayarda çalıştır. Geliştirirken ayar dosyası gerekmez. Başka bir sunucuya bağlanmak için `.env.example` dosyasını `.env` adıyla kopyalayıp `EXPO_PUBLIC_API_URL` değerini yaz. `.env` Git'e girmez.
 
 **Giriş:** Sahip girişi Apple ile yapılır. Denemek için Karşılama ekranında ve Ayarlar'da "Deneme hesabıyla gir" düğmesi var. Bu düğme yalnızca sunucunun `.env` dosyasında `ALLOW_DEV_LOGIN=true` iken çalışır. Her basış yeni, boş bir hesap açar. Veteriner girişi Karşılama'daki ayrı düğmeden, e-posta ve şifreyle.
 

@@ -31,6 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
+# Ayar dosyası Git'e girmez: içine yazılan adres ya da anahtar herkese açık repoya gitmesin.
+# Örnek ayarlar .env.example içinde.
+.env
 .env*.local
 
 # typescript

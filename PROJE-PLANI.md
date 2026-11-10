@@ -232,6 +232,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Git'te ana hatta (`master`) çalışılıyor, kullanıcı böyle seçti.
 - Repolar herkese açık olduğu için kayıt e-postası GitHub'ın gizli adresi (`...@users.noreply.github.com`). İki reponun kendi Git ayarında yazılı. Başka bilgisayarda kayıt yapılacaksa orada da aynı adres ayarlanmalı, yoksa kişisel e-posta yeniden görünür.
 - Repolar herkese açık: Git'e girecek dosyada şifre, anahtar ya da kişisel bilgi olmamalı. Gönderdikten sonra silmek yetmez, geçmişte kalır.
+- `.env` iki repoda da Git'e girmez (`.gitignore`), örnek ayarlar `.env.example` içinde. Uygulamanın `.env` dosyası 10 Kasım 2026'ya kadar Git'teydi, o gün çıkarıldı.
 - Windows'ta `npx expo login` tarayıcı açarken hata verip kapanıyor. Girişte `npx expo login --no-browser` kullan.
 - Yeni paket kurulunca sunucu dosyaları göremeyebilir. `npx expo start --clear` ile yeniden başlat.
 - Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası backend'den yayınlandığı için bu ayarı değiştirmek gerekmedi.
