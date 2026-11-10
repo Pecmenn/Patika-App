@@ -125,7 +125,7 @@ Sahibin alt menüsünde Bugün, Hayvanlar, ortada Hayvanım kayıp, Veterinerler
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
 - [ ] Gizlilik metnine Ayarlar'dan bağlantı ver: Apple bu bağlantıyı hem mağaza sayfasında hem uygulamanın içinde ister
 - [ ] Backend'i internete açık bir sunucuya al (TestFlight'tan önce şart): barındırma seçimi, HTTPS, kalıcı alan adı, veritabanı ve fotoğraf yedeği, izleme. Şimdilik yalnızca bu bilgisayarda çalışıyor, QR sayfası dışarıdan açılmıyor, telefon başka ağdayken eşitleme yapmıyor
-- [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor. Artık acil: uygulama reposu herkese açık ve eski bir sürümündeki `.env` dosyasında bu projenin adresi ve herkese açık anahtarı yazıyor. Proje silinince anahtar işe yaramaz
+- [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor. Artık acil: projenin adresi ve herkese açık anahtarı, uygulama reposu herkese açıkken bir süre GitHub'daki geçmişte durdu (`.env`). 10 Kasım 2026'da geçmişten silindi, ama GitHub eski kayıtları doğrudan bağlantıyla bir süre daha gösterebilir. Proje silinince anahtar tamamen işe yaramaz
 - [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor, Türkiye'deyse bu yükümlülük doğmayabilir. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
@@ -232,7 +232,7 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 - Git'te ana hatta (`master`) çalışılıyor, kullanıcı böyle seçti.
 - Repolar herkese açık olduğu için kayıt e-postası GitHub'ın gizli adresi (`...@users.noreply.github.com`). İki reponun kendi Git ayarında yazılı. Başka bilgisayarda kayıt yapılacaksa orada da aynı adres ayarlanmalı, yoksa kişisel e-posta yeniden görünür.
 - Repolar herkese açık: Git'e girecek dosyada şifre, anahtar ya da kişisel bilgi olmamalı. Gönderdikten sonra silmek yetmez, geçmişte kalır.
-- `.env` iki repoda da Git'e girmez (`.gitignore`), örnek ayarlar `.env.example` içinde. Uygulamanın `.env` dosyası 10 Kasım 2026'ya kadar Git'teydi, o gün çıkarıldı.
+- `.env` iki repoda da Git'e girmez (`.gitignore`), örnek ayarlar `.env.example` içinde. Uygulamanın `.env` dosyası 10 Kasım 2026'ya kadar Git'teydi, o gün geçmişin tamamından da silindi.
 - Windows'ta `npx expo login` tarayıcı açarken hata verip kapanıyor. Girişte `npx expo login --no-browser` kullan.
 - Yeni paket kurulunca sunucu dosyaları göremeyebilir. `npx expo start --clear` ile yeniden başlat.
 - Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası backend'den yayınlandığı için bu ayarı değiştirmek gerekmedi.
