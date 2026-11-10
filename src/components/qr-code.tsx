@@ -8,6 +8,12 @@ type QrCodeProps = {
   size: number;
 };
 
+// Kodun çevresindeki boş payın genişliği. Beyaz zeminde bu pay kenar boşluğuna taşınabilir,
+// böylece kodun kendisi yanındaki öğelerle aynı çizgide durur.
+export function qrQuietInset(value: string, size: number) {
+  return (size * QR_QUIET_ZONE) / (qrModules(value).length + QR_QUIET_ZONE * 2);
+}
+
 // Okunabilen gerçek QR kodu. Karşılama ekranındaki süs için DecorativeQr kullanılır.
 export function QrCode({ value, size }: QrCodeProps) {
   const modules = qrModules(value);

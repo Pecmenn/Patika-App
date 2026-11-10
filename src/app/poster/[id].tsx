@@ -17,7 +17,7 @@ import { API_URL } from '@/lib/api';
 import { selectionHaptic, successHaptic } from '@/lib/haptics';
 import { lostPageLink } from '@/lib/lost';
 import {
-  POST_DESCRIPTION_CHARS,
+  isDescriptionCut,
   POSTER_FORMAT_KEYS,
   POSTER_FORMATS,
   posterDescription,
@@ -102,9 +102,7 @@ export default function PosterScreen() {
   const availableWidth = window.width - SIDE_PADDING * 2;
   const scale = Math.min(availableWidth / size.width, availableHeight / size.height);
   const needsPhoto = Boolean(report.photoUrl);
-  const isCutOff =
-    format === 'post' &&
-    posterDescription(report.breed, report.description).length > POST_DESCRIPTION_CHARS;
+  const isCutOff = isDescriptionCut(format, posterDescription(report.breed, report.description));
 
   async function share() {
     setIsSharing(true);
@@ -132,26 +130,30 @@ export default function PosterScreen() {
       {navbar('İlan')}
 
       <View style={styles.previewArea}>
+        {/* Gölge ayrı kutuda: kırpan kutu gölgeyi de kırpabiliyor. */}
         <View
           style={[
-            styles.preview,
+            styles.previewShadow,
             { width: size.width * scale, height: size.height * scale },
           ]}>
-          {/* Kapsayıcı küçültülür, ilanın kendisi gerçek boyutunda kalır. */}
           <View
-            style={{
-              width: size.width,
-              height: size.height,
-              transformOrigin: 'top left',
-              transform: [{ scale }],
-            }}>
-            <LostPoster
-              format={format}
-              link={link}
-              posterRef={posterRef}
-              report={report}
-              onPhotoSettled={() => setIsPhotoReady(true)}
-            />
+            style={[styles.preview, { width: size.width * scale, height: size.height * scale }]}>
+            {/* Kapsayıcı küçültülür, ilanın kendisi gerçek boyutunda kalır. */}
+            <View
+              style={{
+                width: size.width,
+                height: size.height,
+                transformOrigin: 'top left',
+                transform: [{ scale }],
+              }}>
+              <LostPoster
+                format={format}
+                link={link}
+                posterRef={posterRef}
+                report={report}
+                onPhotoSettled={() => setIsPhotoReady(true)}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -242,6 +244,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 10,
+  },
+  // Tasarımdaki ilan gölgesi: ilan turuncu zeminden kalkmış gibi durur.
+  previewShadow: {
+    borderRadius: 10,
+    boxShadow: '0 26px 40px -18px rgba(70, 15, 0, 0.6)',
   },
   preview: {
     overflow: 'hidden',

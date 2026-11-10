@@ -528,7 +528,8 @@ test('kayıp: harita duraklarında aynı nokta denetimi', () => {
 
 // --- QR ve ilan ---
 const { qrModules, qrPath, qrSvg } = await import('@/lib/qr');
-const { posterHeading, posterLastSeen, posterDescription, qrSheetHtml, a4PosterHtml } = await import('@/lib/poster');
+const { posterHeading, posterLastSeen, posterDescription, qrSheetHtml, a4PosterHtml, isDescriptionCut } =
+  await import('@/lib/poster');
 const { lostPageLink, shortLink, groupMessagesByPet } = await import('@/lib/lost');
 
 test('QR: kare biçiminde ve üç köşesinde konum işareti var', () => {
@@ -576,6 +577,14 @@ test('ilan yazıları: tür başlığı, son görülme ve açıklama', () => {
   assert.equal(posterDescription('Melez', 'Mavi tasma'), 'Melez. Mavi tasma');
   assert.equal(posterDescription(null, 'Mavi tasma'), 'Mavi tasma');
   assert.equal(posterDescription(null, null), '');
+});
+
+test('ilan açıklaması: story ve gönderide uzun yazı kesilir, A4 baskıda tamamı görünür', () => {
+  const long = 'a'.repeat(151);
+  assert.equal(isDescriptionCut('story', 'a'.repeat(150)), false);
+  assert.equal(isDescriptionCut('story', long), true);
+  assert.equal(isDescriptionCut('post', 'a'.repeat(131)), true);
+  assert.equal(isDescriptionCut('a4', 'a'.repeat(400)), false);
 });
 
 test('yazdırma sayfası: hayvan adı HTML olarak çalışamaz', () => {

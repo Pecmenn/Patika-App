@@ -24,7 +24,7 @@ Temiz kurulum, ad yazmadan kaydedememe, hayvan ekleme, aşı (boş ad, öneri, s
 Yarım formu kapatırken soru (düzenlemeye dön, kaydetmeden çık, Android geri tuşu), değişiklik yapılmış ama gönderilmemiş kayıp ve klinik formunda soru, sunucu kapalıyken "Sunucuya ulaşılamadı" ve sunucu gelince "Tekrar dene" ile listenin açılması.
 
 ### Boş ekranlar ve hizalama (taklitçi, piksel karşılaştırmasıyla)
-Bugün'deki "sırada" kartı (kısa adda boşluk kalmaması, sayacın tarih satırıyla aynı hizada durması), fotoğrafsız avatarda adın baş harfi, Bugün'de kilo ve ziyaret yokken boş kartlar, tek tartıda çizgisiz kilo kartı, Hayvanlar listesinde yaş, son kilo ve sıradaki iş, hayvan sayfasındaki bilgi kutuları, gruplu Ayarlar (girişli ve girişsiz), klinik kartındaki hizmetler, ilan biçimi değişince düğmelerin yerinde kalması. Ayarlar'daki hatırlatma düğmesi: kapatınca telefonda kurulu bildirim alarmlarının silinmesi, açınca geri gelmesi. "Sıradaki" iş, "kaç gün kaldı" yazısı, son kilo ve avatar harfi (Türkçe büyük harf, harfle başlamayan ad) `npm test` içinde de sınanıyor.
+Bugün'deki "sırada" kartı (kısa adda boşluk kalmaması, sayacın tarih satırıyla aynı hizada durması), fotoğrafsız avatarda adın baş harfi, Bugün'de kilo ve ziyaret yokken boş kartlar, tek tartıda çizgisiz kilo kartı, Hayvanlar listesinde yaş, son kilo ve sıradaki iş, hayvan sayfasındaki bilgi kutuları, gruplu Ayarlar (girişli ve girişsiz), klinik kartındaki hizmetler, ilan biçimi değişince düğmelerin yerinde kalması, ilan görselinde QR kodunun sol çizgide durması, Story'deki lacivert çerçeve, A4 şeritlerinin kesim çizgileri. Ayarlar'daki hatırlatma düğmesi: kapatınca telefonda kurulu bildirim alarmlarının silinmesi, açınca geri gelmesi. "Sıradaki" iş, "kaç gün kaldı" yazısı, son kilo, avatar harfi (Türkçe büyük harf, harfle başlamayan ad) ve ilan açıklamasının hangi biçimde kesildiği `npm test` içinde de sınanıyor.
 
 ### Alt menü (taklitçi)
 Kayıp düğmesinin başka sekmeden açılması, dairenin menü dışına taşan yerine dokunma, kapatınca sekmenin değişmemesi, Android geri tuşunun Ayarlar'dan Bugün'e dönmesi, açık ilanda düğmenin hayvanın adını gösterip ilanı açması, veteriner menüsünde kayıp düğmesinin olmaması.
@@ -90,7 +90,7 @@ Bilgisayarda sanal iPhone çalışmıyor, Playwright da iOS'u süremiyor. Safari
 - Aynı hesapla gerçek iki telefon ve çakışma birleştirme
 - Gönderilmemiş değişiklikle çıkış uyarısı ("Yine de çık")
 - Haritadaki ihbar işaretleri, "haritada aç", iki açık ilan
-- Fotoğrafsız ve uzun yazılı ilan görselleri
+- Fotoğrafsız ve uzun yazılı ilan görselleri (en uzun açıklama, uzun semt, yatay ve dikey fotoğraf, üç biçimde: geçici bir önizleme sayfasıyla taklitçide elle denendi, 9 Kasım 2026. Otomatik testi yok)
 - Fotoğraf yükleme hatası ve ilan ekranındaki yeniden deneme, fotoğrafsız ilan uyarısı
 - `server.ts` başlangıcı, yarım kalan veritabanı değişikliği, yeniden başlatmada veri kalıcılığı, Apple anahtar servisine ulaşılamaması
 - Küçük telefon ve büyük yazı boyutu (uygulamada; kayıp sayfasında var)

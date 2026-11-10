@@ -10,13 +10,38 @@ type FormatSize = {
   height: number;
   // Tasarımdaki ölçülerin genişliği. Yazılar ve boşluklar buna göre büyür.
   units: number;
+  // Açıklama yaklaşık bu kadar karakterde kesilir. Boşsa tamamı görünür.
+  descriptionChars: number | undefined;
 };
 
 export const POSTER_FORMATS: Record<PosterFormat, FormatSize> = {
-  story: { label: 'Story', width: 1080, height: 1920, units: 360 },
-  post: { label: 'Gönderi', width: 1080, height: 1350, units: 360 },
-  a4: { label: 'A4 baskı', width: 1654, height: 2339, units: 420 },
+  story: {
+    label: 'Story',
+    width: 1080,
+    height: 1920,
+    units: 360,
+    descriptionChars: 150,
+  },
+  post: {
+    label: 'Gönderi',
+    width: 1080,
+    height: 1350,
+    units: 360,
+    descriptionChars: 130,
+  },
+  a4: {
+    label: 'A4 baskı',
+    width: 1654,
+    height: 2339,
+    units: 420,
+    descriptionChars: undefined,
+  },
 };
+
+export function isDescriptionCut(format: PosterFormat, description: string) {
+  const limit = POSTER_FORMATS[format].descriptionChars;
+  return limit !== undefined && description.length > limit;
+}
 
 export const POSTER_FORMAT_KEYS = Object.keys(POSTER_FORMATS) as PosterFormat[];
 
@@ -66,9 +91,6 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
 img { display: block; width: 100%; height: 99.8vh; object-fit: fill; }
 </style></head><body><img src="data:image/jpeg;base64,${jpegBase64}"></body></html>`;
 }
-
-// Gönderi biçiminde açıklama yaklaşık bu kadar karakterde kesilir.
-export const POST_DESCRIPTION_CHARS = 130;
 
 function escapeHtml(text: string) {
   return text

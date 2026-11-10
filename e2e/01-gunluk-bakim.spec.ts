@@ -192,6 +192,8 @@ test('görev eklenir, Bugün listesinde "Yapıldı" işaretlenir', async () => {
   await phone.hideKeyboard();
   await phone.tap('Her gün');
   await phone.see(/Hatırlatma: .*/);
+  // Çipin basma tepkisi bitmeden görüntü alınırsa çip yarı saydam görünür.
+  await phone.wait(600);
   await snap('gorev-form');
   await phone.tap('Kaydet');
   await phone.see('Tiroid hapı');
