@@ -1,56 +1,58 @@
-# Welcome to your Expo app 👋
+# Patika
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Evcil hayvanların aşı, tedavi, ziyaret ve kilo kayıtlarını tek yerde tutan, zamanı gelince hatırlatan, hayvan kaybolduğunda ilan ve QR sayfası sunan telefon uygulaması. Veterinerler klinik profili açıp randevu isteklerini yönetebilir.
 
-## Get started
+Geliştirme aşamasında, App Store'da henüz yok. Sunucu da henüz internette değil, yalnızca kendi bilgisayarında çalışıyor.
 
-1. Install dependencies
+**Teknoloji:** Expo SDK 58 (React Native), Expo Router, TypeScript. Sunucusu ayrı depoda: [Patika-Backend](https://github.com/Pecmenn/Patika-Backend).
 
-   ```bash
-   npm install
-   ```
+## Çalıştırma
 
-2. Start the app
+Gerekenler:
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+- Node.js 24
+- Telefonda Expo Go uygulaması (SDK 58 sürümü)
+- Telefon ile bilgisayar aynı Wi-Fi ağında
+- Giriş, yedekleme, kayıp ilanı ve veteriner ekranları için çalışan bir [Patika-Backend](https://github.com/Pecmenn/Patika-Backend). Kurulumu o deponun README dosyasında. Sunucu olmadan uygulama açılır, kayıtlar yalnızca telefonda kalır.
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Ekrana gelen QR kodunu iPhone'da kamerayla, Android'de Expo Go ile okut.
 
-### Other setup steps
+Uygulama sunucuyu kendisi bulur: kodu sunan bilgisayarın 4000 numaralı kapısına bağlanır. Bu yüzden sunucuyu ve `npx expo start` komutunu aynı bilgisayarda çalıştır. `.env` içindeki `EXPO_PUBLIC_API_URL` geliştirirken boş kalır.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+**Giriş:** Sahip girişi Apple ile yapılır. Denemek için Karşılama ekranında ve Ayarlar'da "Deneme hesabıyla gir" düğmesi var. Bu düğme yalnızca sunucunun `.env` dosyasında `ALLOW_DEV_LOGIN=true` iken çalışır. Her basış yeni, boş bir hesap açar. Veteriner girişi Karşılama'daki ayrı düğmeden, e-posta ve şifreyle.
 
-## Learn more
+## Komutlar
 
-To learn more about developing your project with Expo, look at the following resources:
+| Komut | Ne yapar |
+|---|---|
+| `npx expo start` | Geliştirme sunucusunu başlatır |
+| `npm test` | Tarih, görev, kilo, eşitleme, QR ve klinik kuralları |
+| `npm run test:e2e` | Android taklitçisinde gerçek ekranlar ve piksel testleri (Playwright) |
+| `npx expo lint` | Kod denetimi |
+| `npx tsc --noEmit` | Tip kontrolü |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Uçtan uca testler `patika` adlı bir Android taklitçisi ve çalışan sunucu ister. Ayrıntılar `PROJE-PLANI.md` içindeki "Test ve derleme" bölümünde.
 
-## Join the community
+## Klasörler
 
-Join our community of developers creating universal apps.
+```
+src/
+  app/          Ekranlar (Expo Router: her dosya bir ekran)
+  components/   Ekranlarda kullanılan parçalar
+  constants/    Renkler, yazı tipleri, hayvan türleri
+  data/         Kayıtların okunup yazılması
+  hooks/        Ortak React kancaları
+  lib/          Hesaplar ve kurallar (testleri tests/ içinde)
+e2e/            Taklitçi testleri, senaryo listesi (SENARYOLAR.md)
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Belgeler
+
+- `PROJE-PLANI.md`: kararlar, ilk sürümün kapsamı, açık işler ve ilerleme
+- `e2e/SENARYOLAR.md`: test edilen senaryolar ve kapsanmayanlar
+- `AGENTS.md`: Expo ile çalışma kuralları
