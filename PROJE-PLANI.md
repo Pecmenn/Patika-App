@@ -1,6 +1,6 @@
 # Patika Proje Planı
 
-Son güncelleme: 9 Kasım 2026
+Son güncelleme: 10 Kasım 2026
 
 Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan, zamanı gelince hatırlatan ve hayvan kaybolduğunda ilan ile QR sayfası sunan bir telefon uygulaması. Hedef, portfolyodaki tasarımı App Store'da yayınlanan gerçek bir ürüne dönüştürmek.
 
@@ -16,6 +16,7 @@ Patika; evcil hayvanların aşı, tedavi ve kilo kayıtlarını tek yerde tutan,
 | İlk sürüm kapsamı | Aşağıdaki liste | Kesin |
 | Teknoloji | Expo (React Native), SDK 58 | Kesin |
 | Çalışma yeri | Windows bilgisayar. Uygulama `Desktop\Patika-App`, sunucu `Desktop\Patika-Backend` klasöründe (ayrı repolar) | Kesin |
+| Kodun paylaşımı | İki repo da GitHub'da herkese açık: `Pecmenn/Patika-App` ve `Pecmenn/Patika-Backend` (10 Kasım 2026, kullanıcı kararı: arkadaşıyla paylaşmak için). Kayıtlarda kişisel e-posta yerine GitHub'ın gizli adresi var, geçmiş göndermeden önce bu adresle yeniden yazıldı. Kod, iş planı ve Karşılama fotoğrafları herkese görünüyor, kullanıcı bunu bilerek seçti | Kesin |
 | Alan adı | patika.pet | Öneri, satın alınmadı, boş olduğu doğrulanmadı |
 | Veri saklama | Telefon önce: kayıt önce telefona yazılır (AsyncStorage), internet olunca kendi sunucumuza gider. Çakışmada son değişiklik kazanır. Çıkış yapınca telefondaki kopya silinir, gönderilmemiş değişiklik varsa önce uyarır | Kesin |
 | Tedavi kaydı | Aşı gibi: ad, tarih, isteğe bağlı sonraki tarih ve not. Sonraki tarih 7 gün önce ve son gün hatırlatılır. Her gün verilecek ilaç Görevler'e girer | Kesin |
@@ -124,12 +125,11 @@ Sahibin alt menüsünde Bugün, Hayvanlar, ortada Hayvanım kayıp, Veterinerler
 - [ ] Gizlilik politikası ve KVKK metnini hazırla
 - [ ] Gizlilik metnine Ayarlar'dan bağlantı ver: Apple bu bağlantıyı hem mağaza sayfasında hem uygulamanın içinde ister
 - [ ] Backend'i internete açık bir sunucuya al (TestFlight'tan önce şart): barındırma seçimi, HTTPS, kalıcı alan adı, veritabanı ve fotoğraf yedeği, izleme. Şimdilik yalnızca bu bilgisayarda çalışıyor, QR sayfası dışarıdan açılmıyor, telefon başka ağdayken eşitleme yapmıyor
-- [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor
+- [ ] Supabase projesini sil: yeni sunucu iPhone'da doğrulandı (5 Kasım 2026), kullanıcı kendisi yapacak. İçinde deneme kayıtları, açık bir kayıp ilanı (Şanslı) ve herkese açık fotoğrafı duruyor. Artık acil: uygulama reposu herkese açık ve eski bir sürümündeki `.env` dosyasında bu projenin adresi ve herkese açık anahtarı yazıyor. Proje silinince anahtar işe yaramaz
 - [ ] Gerçek kişiler kullanmadan önce (TestFlight öncesi) avukata danış: sunucu yurt dışındaysa KVKK standart sözleşmesi gerekiyor, Türkiye'deyse bu yükümlülük doğmayabilir. Çözülmeden sunucuya gerçek kullanıcı verisi konmayacak
 - [ ] Expo'nun widget sınırlamalarını kontrol et (widget aşamasında)
 - [ ] Karşılama ekranındaki kedi ve köpek fotoğraflarının App Store'da kullanım hakkını kontrol et
 - [ ] Hesap silmeyi tamamla: düğme ve sunucu ucu hazır. Eksik: Apple'ın istediği giriş izni iptali (Apple geliştirici üyeliği gerektirir). Sunucu silme sırasında Apple'a iptal isteği gönderecek. App Store'dan önce şart
-- [ ] Kodun internette yedeği yok, iki repo da yalnızca bu bilgisayarda: özel GitHub deposu aç
 - [ ] Kendi derlememize geçince backend'in `APPLE_AUDIENCES` ayarına uygulama kimliğini ekle, yayından önce `host.exp.Exponent` değerini çıkar (Expo Go'ya özel deneme izni). `ALLOW_DEV_LOGIN` gerçek sunucuda kapalı olmalı
 - [ ] Android sürümü için Apple dışında bir giriş yöntemi seç
 - [ ] Uygulama kapalıyken ihbar bildirimi: Apple geliştirici üyeliği ve kendi derlememiz gerekiyor, TestFlight'tan önce yapılacak (Expo Push Service). Şimdilik ihbarlar uygulama açıkken anında, kapalıyken açılınca görünüyor. Yönetici ilanı kaldırma haberi de aynı yolla gidecek: uygulama kapalıyken kaldırılan ilan şimdilik Bugün ekranından açıklamasız düşüyor
@@ -230,6 +230,8 @@ Hedef: uygulamanın App Store'da yayında olması. Ağırlıklar işin büyükl�
 **Bu projede öğrenilenler:**
 
 - Git'te ana hatta (`master`) çalışılıyor, kullanıcı böyle seçti.
+- Repolar herkese açık olduğu için kayıt e-postası GitHub'ın gizli adresi (`...@users.noreply.github.com`). İki reponun kendi Git ayarında yazılı. Başka bilgisayarda kayıt yapılacaksa orada da aynı adres ayarlanmalı, yoksa kişisel e-posta yeniden görünür.
+- Repolar herkese açık: Git'e girecek dosyada şifre, anahtar ya da kişisel bilgi olmamalı. Gönderdikten sonra silmek yetmez, geçmişte kalır.
 - Windows'ta `npx expo login` tarayıcı açarken hata verip kapanıyor. Girişte `npx expo login --no-browser` kullan.
 - Yeni paket kurulunca sunucu dosyaları göremeyebilir. `npx expo start --clear` ile yeniden başlat.
 - Web önizlemesi için `app.json` içinde `web.output` değeri `single`. `server` değeri ekran genişliğini 0 sayıp sayfayı bozuyordu. QR sayfası backend'den yayınlandığı için bu ayarı değiştirmek gerekmedi.
